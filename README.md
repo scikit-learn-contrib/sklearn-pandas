@@ -9,6 +9,20 @@ In particular, it provides:
 1. a way to map DataFrame columns to transformations, which are later recombined into features
 2. a way to cross-validate a pipeline that takes a pandas DataFrame as input.
 
+Installation
+------------
+
+You can install `sklearn-pandas` with `pip`.
+
+    # pip install sklearn-pandas
+
+Tests
+-----
+
+The examples in this file double as basic sanity tests. To run them, use `doctest`, which is included with python.
+
+    # python -m doctest README.md
+
 Usage
 -----
 
