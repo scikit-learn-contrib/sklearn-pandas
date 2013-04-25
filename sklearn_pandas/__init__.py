@@ -14,22 +14,23 @@ def cross_val_score(estimator, X, *args, **kwargs):
 
     class DataFrameMapper(BaseEstimator):
         def __init__(self, estimator, X):
-            pdb.set_trace()
             self.estimator = estimator
             self.X = X
 
         def fit(self, x, y):
-            pdb.set_trace()
-            self.estimator.fit(self.X.df.irow(x), y)
+            self.estimator.fit(self._get_row_subset(x), y)
             return self
 
         def transform(self, x):
-            pdb.set_trace()
-            return self.estimator.transform(self.X.df.irow(x))
+            return self.estimator.transform(self._get_row_subset(x))
 
         def predict(self, x):
-            pdb.set_trace()
-            return self.estimator.predict(self.X.df.irow(x))
+            return self.estimator.predict(self._get_row_subset(x))
+
+        def _get_row_subset(self, rows):
+            subset = self.X.df.irow(rows)
+            subset.index = range(0, len(rows))
+            return subset
     
     X_indices = range(len(X))
     X_wrapped = DataFrameWrapper(X)

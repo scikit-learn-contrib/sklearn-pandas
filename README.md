@@ -5,6 +5,7 @@ Sklearn-pandas
 This module provides a bridge between [Scikit-Learn](http://scikit-learn.org/stable/)'s machine learning methods and [pandas](http://pandas.pydata.org/)-style Data Frames.
 
 In particular, it provides:
+
 1. a way to map DataFrame columns to transformations, which are later recombined into features
 2. a way to cross-validate a pipeline that takes a pandas DataFrame as input.
 
@@ -14,6 +15,7 @@ Usage
 ### Import
 
 Import what you need from the `sklearn_pandas` package. The choices are:
+
 * `DataFrameMapper`, a class for mapping pandas data frame columns to different sklearn transformations
 * `cross_val_score`, similar to `sklearn.cross_validation.cross_val_score` but working on pandas DataFrames
 
@@ -98,4 +100,5 @@ To get around this, sklearn-pandas provides a wrapper on sklearn's `cross_val_sc
     ...     ('featurize', mapper),
     ...     ('lm', sklearn.linear_model.LinearRegression())])
     >>> cross_val_score(pipe, data, data.salary, sklearn.metrics.mean_squared_error)
+    array([ 2018.185     ,     6.72033058,  1899.58333333])
 
