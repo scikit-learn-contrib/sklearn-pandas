@@ -19,6 +19,7 @@ Import what you need from the `sklearn_pandas` package. The choices are:
 * `DataFrameMapper`, a class for mapping pandas data frame columns to different sklearn transformations
 * `cross_val_score`, similar to `sklearn.cross_validation.cross_val_score` but working on pandas DataFrames
 
+
     >>> from sklearn_pandas import DataFrameMapper, cross_val_score
 
 For these examples, we'll also use pandas and sklearn.
@@ -102,3 +103,4 @@ To get around this, sklearn-pandas provides a wrapper on sklearn's `cross_val_sc
     >>> cross_val_score(pipe, data, data.salary, sklearn.metrics.mean_squared_error)
     array([ 2018.185     ,     6.72033058,  1899.58333333])
 
+Sklearn-pandas' `cross_val_score` function provides exactly the same interface as sklearn's function of the same name.
