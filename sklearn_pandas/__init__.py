@@ -2,7 +2,6 @@
 import numpy as np
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn import cross_validation
-import pdb
 
 def cross_val_score(estimator, X, *args, **kwargs):
     class DataFrameWrapper(object):

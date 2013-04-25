@@ -3,7 +3,7 @@
 from setuptools import setup
 
 setup(name='sklearn-pandas',
-      version='0.2',
+      version='0.0.1',
       description='Pandas integration with sklearn',
       author='Paul Butler',
       author_email='paulgb@gmail.com',
