@@ -21,7 +21,7 @@ Tests
 
 The examples in this file double as basic sanity tests. To run them, use ``doctest``, which is included with python::
 
-    # python -m doctest README.md
+    # python -m doctest README.rst
 
 Usage
 -----
