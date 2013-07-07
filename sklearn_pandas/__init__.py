@@ -1,4 +1,3 @@
-
 import numpy as np
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn import cross_validation
@@ -27,9 +26,7 @@ def cross_val_score(estimator, X, *args, **kwargs):
             return self.estimator.predict(self._get_row_subset(x))
 
         def _get_row_subset(self, rows):
-            subset = self.X.df.irow(rows)
-            subset.index = range(0, len(rows))
-            return subset
+            return self.X.df.iloc[rows].reset_index(drop=True)
     
     X_indices = range(len(X))
     X_wrapped = DataFrameWrapper(X)
