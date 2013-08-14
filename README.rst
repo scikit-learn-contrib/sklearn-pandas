@@ -38,9 +38,10 @@ For this demonstration, we will import both::
 
     >>> from sklearn_pandas import DataFrameMapper, cross_val_score
 
-For these examples, we'll also use pandas and sklearn::
+For these examples, we'll also use pandas, numpy, and sklearn::
 
     >>> import pandas as pd
+    >>> import numpy as np
     >>> import sklearn.preprocessing, sklearn.decomposition, \
     ...     sklearn.linear_model, sklearn.pipeline, sklearn.metrics
 
@@ -70,24 +71,24 @@ The mapper takes a list of pairs. The first is a column name from the pandas Dat
 Test the Transformation
 ***********************
 
-We can use the ``fit_transform`` shortcut to both fit the model and see what transformed data looks like::
+We can use the ``fit_transform`` shortcut to both fit the model and see what transformed data looks like. In this and the other examples, output is rounded to two digits with ``np.round`` to account for rounding errors on different hardware::
 
-    >>> mapper.fit_transform(data)
-    array([[ 1.        ,  0.        ,  0.        ,  0.20851441],
-           [ 0.        ,  1.        ,  0.        ,  1.87662973],
-           [ 0.        ,  1.        ,  0.        , -0.62554324],
-           [ 0.        ,  0.        ,  1.        , -0.62554324],
-           [ 1.        ,  0.        ,  0.        , -1.4596009 ],
-           [ 0.        ,  1.        ,  0.        , -0.62554324],
-           [ 1.        ,  0.        ,  0.        ,  1.04257207],
-           [ 0.        ,  0.        ,  1.        ,  0.20851441]])
+    >>> np.round(mapper.fit_transform(data), 2)
+    array([[ 1.  ,  0.  ,  0.  ,  0.21],
+           [ 0.  ,  1.  ,  0.  ,  1.88],
+           [ 0.  ,  1.  ,  0.  , -0.63],
+           [ 0.  ,  0.  ,  1.  , -0.63],
+           [ 1.  ,  0.  ,  0.  , -1.46],
+           [ 0.  ,  1.  ,  0.  , -0.63],
+           [ 1.  ,  0.  ,  0.  ,  1.04],
+           [ 0.  ,  0.  ,  1.  ,  0.21]])
 
 Note that the first three columns are the output of the ``LabelBinarizer`` (corresponding to _cat_, _dog_, and _fish_ respectively) and the fourth column is the standardized value for the number of children. In general, the columns are ordered according to the order given when the ``DataFrameMapper`` is constructed.
 
 Now that the transformation is trained, we confirm that it works on new data::
 
-    >>> mapper.transform({'pet': ['cat'], 'children': [5.]})
-    array([[ 1.        ,  0.        ,  0.        ,  1.04257207]])
+    >>> np.round(mapper.transform({'pet': ['cat'], 'children': [5.]}), 2)
+    array([[ 1.  ,  0.  ,  0.  ,  1.04]])
 
 Transform Multiple Columns
 **************************
@@ -100,15 +101,15 @@ Transformations may require multiple input columns. In these cases, the column n
     
 Now running ``fit_transform`` will run PCA on the ``children`` and ``salary`` columns and return the first principal component::
 
-    >>> mapper2.fit_transform(data)
-    array([[ 47.62288153],
-           [-18.38596516],
-           [  1.62873661],
-           [-15.3709553 ],
-           [-10.36602451],
-           [ 16.62846476],
-           [ -6.38116123],
-           [-15.37597671]])
+    >>> np.round(mapper2.fit_transform(data), 2)
+    array([[ 47.62],
+           [-18.39],
+           [  1.63],
+           [-15.37],
+           [-10.37],
+           [ 16.63],
+           [ -6.38],
+           [-15.38]])
 
 Cross-Validation
 ----------------
@@ -120,8 +121,8 @@ To get around this, sklearn-pandas provides a wrapper on sklearn's ``cross_val_s
     >>> pipe = sklearn.pipeline.Pipeline([
     ...     ('featurize', mapper),
     ...     ('lm', sklearn.linear_model.LinearRegression())])
-    >>> cross_val_score(pipe, data, data.salary, sklearn.metrics.mean_squared_error)
-    array([ 2018.185     ,     6.72033058,  1899.58333333])
+    >>> np.round(cross_val_score(pipe, data, data.salary, sklearn.metrics.mean_squared_error), 2)
+    array([ 2018.18,     6.72,  1899.58])
 
 Sklearn-pandas' ``cross_val_score`` function provides exactly the same interface as sklearn's function of the same name.
 
