@@ -73,30 +73,23 @@ Test the Transformation
 
 We can use the ``fit_transform`` shortcut to both fit the model and see what transformed data looks like. In this and the other examples, output is rounded to two digits with ``np.round`` to account for rounding errors on different hardware::
 
-    >>> np.round(mapper.fit_transform(data), 1)
-    array([[ 1. ,  0. ,  0. ,  0.2],
-           [ 0. ,  1. ,  0. ,  1.9],
-           [ 0. ,  1. ,  0. , -0.6],
-           [ 0. ,  0. ,  1. , -0.6],
-           [ 1. ,  0. ,  0. , -1.5],
-           [ 0. ,  1. ,  0. , -0.6],
-           [ 1. ,  0. ,  0. ,  1. ],
-           [ 0. ,  0. ,  1. ,  0.2]])
-
+    >>> np.round(mapper.fit_transform(data), 2)
+    array([[ 1.  ,  0.  ,  0.  ,  0.21],
+           [ 0.  ,  1.  ,  0.  ,  1.88],
+           [ 0.  ,  1.  ,  0.  , -0.63],
+           [ 0.  ,  0.  ,  1.  , -0.63],
+           [ 1.  ,  0.  ,  0.  , -1.46],
+           [ 0.  ,  1.  ,  0.  , -0.63],
+           [ 1.  ,  0.  ,  0.  ,  1.04],
+           [ 0.  ,  0.  ,  1.  ,  0.21]])
 
 Note that the first three columns are the output of the ``LabelBinarizer`` (corresponding to _cat_, _dog_, and _fish_ respectively) and the fourth column is the standardized value for the number of children. In general, the columns are ordered according to the order given when the ``DataFrameMapper`` is constructed.
 
 Now that the transformation is trained, we confirm that it works on new data::
 
-<<<<<<< HEAD
     >>> sample = pd.DataFrame({'pet': ['cat'], 'children': [5.]})
     >>> np.round(mapper.transform(sample), 2)
     array([[ 1.  ,  0.  ,  0.  ,  1.04]])
-=======
-    >>> np.round(mapper.transform({'pet': ['cat'], 'children': [5.]}), 1)
-    array([[ 1.,  0.,  0.,  1.]])
-
->>>>>>> 5bdeb8bd72e2fb333270ec6b2f7f2b5df0e4eeb6
 
 Transform Multiple Columns
 **************************
@@ -129,13 +122,8 @@ To get around this, sklearn-pandas provides a wrapper on sklearn's ``cross_val_s
     >>> pipe = sklearn.pipeline.Pipeline([
     ...     ('featurize', mapper),
     ...     ('lm', sklearn.linear_model.LinearRegression())])
-<<<<<<< HEAD
     >>> np.round(cross_val_score(pipe, data, data.salary, 'r2'), 2)
     array([ -1.09,  -5.3 , -15.38])
-=======
-    >>> np.round(cross_val_score(pipe, data, data.salary, sklearn.metrics.mean_squared_error), 1)
-    array([ 2018.2,     6.7,  1899.6])
->>>>>>> 5bdeb8bd72e2fb333270ec6b2f7f2b5df0e4eeb6
 
 Sklearn-pandas' ``cross_val_score`` function provides exactly the same interface as sklearn's function of the same name.
 
