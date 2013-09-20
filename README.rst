@@ -87,7 +87,8 @@ Note that the first three columns are the output of the ``LabelBinarizer`` (corr
 
 Now that the transformation is trained, we confirm that it works on new data::
 
-    >>> np.round(mapper.transform({'pet': ['cat'], 'children': [5.]}), 2)
+    >>> sample = pd.DataFrame({'pet': ['cat'], 'children': [5.]})
+    >>> np.round(mapper.transform(sample), 2)
     array([[ 1.  ,  0.  ,  0.  ,  1.04]])
 
 Transform Multiple Columns
@@ -101,15 +102,15 @@ Transformations may require multiple input columns. In these cases, the column n
     
 Now running ``fit_transform`` will run PCA on the ``children`` and ``salary`` columns and return the first principal component::
 
-    >>> np.round(mapper2.fit_transform(data), 2)
-    array([[ 47.62],
-           [-18.39],
-           [  1.63],
-           [-15.37],
-           [-10.37],
-           [ 16.63],
-           [ -6.38],
-           [-15.38]])
+    >>> np.round(mapper2.fit_transform(data), 1)
+    array([[ 47.6],
+           [-18.4],
+           [  1.6],
+           [-15.4],
+           [-10.4],
+           [ 16.6],
+           [ -6.4],
+           [-15.4]])
 
 Cross-Validation
 ----------------
@@ -121,8 +122,8 @@ To get around this, sklearn-pandas provides a wrapper on sklearn's ``cross_val_s
     >>> pipe = sklearn.pipeline.Pipeline([
     ...     ('featurize', mapper),
     ...     ('lm', sklearn.linear_model.LinearRegression())])
-    >>> np.round(cross_val_score(pipe, data, data.salary, sklearn.metrics.mean_squared_error), 2)
-    array([ 2018.18,     6.72,  1899.58])
+    >>> np.round(cross_val_score(pipe, data, data.salary, 'r2'), 2)
+    array([ -1.09,  -5.3 , -15.38])
 
 Sklearn-pandas' ``cross_val_score`` function provides exactly the same interface as sklearn's function of the same name.
 
