@@ -1,55 +1,43 @@
+
+__version__ = '0.0.5'
+
 import numpy as np
+import pandas as pd
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn import cross_validation
+from sklearn import grid_search
 
 def cross_val_score(model, X, *args, **kwargs):
-    class ModelDataWrapper(BaseEstimator):
-        '''
-        sklearn's built-in cross-validation will turn a Pandas DataFrame
-        into an array, which clobbers all the  column names. This
-        breaks DataFrameMapper (which uses the column names), so we need
-        to work around it.
+    X = DataWrapper(X)
+    return cross_validation.cross_val_score(model, X, *args, **kwargs)
 
-        We do this by wrapping the model and data in this wrapper class.
-        We don't pass the data to sklearn's cross_val_score at all, we
-        just pass a list of indices to the data. Then sklearn picks
-        a subset of those indices and passes them to this class (as
-        the argument to fit, predict, or transform). This class selects
-        the appropriate subset of rows from the original dataset,
-        and sends it off to the model without stripping the column names.
-        '''
 
-        def __init__(self, model, X):
-            '''
-            Create a ModelDataWrapper
+class GridSearchCV(grid_search.GridSearchCV):
+    def fit(self, X, *params, **kwparams):
+        super(GridSearchCV, self).fit(DataWrapper(X), *params, **kwparams)
 
-            model   the model to cross-validate
-            X       the data to use for cross-validation
-            '''
-            self.model = model
-            self.X = X
+    def predict(self, X, *params, **kwparams):
+        super(GridSearchCV, self).fit(DataWrapper(X), *params, **kwparams)
 
-        def fit(self, x, y):
-            self.model.fit(self._get_row_subset(x), y)
-            return self
 
-        def predict(self, x):
-            return self.model.predict(self._get_row_subset(x))
+class RandomizedSearchCV(grid_search.RandomizedSearchCV):
+    def fit(self, X, *params, **kwparams):
+        super(RandomizedSearchCV, self).fit(DataWrapper(X), *params, **kwparams)
 
-        def _get_row_subset(self, rows):
-            '''
-            Return a dataframe with rows matching the indices
-            provided
+    def predict(self, X, *params, **kwparams):
+        super(RandomizedSearchCV, self).fit(DataWrapper(X), *params, **kwparams)
 
-            rows    a list of indices of rows to return
-            '''
-            return self.X.iloc[rows].reset_index(drop=True)
+
+class DataWrapper(object):
+    def __init__(self, df):
+        self.df = df
+
+    def __len__(self):
+        return len(self.df)
+
+    def __getitem__(self, key):
+        return self.df.iloc[key]
     
-
-    X_indices = xrange(len(X))
-    mdw = ModelDataWrapper(model, X)
-    return cross_validation.cross_val_score(mdw, X_indices, *args, **kwargs)
-
 
 class DataFrameMapper(BaseEstimator, TransformerMixin):
     '''
@@ -82,6 +70,14 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         if isinstance(cols, basestring):
             cols = [cols]
 
+        if isinstance(X, list):
+            X = [x[cols] for x in X]
+            X = pd.DataFrame(X)
+
+        elif isinstance(X, DataWrapper):
+            # if it's a datawrapper, unwrap it
+            X = X.df
+
         t = X.as_matrix(cols)
 
         # there is an sklearn bug (#2374) which causes weird behavior
@@ -102,7 +98,8 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         X       the data to fit
         '''
         for columns, transformer in self.features:
-            transformer.fit(self._get_col_subset(X, columns))
+            if transformer is not None:
+                transformer.fit(self._get_col_subset(X, columns))
         return self
 
 
@@ -117,8 +114,16 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
             # columns could be a string or list of
             # strings; we don't care because pandas
             # will handle either.
-            fea = transformer.transform(self._get_col_subset(X, columns))
+            if transformer is not None:
+                fea = transformer.transform(self._get_col_subset(X, columns))
+            else:
+                fea = self._get_col_subset(X, columns)
             
+            if hasattr(fea, 'toarray'):
+                # sparse arrays should be converted to regular arrays
+                # for hstack.
+                fea = fea.toarray()
+
             if len(fea.shape) == 1:
                 fea = np.array([fea]).T
             extracted.append(fea)

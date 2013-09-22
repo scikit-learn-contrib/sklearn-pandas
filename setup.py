@@ -2,8 +2,10 @@
 
 from setuptools import setup
 
+import sklearn_pandas
+
 setup(name='sklearn-pandas',
-      version='0.0.3',
+      version=sklearn_pandas.__version__,
       description='Pandas integration with sklearn',
       author='Paul Butler',
       author_email='paulgb@gmail.com',
@@ -11,7 +13,7 @@ setup(name='sklearn-pandas',
       packages=['sklearn_pandas'],
       keywords=['scikit', 'sklearn', 'pandas'],
       install_requires=[
-          'scikit-learn>=0.13.1',
+          'scikit-learn>=0.14',
           'pandas>=0.11.0',
           'numpy>=1.6.1']
 )
