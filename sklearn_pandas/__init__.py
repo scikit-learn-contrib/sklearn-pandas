@@ -1,5 +1,5 @@
 
-__version__ = '0.0.5'
+__version__ = '0.0.6-a'
 
 import numpy as np
 import pandas as pd
@@ -78,7 +78,10 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
             # if it's a datawrapper, unwrap it
             X = X.df
 
-        t = X.as_matrix(cols)
+        if len(cols) == 1:
+            t = X[cols[0]]
+        else:
+            t = X.as_matrix(cols)
 
         # there is an sklearn bug (#2374) which causes weird behavior
         # when 'object' type arrays are passed to labelling functions.
