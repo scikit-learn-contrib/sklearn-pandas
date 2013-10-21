@@ -19,14 +19,15 @@ class GridSearchCV(grid_search.GridSearchCV):
     def predict(self, X, *params, **kwparams):
         super(GridSearchCV, self).fit(DataWrapper(X), *params, **kwparams)
 
+try:
+    class RandomizedSearchCV(grid_search.RandomizedSearchCV):
+        def fit(self, X, *params, **kwparams):
+            super(RandomizedSearchCV, self).fit(DataWrapper(X), *params, **kwparams)
 
-class RandomizedSearchCV(grid_search.RandomizedSearchCV):
-    def fit(self, X, *params, **kwparams):
-        super(RandomizedSearchCV, self).fit(DataWrapper(X), *params, **kwparams)
-
-    def predict(self, X, *params, **kwparams):
-        super(RandomizedSearchCV, self).fit(DataWrapper(X), *params, **kwparams)
-
+        def predict(self, X, *params, **kwparams):
+            super(RandomizedSearchCV, self).fit(DataWrapper(X), *params, **kwparams)
+except AttributeError:
+    pass
 
 class DataWrapper(object):
     def __init__(self, df):
@@ -37,7 +38,7 @@ class DataWrapper(object):
 
     def __getitem__(self, key):
         return self.df.iloc[key]
-    
+
 
 class DataFrameMapper(BaseEstimator, TransformerMixin):
     '''
@@ -66,7 +67,7 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
                 to select
 
         Returns a numpy array with the data from the selected columns
-        ''' 
+        '''
         if isinstance(cols, basestring):
             cols = [cols]
 
@@ -86,11 +87,11 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         # there is an sklearn bug (#2374) which causes weird behavior
         # when 'object' type arrays are passed to labelling functions.
         # To get around this, in cases where all columns are strings
-        # (represnted as object by Pandas), we convert the dtype to 
+        # (represnted as object by Pandas), we convert the dtype to
         # numpy's string type
         if np.all(X.dtypes[cols] == 'object'):
             t = np.array(t, dtype='|S')
-         
+
         return t
 
 
@@ -121,7 +122,7 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
                 fea = transformer.transform(self._get_col_subset(X, columns))
             else:
                 fea = self._get_col_subset(X, columns)
-            
+
             if hasattr(fea, 'toarray'):
                 # sparse arrays should be converted to regular arrays
                 # for hstack.

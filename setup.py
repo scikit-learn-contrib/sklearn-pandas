@@ -13,7 +13,7 @@ setup(name='sklearn-pandas',
       packages=['sklearn_pandas'],
       keywords=['scikit', 'sklearn', 'pandas'],
       install_requires=[
-          'scikit-learn>=0.14',
+          'scikit-learn>=0.13',
           'pandas>=0.11.0',
           'numpy>=1.6.1']
 )
