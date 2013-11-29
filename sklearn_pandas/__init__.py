@@ -1,5 +1,5 @@
 
-__version__ = '0.0.7'
+__version__ = '0.0.8'
 
 import numpy as np
 import pandas as pd

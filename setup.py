@@ -1,11 +1,16 @@
 #!/usr/bin/env python
 
 from setuptools import setup
+import re
 
-import sklearn_pandas
+for line in open('sklearn_pandas/__init__.py'):
+    match = re.match("__version__ *= *'(.*)'", line)
+    if match:
+        __version__, = match.groups()
+
 
 setup(name='sklearn-pandas',
-      version=sklearn_pandas.__version__,
+      version=__version__,
       description='Pandas integration with sklearn',
       author='Paul Butler',
       author_email='paulgb@gmail.com',
