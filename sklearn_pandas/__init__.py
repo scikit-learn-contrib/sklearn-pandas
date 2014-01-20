@@ -7,6 +7,7 @@ from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn import cross_validation
 from sklearn import grid_search
 
+
 def cross_val_score(model, X, *args, **kwargs):
     X = DataWrapper(X)
     return cross_validation.cross_val_score(model, X, *args, **kwargs)
@@ -29,6 +30,7 @@ try:
 except AttributeError:
     pass
 
+
 class DataWrapper(object):
     def __init__(self, df):
         self.df = df
@@ -38,6 +40,14 @@ class DataWrapper(object):
 
     def __getitem__(self, key):
         return self.df.iloc[key]
+
+
+class PassthroughTransformer(TransformerMixin):
+    def fit(self, X, y=None, **fit_params):
+        return self
+
+    def transform(self, X):
+        return np.array(X).astype(np.float)
 
 
 class DataFrameMapper(BaseEstimator, TransformerMixin):
