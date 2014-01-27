@@ -78,7 +78,9 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
 
         Returns a numpy array with the data from the selected columns
         '''
+        return_vector = False
         if isinstance(cols, basestring):
+            return_vector = True
             cols = [cols]
 
         if isinstance(X, list):
@@ -89,7 +91,7 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
             # if it's a datawrapper, unwrap it
             X = X.df
 
-        if len(cols) == 1:
+        if return_vector:
             t = X[cols[0]]
         else:
             t = X.as_matrix(cols)
