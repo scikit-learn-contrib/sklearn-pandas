@@ -6,7 +6,10 @@ import pandas as pd
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn import cross_validation
 from sklearn import grid_search
+import sys
 
+if sys.version_info >= (3, 0):
+    basestring = str
 
 def cross_val_score(model, X, *args, **kwargs):
     X = DataWrapper(X)
