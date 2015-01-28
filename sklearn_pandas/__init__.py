@@ -99,14 +99,6 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         else:
             t = X.as_matrix(cols)
 
-        # there is an sklearn bug (#2374) which causes weird behavior
-        # when 'object' type arrays are passed to labelling functions.
-        # To get around this, in cases where all columns are strings
-        # (represnted as object by Pandas), we convert the dtype to
-        # numpy's string type
-        if np.all(X.dtypes[cols] == 'object'):
-            t = np.array(t, dtype='|S')
-
         return t
 
 
