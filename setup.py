@@ -22,4 +22,3 @@ setup(name='sklearn-pandas',
           'pandas>=0.11.0',
           'numpy>=1.6.1']
 )
-
