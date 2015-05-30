@@ -37,5 +37,5 @@ def test_with_iris_dataframe(iris_dataframe):
     labels = iris_dataframe["species"]
     clf = SVC(kernel='linear', C=1)
     scores = cross_val_score(clf, data, labels)
-    assert scores.mean > 0.96
+    assert scores.mean() > 0.96
     assert (scores.std() * 2) < 0.04
