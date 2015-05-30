@@ -112,6 +112,25 @@ Now running ``fit_transform`` will run PCA on the ``children`` and ``salary`` co
            [ -6.4],
            [-15.4]])
 
+Columns that don't need any transformation
+******************************************
+
+Only columns that are listed in the DataFrameMapper are kept. To keep a column but don't apply any transformation to it, use `None` as transformer::
+
+    >>> mapper3 = DataFrameMapper([
+    ...     ('pet', sklearn.preprocessing.LabelBinarizer()),
+    ...     ('children', None)
+    ... ])
+    >>> np.round(mapper3.fit_transform(data))
+    array([[ 1.,  0.,  0.,  4.],
+           [ 0.,  1.,  0.,  6.],
+           [ 0.,  1.,  0.,  3.],
+           [ 0.,  0.,  1.,  3.],
+           [ 1.,  0.,  0.,  2.],
+           [ 0.,  1.,  0.,  3.],
+           [ 1.,  0.,  0.,  5.],
+           [ 0.,  0.,  1.,  4.]])
+
 Cross-Validation
 ----------------
 
