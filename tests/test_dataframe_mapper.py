@@ -1,9 +1,11 @@
 import pytest
 
 from pandas import DataFrame
+import pandas as pd
 from sklearn.datasets import load_iris
 from sklearn.pipeline import Pipeline
 from sklearn.svm import SVC
+from sklearn.feature_extraction.text import CountVectorizer
 import numpy as np
 
 from sklearn_pandas import (
@@ -27,6 +29,11 @@ def iris_dataframe():
     )
 
 
+@pytest.fixture
+def cars_dataframe():
+    return pd.read_csv("tests/test_data/cars.csv.gz")
+
+
 def test_with_iris_dataframe(iris_dataframe):
     pipeline = Pipeline([
         ("preprocess", DataFrameMapper([
@@ -42,3 +49,16 @@ def test_with_iris_dataframe(iris_dataframe):
     scores = cross_val_score(pipeline, data, labels)
     assert scores.mean() > 0.96
     assert (scores.std() * 2) < 0.04
+
+
+def test_with_car_dataframe(cars_dataframe):
+    pipeline = Pipeline([
+        ("preprocess", DataFrameMapper([
+            ("description", CountVectorizer()),
+        ])),
+        ("classify", SVC(kernel='linear'))
+    ])
+    data = cars_dataframe.drop("model", axis=1)
+    labels = cars_dataframe["model"]
+    scores = cross_val_score(pipeline, data, labels)
+    assert scores.mean() > 0.30
