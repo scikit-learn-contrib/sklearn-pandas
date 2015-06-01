@@ -73,7 +73,7 @@ Test the Transformation
 
 We can use the ``fit_transform`` shortcut to both fit the model and see what transformed data looks like. In this and the other examples, output is rounded to two digits with ``np.round`` to account for rounding errors on different hardware::
 
-    >>> np.round(mapper.fit_transform(data), 2)
+    >>> np.round(mapper.fit_transform(data.copy()), 2)
     array([[ 1.  ,  0.  ,  0.  ,  0.21],
            [ 0.  ,  1.  ,  0.  ,  1.88],
            [ 0.  ,  1.  ,  0.  , -0.63],
@@ -102,7 +102,7 @@ Transformations may require multiple input columns. In these cases, the column n
     
 Now running ``fit_transform`` will run PCA on the ``children`` and ``salary`` columns and return the first principal component::
 
-    >>> np.round(mapper2.fit_transform(data), 1)
+    >>> np.round(mapper2.fit_transform(data.copy()), 1)
     array([[ 47.6],
            [-18.4],
            [  1.6],
@@ -121,7 +121,7 @@ Only columns that are listed in the DataFrameMapper are kept. To keep a column b
     ...     ('pet', sklearn.preprocessing.LabelBinarizer()),
     ...     ('children', None)
     ... ])
-    >>> np.round(mapper3.fit_transform(data))
+    >>> np.round(mapper3.fit_transform(data.copy()))
     array([[ 1.,  0.,  0.,  4.],
            [ 0.,  1.,  0.,  6.],
            [ 0.,  1.,  0.,  3.],
@@ -141,7 +141,7 @@ To get around this, sklearn-pandas provides a wrapper on sklearn's ``cross_val_s
     >>> pipe = sklearn.pipeline.Pipeline([
     ...     ('featurize', mapper),
     ...     ('lm', sklearn.linear_model.LinearRegression())])
-    >>> np.round(cross_val_score(pipe, data, data.salary, 'r2'), 2)
+    >>> np.round(cross_val_score(pipe, data.copy(), data.salary, 'r2'), 2)
     array([ -1.09,  -5.3 , -15.38])
 
 Sklearn-pandas' ``cross_val_score`` function provides exactly the same interface as sklearn's function of the same name.
