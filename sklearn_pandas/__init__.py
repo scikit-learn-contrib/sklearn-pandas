@@ -108,9 +108,13 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
 
         X       the data to fit
         '''
-        for columns, transformer in self.features:
-            if transformer is not None:
-                transformer.fit(self._get_col_subset(X, columns))
+        for columns, transformers in self.features:
+            if transformers is not None:
+                if isinstance(transformers, list):
+                    for transformer in transformers:
+                        transformer.fit(self._get_col_subset(X, columns))
+                else:
+                    transformers.fit(self._get_col_subset(X, columns))
         return self
 
 
@@ -121,23 +125,18 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         X       the data to transform
         '''
         extracted = []
-        for columns, transformer in self.features:
+        for columns, transformers in self.features:
             # columns could be a string or list of
             # strings; we don't care because pandas
             # will handle either.
-            if transformer is not None:
-                fea = transformer.transform(self._get_col_subset(X, columns))
+            if transformers is not None:
+                if isinstance(transformers, list):
+                    for transformer in transformers:
+                        extracted.append(self._handle_feature(transformer.transform(self._get_col_subset(X, columns))))
+                else:
+                    extracted.append(self._handle_feature(transformers.transform(self._get_col_subset(X, columns))))
             else:
-                fea = self._get_col_subset(X, columns)
-
-            if hasattr(fea, 'toarray'):
-                # sparse arrays should be converted to regular arrays
-                # for hstack.
-                fea = fea.toarray()
-
-            if len(fea.shape) == 1:
-                fea = np.array([fea]).T
-            extracted.append(fea)
+                extracted.append(self._handle_feature(self._get_col_subset(X, columns)))
 
         # combine the feature outputs into one array.
         # at this point we lose track of which features
@@ -145,3 +144,13 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         # assumed that that doesn't matter to the model.
         return np.hstack(extracted)
 
+    def _handle_feature(self, fea):
+            if hasattr(fea, 'toarray'):
+                # sparse arrays should be converted to regular arrays
+                # for hstack.
+                fea = fea.toarray()
+
+            if len(fea.shape) == 1:
+                fea = np.array([fea]).T
+
+            return fea
