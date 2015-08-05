@@ -54,7 +54,7 @@ def test_with_iris_dataframe(iris_dataframe):
 def test_with_car_dataframe(cars_dataframe):
     pipeline = Pipeline([
         ("preprocess", DataFrameMapper([
-            ("description", CountVectorizer()),
+            ("description", [PassthroughTransformer(), CountVectorizer()]),
         ])),
         ("classify", SVC(kernel='linear'))
     ])
