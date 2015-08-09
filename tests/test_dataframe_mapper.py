@@ -6,6 +6,7 @@ from sklearn.datasets import load_iris
 from sklearn.pipeline import Pipeline
 from sklearn.svm import SVC
 from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.preprocessing import Imputer, StandardScaler
 import numpy as np
 
 from sklearn_pandas import (
@@ -54,7 +55,7 @@ def test_with_iris_dataframe(iris_dataframe):
 def test_with_car_dataframe(cars_dataframe):
     pipeline = Pipeline([
         ("preprocess", DataFrameMapper([
-            ("description", [PassthroughTransformer(), CountVectorizer()]),
+            ("description", CountVectorizer()),
         ])),
         ("classify", SVC(kernel='linear'))
     ])
@@ -62,3 +63,19 @@ def test_with_car_dataframe(cars_dataframe):
     labels = cars_dataframe["model"]
     scores = cross_val_score(pipeline, data, labels)
     assert scores.mean() > 0.30
+
+
+def test_list_transformers():
+    dataframe = pd.DataFrame({"a": [1, np.nan, 3], "b": [1, 5, 7]})
+
+    mapper = DataFrameMapper([
+        (["a"], [Imputer(), StandardScaler()]),
+        (["b"], StandardScaler()),
+    ])
+    dmatrix = mapper.fit_transform(dataframe)
+
+    assert pd.isnull(dmatrix).sum() == 0  # no null values
+
+    # all features have mean 0 and std deviation 1 (standardized)
+    assert (abs(dmatrix.mean(axis=0) - 0) <= 1e-6).all()
+    assert (abs(dmatrix.std(axis=0) - 1) <= 1e-6).all()

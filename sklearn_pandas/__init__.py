@@ -122,8 +122,12 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         for columns, transformers in self.features:
             if transformers is not None:
                 if isinstance(transformers, list):
-                    for transformer in transformers:
-                        transformer.fit(self._get_col_subset(X, columns))
+                    # first fit_transform all transformers except the last one
+                    Xt = self._get_col_subset(X, columns)
+                    for transformer in transformers[:-1]:
+                        Xt = transformer.fit_transform(Xt)
+                    # then fit the last one without transformation
+                    transformers[-1].fit(Xt)
                 else:
                     transformers.fit(self._get_col_subset(X, columns))
         return self
@@ -139,14 +143,14 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
             # columns could be a string or list of
             # strings; we don't care because pandas
             # will handle either.
-            final_feature = self._get_col_subset(X, columns)
+            Xt = self._get_col_subset(X, columns)
             if transformers is not None:
                 if isinstance(transformers, list):
                     for transformer in transformers:
-                        final_feature = transformer.transform(final_feature)
+                        Xt = transformer.transform(Xt)
                 else:
-                    final_feature = transformers.transform(final_feature)
-            extracted.append(_handle_feature(final_feature))
+                    Xt = transformers.transform(Xt)
+            extracted.append(_handle_feature(Xt))
 
         # combine the feature outputs into one array.
         # at this point we lose track of which features
