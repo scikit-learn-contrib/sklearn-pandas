@@ -97,6 +97,10 @@ def test_cols_list_column_vector():
 
 
 def test_list_transformers():
+    """
+    Specifying a list of transformers applies them sequentially to the
+    selected column.
+    """
     dataframe = pd.DataFrame({"a": [1, np.nan, 3], "b": [1, 5, 7]})
 
     mapper = DataFrameMapper([
