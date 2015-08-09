@@ -109,7 +109,7 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         if return_vector:
             t = X[cols[0]].values
         else:
-            t = X.as_matrix(cols)
+            t = X[cols].values
 
         return t
 

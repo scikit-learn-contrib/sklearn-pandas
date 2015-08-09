@@ -42,6 +42,15 @@ def cars_dataframe():
     return pd.read_csv("tests/test_data/cars.csv.gz", compression='gzip')
 
 
+def test_nonexistent_columns_explicit_fail(iris_dataframe):
+    """
+    If a nonexistent column is selected, KeyError is raised.
+    """
+    mapper = DataFrameMapper(None)
+    with pytest.raises(KeyError):
+        mapper._get_col_subset(iris_dataframe, ['nonexistent_feature'])
+
+
 def test_with_iris_dataframe(iris_dataframe):
     pipeline = Pipeline([
         ("preprocess", DataFrameMapper([
