@@ -1,4 +1,5 @@
 import pytest
+from mock import Mock
 
 from pandas import DataFrame
 import pandas as pd
@@ -63,6 +64,36 @@ def test_with_car_dataframe(cars_dataframe):
     labels = cars_dataframe["model"]
     scores = cross_val_score(pipeline, data, labels)
     assert scores.mean() > 0.30
+
+
+def test_cols_string_array():
+    """
+    If an string specified as the columns, the transformer
+    is called with a 1-d array as input.
+    """
+    dataframe = pd.DataFrame({"a": [1, 2, 3]})
+    mock_transformer = Mock()
+    mock_transformer.transform.return_value = np.array([1, 2, 3])  # do nothing
+    mapper = DataFrameMapper([("a", mock_transformer)])
+
+    mapper.fit_transform(dataframe)
+    args, kwargs = mock_transformer.fit.call_args
+    assert args[0].shape == (3,)
+
+
+def test_cols_list_column_vector():
+    """
+    If a one-element list is specified as the columns, the transformer
+    is called with a column vector as input.
+    """
+    dataframe = pd.DataFrame({"a": [1, 2, 3]})
+    mock_transformer = Mock()
+    mock_transformer.transform.return_value = np.array([1, 2, 3])  # do nothing
+    mapper = DataFrameMapper([(["a"], mock_transformer)])
+
+    mapper.fit_transform(dataframe)
+    args, kwargs = mock_transformer.fit.call_args
+    assert args[0].shape == (3, 1)
 
 
 def test_list_transformers():
