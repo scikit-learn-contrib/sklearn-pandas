@@ -51,6 +51,17 @@ def test_with_iris_dataframe(iris_dataframe):
     assert (scores.std() * 2) < 0.04
 
 
+def test_get_col_subset_single_column_array(iris_dataframe):
+    """
+    Selecting a single column should return a 1-dimensional numpy array.
+    """
+    mapper = DataFrameMapper(None)
+    array = mapper._get_col_subset(iris_dataframe, "species")
+
+    assert type(array) == np.ndarray
+    assert array.shape == (len(iris_dataframe["species"]),)
+
+
 def test_with_car_dataframe(cars_dataframe):
     pipeline = Pipeline([
         ("preprocess", DataFrameMapper([
