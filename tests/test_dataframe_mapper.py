@@ -31,7 +31,7 @@ def iris_dataframe():
 
 @pytest.fixture
 def cars_dataframe():
-    return pd.read_csv("tests/test_data/cars.csv.gz")
+    return pd.read_csv("tests/test_data/cars.csv.gz", compression='gzip')
 
 
 def test_with_iris_dataframe(iris_dataframe):
