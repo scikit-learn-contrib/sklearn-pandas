@@ -109,7 +109,7 @@ Transformations may require multiple input columns. In these cases, the column n
     >>> mapper2 = DataFrameMapper([
     ...     (['children', 'salary'], sklearn.decomposition.PCA(1))
     ... ])
-    
+
 Now running ``fit_transform`` will run PCA on the ``children`` and ``salary`` columns and return the first principal component::
 
     >>> np.round(mapper2.fit_transform(data.copy()), 1)
