@@ -7,8 +7,8 @@ from sklearn import cross_validation
 from sklearn import grid_search
 import sys
 
-if sys.version_info >= (3, 0):
-    basestring = str
+# load in the correct stringtype: str for py3, basestring for py2
+string_types = str if sys.version_info >= (3, 0) else basestring
 
 
 def cross_val_score(model, X, *args, **kwargs):
@@ -94,7 +94,7 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         Returns a numpy array with the data from the selected columns
         """
         return_vector = False
-        if isinstance(cols, basestring):
+        if isinstance(cols, string_types):
             return_vector = True
             cols = [cols]
 
