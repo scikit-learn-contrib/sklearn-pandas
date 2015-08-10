@@ -60,13 +60,23 @@ Transformation Mapping
 Map the Columns to Transformations
 **********************************
 
-The mapper takes a list of pairs. The first is a column name from the pandas DataFrame (or a list of multiple columns, as we will see later). The second is an object which will perform the transformation which will be applied to that column::
+The mapper takes a list of pairs. The first is a column name from the pandas DataFrame, or a list containing one or multiple columns (we will see an example with multiple columns later). The second is an object which will perform the transformation which will be applied to that column::
 
     >>> mapper = DataFrameMapper([
     ...     ('pet', sklearn.preprocessing.LabelBinarizer()),
-    ...     ('children', sklearn.preprocessing.StandardScaler())
+    ...     (['children'], sklearn.preprocessing.StandardScaler())
     ... ])
 
+The difference between specifying the column selector as `'column'` (as a simple stirng) and `['column']` (as a list with one element) is the shape of the array that is passed to the transformer. In the first case, a one dimensional array with be passed, while in the second case it will be a 2-dimensional array with one column, i.e. a column vector.
+
+This behaviour mimics the same pattern as pandas' dataframes `__getitem__` indexing:
+
+    >>> data['children'].shape
+    (8,)
+    >>> data[['children']].shape
+    (8, 1)
+
+Be aware that some transformers expect a 1-dimensional input (the label-oriented ones) while some others, like `OneHotEncoder` or `Imputer`, expect 2-dimensional input, with the shape `[n_samples, n_features]`.
 
 Test the Transformation
 ***********************
@@ -111,6 +121,21 @@ Now running ``fit_transform`` will run PCA on the ``children`` and ``salary`` co
            [ 16.6],
            [ -6.4],
            [-15.4]])
+
+Multiple transformers for the same column
+*****************************************
+
+Multiple transformers can be applied to the same column specifying them
+in a list::
+
+    >>> mapper3 = DataFrameMapper([
+    ...     (['age'], [sklearn.preprocessing.Imputer(),
+    ...                sklearn.preprocessing.StandardScaler()])])
+    >>> data_3 = pd.DataFrame({'age': [1, np.nan, 3]})
+    >>> mapper3.fit_transform(data_3)
+    array([[-1.22474487],
+           [ 0.        ],
+           [ 1.22474487]])
 
 Columns that don't need any transformation
 ******************************************

@@ -1,4 +1,3 @@
-
 __version__ = '0.0.10'
 
 import numpy as np
@@ -11,6 +10,7 @@ import sys
 if sys.version_info >= (3, 0):
     basestring = str
 
+
 def cross_val_score(model, X, *args, **kwargs):
     X = DataWrapper(X)
     return cross_validation.cross_val_score(model, X, *args, **kwargs)
@@ -22,6 +22,7 @@ class GridSearchCV(grid_search.GridSearchCV):
 
     def predict(self, X, *params, **kwparams):
         super(GridSearchCV, self).fit(DataWrapper(X), *params, **kwparams)
+
 
 try:
     class RandomizedSearchCV(grid_search.RandomizedSearchCV):
@@ -53,26 +54,37 @@ class PassthroughTransformer(TransformerMixin):
         return np.array(X).astype(np.float)
 
 
+def _handle_feature(fea):
+    if hasattr(fea, 'toarray'):
+        # sparse arrays should be converted to regular arrays
+        # for hstack.
+        fea = fea.toarray()
+
+    if len(fea.shape) == 1:
+        fea = np.array([fea]).T
+
+    return fea
+
+
 class DataFrameMapper(BaseEstimator, TransformerMixin):
-    '''
+    """
     Map Pandas data frame column subsets to their own
     sklearn transformation.
-    '''
+    """
 
     def __init__(self, features):
-        '''
+        """
         Params:
 
         features    a list of pairs. The first element is the pandas column
                     selector. This can be a string (for one column) or a list
                     of strings. The second element is an object that supports
                     sklearn's transform interface.
-        '''
+        """
         self.features = features
 
-
     def _get_col_subset(self, X, cols):
-        '''
+        """
         Get a subset of columns from the given table X.
 
         X       a Pandas dataframe; the table to select columns from
@@ -80,7 +92,7 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
                 to select
 
         Returns a numpy array with the data from the selected columns
-        '''
+        """
         return_vector = False
         if isinstance(cols, basestring):
             return_vector = True
@@ -101,47 +113,47 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
 
         return t
 
-
     def fit(self, X, y=None):
-        '''
+        """
         Fit a transformation from the pipeline
 
         X       the data to fit
-        '''
-        for columns, transformer in self.features:
-            if transformer is not None:
-                transformer.fit(self._get_col_subset(X, columns))
+        """
+        for columns, transformers in self.features:
+            if transformers is not None:
+                if isinstance(transformers, list):
+                    # first fit_transform all transformers except the last one
+                    Xt = self._get_col_subset(X, columns)
+                    for transformer in transformers[:-1]:
+                        Xt = transformer.fit_transform(Xt)
+                    # then fit the last one without transformation
+                    transformers[-1].fit(Xt)
+                else:
+                    transformers.fit(self._get_col_subset(X, columns))
         return self
 
-
     def transform(self, X):
-        '''
+        """
         Transform the given data. Assumes that fit has already been called.
 
         X       the data to transform
-        '''
+        """
         extracted = []
-        for columns, transformer in self.features:
+        for columns, transformers in self.features:
             # columns could be a string or list of
             # strings; we don't care because pandas
             # will handle either.
-            if transformer is not None:
-                fea = transformer.transform(self._get_col_subset(X, columns))
-            else:
-                fea = self._get_col_subset(X, columns)
-
-            if hasattr(fea, 'toarray'):
-                # sparse arrays should be converted to regular arrays
-                # for hstack.
-                fea = fea.toarray()
-
-            if len(fea.shape) == 1:
-                fea = np.array([fea]).T
-            extracted.append(fea)
+            Xt = self._get_col_subset(X, columns)
+            if transformers is not None:
+                if isinstance(transformers, list):
+                    for transformer in transformers:
+                        Xt = transformer.transform(Xt)
+                else:
+                    Xt = transformers.transform(Xt)
+            extracted.append(_handle_feature(Xt))
 
         # combine the feature outputs into one array.
         # at this point we lose track of which features
         # were created from which input columns, so it's
         # assumed that that doesn't matter to the model.
         return np.hstack(extracted)
-
