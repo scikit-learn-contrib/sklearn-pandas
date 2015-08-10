@@ -67,7 +67,7 @@ The mapper takes a list of pairs. The first is a column name from the pandas Dat
     ...     (['children'], sklearn.preprocessing.StandardScaler())
     ... ])
 
-The difference between specifying the column selector as `'column'` (as a simple stirng) and `['column']` (as a list with one element) is the shape of the array that is passed to the transformer. In the first case, a one dimensional array with be passed, while in the second case it will be a 2-dimensional array with one column, i.e. a column vector.
+The difference between specifying the column selector as `'column'` (as a simple string) and `['column']` (as a list with one element) is the shape of the array that is passed to the transformer. In the first case, a one dimensional array with be passed, while in the second case it will be a 2-dimensional array with one column, i.e. a column vector.
 
 This behaviour mimics the same pattern as pandas' dataframes `__getitem__` indexing:
 
