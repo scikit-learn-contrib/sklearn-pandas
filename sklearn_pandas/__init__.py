@@ -94,9 +94,15 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         Returns a numpy array with the data from the selected columns
         """
         return_vector = False
-        if isinstance(cols, basestring):
-            return_vector = True
-            cols = [cols]
+
+        try:
+            if isinstance(cols, basestring):
+                return_vector = True
+                cols = [cols]
+        except NameError:
+            if isinstance(cols, str):
+                return_vector = True
+                cols = [cols]
 
         if isinstance(X, list):
             X = [x[cols] for x in X]
