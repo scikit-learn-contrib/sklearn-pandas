@@ -6,9 +6,7 @@ from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn import cross_validation
 from sklearn import grid_search
 import sys
-
-if sys.version_info >= (3, 0):
-    basestring = str
+from six import string_types
 
 
 def cross_val_score(model, X, *args, **kwargs):
@@ -94,7 +92,7 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         Returns a numpy array with the data from the selected columns
         """
         return_vector = False
-        if isinstance(cols, basestring):
+        if isinstance(cols, string_types):
             return_vector = True
             cols = [cols]
 
