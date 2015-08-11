@@ -9,11 +9,12 @@ except ImportError:
 
 from pandas import DataFrame
 import pandas as pd
+from scipy import sparse
 from sklearn.datasets import load_iris
 from sklearn.pipeline import Pipeline
 from sklearn.svm import SVC
 from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.preprocessing import Imputer, StandardScaler
+from sklearn.preprocessing import Imputer, StandardScaler, LabelBinarizer
 import numpy as np
 
 from sklearn_pandas import (
@@ -140,3 +141,17 @@ def test_list_transformers():
     # all features have mean 0 and std deviation 1 (standardized)
     assert (abs(dmatrix.mean(axis=0) - 0) <= 1e-6).all()
     assert (abs(dmatrix.std(axis=0) - 1) <= 1e-6).all()
+
+
+def test_sparse_features(cars_dataframe):
+    """
+    If any of the extracted features is sparse, the hstacked
+    is also sparse.
+    """
+    mapper = DataFrameMapper([
+        ("description", CountVectorizer()),  # sparse feature
+        ("model", LabelBinarizer()),  # dense feature
+    ])
+    dmatrix = mapper.fit_transform(cars_dataframe)
+
+    assert type(dmatrix) == sparse.csr.csr_matrix
