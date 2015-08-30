@@ -44,6 +44,7 @@ For these examples, we'll also use pandas, numpy, and sklearn::
     >>> import numpy as np
     >>> import sklearn.preprocessing, sklearn.decomposition, \
     ...     sklearn.linear_model, sklearn.pipeline, sklearn.metrics
+    >>> from sklearn.feature_extraction.text import CountVectorizer
 
 Load some Data
 **************
@@ -155,6 +156,20 @@ Only columns that are listed in the DataFrameMapper are kept. To keep a column b
            [ 0.,  1.,  0.,  3.],
            [ 1.,  0.,  0.,  5.],
            [ 0.,  0.,  1.,  4.]])
+
+
+Working with sparse features
+****************************
+
+`DataFrameMapper`s will return a dense feature array by default. Setting `sparse=True` in the mapper will return a sparse array whenever any of the extracted features is sparse. Example:
+
+    >>> mapper4 = DataFrameMapper([
+    ...     ('pet', CountVectorizer()),
+    ... ], sparse=True)
+    >>> type(mapper4.fit_transform(data))
+    <class 'scipy.sparse.csr.csr_matrix'>
+
+The stacking of the sparse features is done without ever densifying them.
 
 Cross-Validation
 ----------------
