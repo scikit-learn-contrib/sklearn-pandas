@@ -2,6 +2,7 @@ __version__ = '0.0.12'
 
 import numpy as np
 import pandas as pd
+from scipy import sparse
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn import cross_validation
 from sklearn import grid_search
@@ -55,11 +56,7 @@ class PassthroughTransformer(TransformerMixin):
 
 
 def _handle_feature(fea):
-    if hasattr(fea, 'toarray'):
-        # sparse arrays should be converted to regular arrays
-        # for hstack.
-        fea = fea.toarray()
-
+    # convert 1-dimensional arrays to 2-dimensional column vectors
     if len(fea.shape) == 1:
         fea = np.array([fea]).T
 
@@ -156,4 +153,11 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         # at this point we lose track of which features
         # were created from which input columns, so it's
         # assumed that that doesn't matter to the model.
-        return np.hstack(extracted)
+
+        # If any of the extracted features is sparse, combine to produce a
+        # sparse matrix. Otherwise, produce a dense one.
+        if any(sparse.issparse(fea) for fea in extracted):
+            stacked = sparse.hstack(extracted).tocsr()
+        else:
+            stacked = np.hstack(extracted)
+        return stacked
