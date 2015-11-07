@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 from setuptools import setup
 from setuptools.command.test import test as TestCommand
@@ -31,8 +32,8 @@ class PyTest(TestCommand):
 setup(name='sklearn-pandas',
       version=__version__,
       description='Pandas integration with sklearn',
-      maintainer='Cal Paterson',
-      maintainer_email='cal@calpaterson.com',
+      maintainer='Israel Saeta Pérez',
+      maintainer_email='israel.saeta@dukebody.com',
       url='https://github.com/paulgb/sklearn-pandas',
       packages=['sklearn_pandas'],
       keywords=['scikit', 'sklearn', 'pandas'],
