@@ -194,6 +194,7 @@ Changelog
 ********************
 
 * Raise ``KeyError`` when selecting unexistent columns in the dataframe. Fixes #30.
+* Return sparse feature array if any of the features is sparse and `sparse` argument is `True`. Defaults to `False` to avoid potential breaking of existing code. Resolves #34.
 
 
 0.0.12 (2015-11-07)
