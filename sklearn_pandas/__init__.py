@@ -2,6 +2,7 @@ __version__ = '0.0.12'
 
 import numpy as np
 import pandas as pd
+from scipy import sparse
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn import cross_validation
 from sklearn import grid_search
@@ -55,11 +56,7 @@ class PassthroughTransformer(TransformerMixin):
 
 
 def _handle_feature(fea):
-    if hasattr(fea, 'toarray'):
-        # sparse arrays should be converted to regular arrays
-        # for hstack.
-        fea = fea.toarray()
-
+    # convert 1-dimensional arrays to 2-dimensional column vectors
     if len(fea.shape) == 1:
         fea = np.array([fea]).T
 
@@ -72,7 +69,7 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
     sklearn transformation.
     """
 
-    def __init__(self, features):
+    def __init__(self, features, sparse=False):
         """
         Params:
 
@@ -80,8 +77,11 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
                     selector. This can be a string (for one column) or a list
                     of strings. The second element is an object that supports
                     sklearn's transform interface.
+        sparse      will return sparse matrix if set True and any of the
+                    extracted features is sparse. Defaults to False.
         """
         self.features = features
+        self.sparse = sparse
 
     def _get_col_subset(self, X, cols):
         """
@@ -156,4 +156,16 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         # at this point we lose track of which features
         # were created from which input columns, so it's
         # assumed that that doesn't matter to the model.
-        return np.hstack(extracted)
+
+        # If any of the extracted features is sparse, combine sparsely.
+        # Otherwise, combine as normal arrays.
+        if any(sparse.issparse(fea) for fea in extracted):
+            stacked = sparse.hstack(extracted).tocsr()
+            # return a sparse matrix only if the mapper was initialized
+            # with sparse=True
+            if not self.sparse:
+                stacked = stacked.toarray()
+        else:
+            stacked = np.hstack(extracted)
+
+        return stacked

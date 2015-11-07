@@ -9,11 +9,13 @@ except ImportError:
 
 from pandas import DataFrame
 import pandas as pd
+from scipy import sparse
 from sklearn.datasets import load_iris
 from sklearn.pipeline import Pipeline
 from sklearn.svm import SVC
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.preprocessing import Imputer, StandardScaler
+from sklearn.base import BaseEstimator, TransformerMixin
 import numpy as np
 
 from sklearn_pandas import (
@@ -21,6 +23,17 @@ from sklearn_pandas import (
     PassthroughTransformer,
     cross_val_score,
 )
+
+
+class ToSparseTransformer(BaseEstimator, TransformerMixin):
+    """
+    Transforms numpy matrix to sparse format.
+    """
+    def fit(self, X):
+        return self
+
+    def transform(self, X):
+        return sparse.csr_matrix(X)
 
 
 @pytest.fixture
@@ -40,6 +53,11 @@ def iris_dataframe():
 @pytest.fixture
 def cars_dataframe():
     return pd.read_csv("tests/test_data/cars.csv.gz", compression='gzip')
+
+
+@pytest.fixture
+def simple_dataframe():
+    return pd.DataFrame({'a': [1, 2, 3]})
 
 
 def test_nonexistent_columns_explicit_fail(iris_dataframe):
@@ -92,32 +110,32 @@ def test_with_car_dataframe(cars_dataframe):
     assert scores.mean() > 0.30
 
 
-def test_cols_string_array():
+def test_cols_string_array(simple_dataframe):
     """
     If an string specified as the columns, the transformer
     is called with a 1-d array as input.
     """
-    dataframe = pd.DataFrame({"a": [1, 2, 3]})
+    df = simple_dataframe
     mock_transformer = Mock()
     mock_transformer.transform.return_value = np.array([1, 2, 3])  # do nothing
     mapper = DataFrameMapper([("a", mock_transformer)])
 
-    mapper.fit_transform(dataframe)
+    mapper.fit_transform(df)
     args, kwargs = mock_transformer.fit.call_args
     assert args[0].shape == (3,)
 
 
-def test_cols_list_column_vector():
+def test_cols_list_column_vector(simple_dataframe):
     """
     If a one-element list is specified as the columns, the transformer
     is called with a column vector as input.
     """
-    dataframe = pd.DataFrame({"a": [1, 2, 3]})
+    df = simple_dataframe
     mock_transformer = Mock()
     mock_transformer.transform.return_value = np.array([1, 2, 3])  # do nothing
     mapper = DataFrameMapper([(["a"], mock_transformer)])
 
-    mapper.fit_transform(dataframe)
+    mapper.fit_transform(df)
     args, kwargs = mock_transformer.fit.call_args
     assert args[0].shape == (3, 1)
 
@@ -140,3 +158,31 @@ def test_list_transformers():
     # all features have mean 0 and std deviation 1 (standardized)
     assert (abs(dmatrix.mean(axis=0) - 0) <= 1e-6).all()
     assert (abs(dmatrix.std(axis=0) - 1) <= 1e-6).all()
+
+
+def test_sparse_features(simple_dataframe):
+    """
+    If any of the extracted features is sparse and "sparse" argument
+    is true, the hstacked result is also sparse.
+    """
+    df = simple_dataframe
+    mapper = DataFrameMapper([
+        ("a", ToSparseTransformer())
+    ], sparse=True)
+    dmatrix = mapper.fit_transform(df)
+
+    assert type(dmatrix) == sparse.csr.csr_matrix
+
+
+def test_sparse_off(simple_dataframe):
+    """
+    If the resulting features are sparse but the "sparse" argument
+    of the mapper is False, return a non-sparse matrix.
+    """
+    df = simple_dataframe
+    mapper = DataFrameMapper([
+        ("a", ToSparseTransformer())
+    ], sparse=False)
+
+    dmatrix = mapper.fit_transform(df)
+    assert type(dmatrix) != sparse.csr.csr_matrix
