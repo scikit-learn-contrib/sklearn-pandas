@@ -171,8 +171,24 @@ To get around this, sklearn-pandas provides a wrapper on sklearn's ``cross_val_s
 
 Sklearn-pandas' ``cross_val_score`` function provides exactly the same interface as sklearn's function of the same name.
 
-Credit
-------
+
+Changelog
+---------
+
+0.0.12 (2015-11-07)
+********************
+
+* Allow specifying a list of transformers to use sequentially on the same column.
+
+
+Credits
+-------
 
 The code for ``DataFrameMapper`` is based on code originally written by `Ben Hamner <https://github.com/benhamner>`__.
 
+Other contributors:
+
+* Paul Butler
+* Cal Paterson
+* Israel Saeta Pérez
+* Olivier Grisel
