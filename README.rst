@@ -175,6 +175,12 @@ Sklearn-pandas' ``cross_val_score`` function provides exactly the same interface
 Changelog
 ---------
 
+0.0.14 (development)
+********************
+
+* Raise ``KeyError`` when selecting unexistent columns in the dataframe. Fixes #30.
+
+
 0.0.12 (2015-11-07)
 ********************
 
