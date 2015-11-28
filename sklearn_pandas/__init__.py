@@ -57,7 +57,9 @@ class PassthroughTransformer(TransformerMixin):
 
 
 def _handle_feature(fea):
-    # convert 1-dimensional arrays to 2-dimensional column vectors
+    """
+    Convert 1-dimensional arrays to 2-dimensional column vectors.
+    """
     if len(fea.shape) == 1:
         fea = np.array([fea]).T
 

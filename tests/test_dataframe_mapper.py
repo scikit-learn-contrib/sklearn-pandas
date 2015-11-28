@@ -17,12 +17,14 @@ from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.preprocessing import Imputer, StandardScaler
 from sklearn.base import BaseEstimator, TransformerMixin
 import numpy as np
+from numpy.testing import assert_array_equal
 
 from sklearn_pandas import (
     DataFrameMapper,
     PassthroughTransformer,
     cross_val_score,
     _build_transformer,
+    _handle_feature,
 )
 
 
@@ -52,77 +54,40 @@ class ToSparseTransformer(BaseEstimator, TransformerMixin):
 
 
 @pytest.fixture
-def iris_dataframe():
-    iris = load_iris()
-    return DataFrame(
-        data={
-            iris.feature_names[0]: iris.data[:, 0],
-            iris.feature_names[1]: iris.data[:, 1],
-            iris.feature_names[2]: iris.data[:, 2],
-            iris.feature_names[3]: iris.data[:, 3],
-            "species": np.array([iris.target_names[e] for e in iris.target])
-        }
-    )
-
-
-@pytest.fixture
-def cars_dataframe():
-    return pd.read_csv("tests/test_data/cars.csv.gz", compression='gzip')
-
-
-@pytest.fixture
 def simple_dataframe():
     return pd.DataFrame({'a': [1, 2, 3]})
 
 
-def test_nonexistent_columns_explicit_fail(iris_dataframe):
+def test_nonexistent_columns_explicit_fail(simple_dataframe):
     """
     If a nonexistent column is selected, KeyError is raised.
     """
     mapper = DataFrameMapper(None)
     with pytest.raises(KeyError):
-        mapper._get_col_subset(iris_dataframe, ['nonexistent_feature'])
+        mapper._get_col_subset(simple_dataframe, ['nonexistent_feature'])
 
 
-def test_with_iris_dataframe(iris_dataframe):
-    pipeline = Pipeline([
-        ("preprocess", DataFrameMapper([
-            ("petal length (cm)", PassthroughTransformer()),
-            ("petal width (cm)", PassthroughTransformer()),
-            ("sepal length (cm)", PassthroughTransformer()),
-            ("sepal width (cm)", PassthroughTransformer()),
-        ])),
-        ("classify", SVC(kernel='linear'))
-    ])
-    data = iris_dataframe.drop("species", axis=1)
-    labels = iris_dataframe["species"]
-    scores = cross_val_score(pipeline, data, labels)
-    assert scores.mean() > 0.96
-    assert (scores.std() * 2) < 0.04
-
-
-def test_get_col_subset_single_column_array(iris_dataframe):
+def test_get_col_subset_single_column_array(simple_dataframe):
     """
     Selecting a single column should return a 1-dimensional numpy array.
     """
     mapper = DataFrameMapper(None)
-    array = mapper._get_col_subset(iris_dataframe, "species")
+    array = mapper._get_col_subset(simple_dataframe, "a")
 
     assert type(array) == np.ndarray
-    assert array.shape == (len(iris_dataframe["species"]),)
+    assert array.shape == (len(simple_dataframe["a"]),)
 
 
-def test_with_car_dataframe(cars_dataframe):
-    pipeline = Pipeline([
-        ("preprocess", DataFrameMapper([
-            ("description", CountVectorizer()),
-        ])),
-        ("classify", SVC(kernel='linear'))
-    ])
-    data = cars_dataframe.drop("model", axis=1)
-    labels = cars_dataframe["model"]
-    scores = cross_val_score(pipeline, data, labels)
-    assert scores.mean() > 0.30
+def test_get_col_subset_single_column_list(simple_dataframe):
+    """
+    Selecting a list of columns (even if the list contains a single element)
+    should return a 2-dimensional numpy array.
+    """
+    mapper = DataFrameMapper(None)
+    array = mapper._get_col_subset(simple_dataframe, ["a"])
+
+    assert type(array) == np.ndarray
+    assert array.shape == (len(simple_dataframe["a"]), 1)
 
 
 def test_cols_string_array(simple_dataframe):
@@ -153,6 +118,22 @@ def test_cols_list_column_vector(simple_dataframe):
     mapper.fit_transform(df)
     args, kwargs = mock_transformer.fit.call_args
     assert args[0].shape == (3, 1)
+
+
+def test_handle_feature_2dim():
+    """
+    2-dimensional arrays are returned unchanged.
+    """
+    array = np.array([[1, 2], [3, 4]])
+    assert_array_equal(_handle_feature(array), array)
+
+
+def test_handle_feature_1dim():
+    """
+    1-dimensional arrays are converted to 2-dimensional column vectors.
+    """
+    array = np.array([1, 2])
+    assert_array_equal(_handle_feature(array), np.array([[1], [2]]))
 
 
 def test_build_transformers():
@@ -213,3 +194,54 @@ def test_sparse_off(simple_dataframe):
 
     dmatrix = mapper.fit_transform(df)
     assert type(dmatrix) != sparse.csr.csr_matrix
+
+
+# Integration tests with real dataframes
+
+@pytest.fixture
+def iris_dataframe():
+    iris = load_iris()
+    return DataFrame(
+        data={
+            iris.feature_names[0]: iris.data[:, 0],
+            iris.feature_names[1]: iris.data[:, 1],
+            iris.feature_names[2]: iris.data[:, 2],
+            iris.feature_names[3]: iris.data[:, 3],
+            "species": np.array([iris.target_names[e] for e in iris.target])
+        }
+    )
+
+
+@pytest.fixture
+def cars_dataframe():
+    return pd.read_csv("tests/test_data/cars.csv.gz", compression='gzip')
+
+
+def test_with_iris_dataframe(iris_dataframe):
+    pipeline = Pipeline([
+        ("preprocess", DataFrameMapper([
+            ("petal length (cm)", PassthroughTransformer()),
+            ("petal width (cm)", PassthroughTransformer()),
+            ("sepal length (cm)", PassthroughTransformer()),
+            ("sepal width (cm)", PassthroughTransformer()),
+        ])),
+        ("classify", SVC(kernel='linear'))
+    ])
+    data = iris_dataframe.drop("species", axis=1)
+    labels = iris_dataframe["species"]
+    scores = cross_val_score(pipeline, data, labels)
+    assert scores.mean() > 0.96
+    assert (scores.std() * 2) < 0.04
+
+
+def test_with_car_dataframe(cars_dataframe):
+    pipeline = Pipeline([
+        ("preprocess", DataFrameMapper([
+            ("description", CountVectorizer()),
+        ])),
+        ("classify", SVC(kernel='linear'))
+    ])
+    data = cars_dataframe.drop("model", axis=1)
+    labels = cars_dataframe["model"]
+    scores = cross_val_score(pipeline, data, labels)
+    assert scores.mean() > 0.30
