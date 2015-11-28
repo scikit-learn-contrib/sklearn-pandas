@@ -193,6 +193,7 @@ Changelog
 0.0.14 (development)
 ********************
 
+* Use ``sklearn.pipeline.Pipeline`` instead of copying its code. Resolves #43.
 * Raise ``KeyError`` when selecting unexistent columns in the dataframe. Fixes #30.
 * Return sparse feature array if any of the features is sparse and `sparse` argument is `True`. Defaults to `False` to avoid potential breaking of existing code. Resolves #34.
 * Return model and prediction in custom CV classes. Fixes #27.
@@ -214,4 +215,5 @@ Other contributors:
 * Paul Butler
 * Cal Paterson
 * Israel Saeta Pérez
+* Zac Stewart
 * Olivier Grisel
