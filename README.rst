@@ -161,7 +161,7 @@ Only columns that are listed in the DataFrameMapper are kept. To keep a column b
 Working with sparse features
 ****************************
 
-``DataFrameMapper``s will return a dense feature array by default. Setting `sparse=True` in the mapper will return a sparse array whenever any of the extracted features is sparse. Example:
+``DataFrameMapper``s will return a dense feature array by default. Setting ``sparse=True`` in the mapper will return a sparse array whenever any of the extracted features is sparse. Example:
 
     >>> mapper4 = DataFrameMapper([
     ...     ('pet', CountVectorizer()),
@@ -190,9 +190,10 @@ Sklearn-pandas' ``cross_val_score`` function provides exactly the same interface
 Changelog
 ---------
 
-0.0.14 (development)
-********************
+1.0.0 (2015-11-28)
+*******************
 
+* Change version numbering scheme to SemVer.
 * Use ``sklearn.pipeline.Pipeline`` instead of copying its code. Resolves #43.
 * Raise ``KeyError`` when selecting unexistent columns in the dataframe. Fixes #30.
 * Return sparse feature array if any of the features is sparse and ``sparse`` argument is ``True``. Defaults to ``False`` to avoid potential breaking of existing code. Resolves #34.
