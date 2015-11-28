@@ -6,8 +6,8 @@ This module provides a bridge between `Scikit-Learn <http://scikit-learn.org/sta
 
 In particular, it provides:
 
-1. a way to map DataFrame columns to transformations, which are later recombined into features
-2. a way to cross-validate a pipeline that takes a pandas DataFrame as input.
+1. A way to map ``DataFrame`` columns to transformations, which are later recombined into features.
+2. A way to cross-validate a pipeline that takes a pandas ``DataFrame`` as input.
 
 Installation
 ------------
@@ -32,7 +32,7 @@ Import
 Import what you need from the ``sklearn_pandas`` package. The choices are:
 
 * ``DataFrameMapper``, a class for mapping pandas data frame columns to different sklearn transformations
-* ``cross_val_score``, similar to `sklearn.cross_validation.cross_val_score` but working on pandas DataFrames
+* ``cross_val_score``, similar to ``sklearn.cross_validation.cross_val_score`` but working on pandas DataFrames
 
 For this demonstration, we will import both::
 
@@ -68,16 +68,16 @@ The mapper takes a list of pairs. The first is a column name from the pandas Dat
     ...     (['children'], sklearn.preprocessing.StandardScaler())
     ... ])
 
-The difference between specifying the column selector as `'column'` (as a simple string) and `['column']` (as a list with one element) is the shape of the array that is passed to the transformer. In the first case, a one dimensional array with be passed, while in the second case it will be a 2-dimensional array with one column, i.e. a column vector.
+The difference between specifying the column selector as ``'column'`` (as a simple string) and ``['column']`` (as a list with one element) is the shape of the array that is passed to the transformer. In the first case, a one dimensional array with be passed, while in the second case it will be a 2-dimensional array with one column, i.e. a column vector.
 
-This behaviour mimics the same pattern as pandas' dataframes `__getitem__` indexing:
+This behaviour mimics the same pattern as pandas' dataframes ``__getitem__``  indexing:
 
     >>> data['children'].shape
     (8,)
     >>> data[['children']].shape
     (8, 1)
 
-Be aware that some transformers expect a 1-dimensional input (the label-oriented ones) while some others, like `OneHotEncoder` or `Imputer`, expect 2-dimensional input, with the shape `[n_samples, n_features]`.
+Be aware that some transformers expect a 1-dimensional input (the label-oriented ones) while some others, like ``OneHotEncoder`` or ``Imputer``, expect 2-dimensional input, with the shape ``[n_samples, n_features]``.
 
 Test the Transformation
 ***********************
@@ -161,7 +161,7 @@ Only columns that are listed in the DataFrameMapper are kept. To keep a column b
 Working with sparse features
 ****************************
 
-`DataFrameMapper`s will return a dense feature array by default. Setting `sparse=True` in the mapper will return a sparse array whenever any of the extracted features is sparse. Example:
+``DataFrameMapper``s will return a dense feature array by default. Setting `sparse=True` in the mapper will return a sparse array whenever any of the extracted features is sparse. Example:
 
     >>> mapper4 = DataFrameMapper([
     ...     ('pet', CountVectorizer()),
@@ -195,7 +195,7 @@ Changelog
 
 * Use ``sklearn.pipeline.Pipeline`` instead of copying its code. Resolves #43.
 * Raise ``KeyError`` when selecting unexistent columns in the dataframe. Fixes #30.
-* Return sparse feature array if any of the features is sparse and `sparse` argument is `True`. Defaults to `False` to avoid potential breaking of existing code. Resolves #34.
+* Return sparse feature array if any of the features is sparse and ``sparse`` argument is ``True``. Defaults to ``False`` to avoid potential breaking of existing code. Resolves #34.
 * Return model and prediction in custom CV classes. Fixes #27.
 
 
