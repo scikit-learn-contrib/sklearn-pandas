@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 from scipy import sparse
 from sklearn.base import BaseEstimator, TransformerMixin
-from sklearn.pipeline import Pipeline
+from sklearn.pipeline import make_pipeline
 from sklearn import cross_validation
 from sklearn import grid_search
 import sys
@@ -66,8 +66,7 @@ def _handle_feature(fea):
 
 def _build_transformer(transformers):
     if isinstance(transformers, list):
-        transformers = Pipeline(
-            [(t.__class__.__name__, t) for t in transformers])
+        transformers = make_pipeline(*transformers)
     return transformers
 
 
