@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 from scipy import sparse
 from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.pipeline import make_pipeline
 from sklearn import cross_validation
 from sklearn import grid_search
 import sys
@@ -63,6 +64,12 @@ def _handle_feature(fea):
     return fea
 
 
+def _build_transformer(transformers):
+    if isinstance(transformers, list):
+        transformers = make_pipeline(*transformers)
+    return transformers
+
+
 class DataFrameMapper(BaseEstimator, TransformerMixin):
     """
     Map Pandas data frame column subsets to their own
@@ -76,10 +83,13 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         features    a list of pairs. The first element is the pandas column
                     selector. This can be a string (for one column) or a list
                     of strings. The second element is an object that supports
-                    sklearn's transform interface.
+                    sklearn's transform interface, or a list of such objects.
         sparse      will return sparse matrix if set True and any of the
                     extracted features is sparse. Defaults to False.
         """
+        if isinstance(features, list):
+            features = [(columns, _build_transformer(transformers))
+                        for (columns, transformers) in features]
         self.features = features
         self.sparse = sparse
 
@@ -121,15 +131,7 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         """
         for columns, transformers in self.features:
             if transformers is not None:
-                if isinstance(transformers, list):
-                    # first fit_transform all transformers except the last one
-                    Xt = self._get_col_subset(X, columns)
-                    for transformer in transformers[:-1]:
-                        Xt = transformer.fit_transform(Xt)
-                    # then fit the last one without transformation
-                    transformers[-1].fit(Xt)
-                else:
-                    transformers.fit(self._get_col_subset(X, columns))
+                transformers.fit(self._get_col_subset(X, columns))
         return self
 
     def transform(self, X):
@@ -145,11 +147,7 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
             # will handle either.
             Xt = self._get_col_subset(X, columns)
             if transformers is not None:
-                if isinstance(transformers, list):
-                    for transformer in transformers:
-                        Xt = transformer.transform(Xt)
-                else:
-                    Xt = transformers.transform(Xt)
+                Xt = transformers.transform(Xt)
             extracted.append(_handle_feature(Xt))
 
         # combine the feature outputs into one array.

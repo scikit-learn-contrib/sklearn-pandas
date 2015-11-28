@@ -22,7 +22,22 @@ from sklearn_pandas import (
     DataFrameMapper,
     PassthroughTransformer,
     cross_val_score,
+    _build_transformer,
 )
+
+
+class MockTClassifier(object):
+    """
+    Mock transformer/classifier.
+    """
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X):
+        return X
+
+    def predict(self, X):
+        return True
 
 
 class ToSparseTransformer(BaseEstimator, TransformerMixin):
@@ -138,6 +153,18 @@ def test_cols_list_column_vector(simple_dataframe):
     mapper.fit_transform(df)
     args, kwargs = mock_transformer.fit.call_args
     assert args[0].shape == (3, 1)
+
+
+def test_build_transformers():
+    """
+    When a list of transformers is passed, return a pipeline with
+    each element of the iterable as a step of the pipeline.
+    """
+    transformers = [MockTClassifier(), MockTClassifier()]
+    pipeline = _build_transformer(transformers)
+    assert isinstance(pipeline, Pipeline)
+    for ix, transformer in enumerate(transformers):
+        assert pipeline.steps[ix][1] == transformer
 
 
 def test_list_transformers():
