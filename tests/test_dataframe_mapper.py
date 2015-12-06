@@ -18,6 +18,7 @@ from sklearn.preprocessing import Imputer, StandardScaler
 from sklearn.base import BaseEstimator, TransformerMixin
 import numpy as np
 from numpy.testing import assert_array_equal
+import pickle
 
 from sklearn_pandas import (
     DataFrameMapper,
@@ -25,6 +26,7 @@ from sklearn_pandas import (
     cross_val_score,
     _build_transformer,
     _handle_feature,
+    TransformerPipeline,
 )
 
 
@@ -189,6 +191,18 @@ def test_list_transformers():
     # all features have mean 0 and std deviation 1 (standardized)
     assert (abs(dmatrix.mean(axis=0) - 0) <= 1e-6).all()
     assert (abs(dmatrix.std(axis=0) - 1) <= 1e-6).all()
+
+
+def test_list_transformers_old_unpickle(simple_dataframe):
+    mapper = DataFrameMapper(None)
+    # simulate the mapper was created with < 1.0.0 code
+    mapper.features = [('a', [MockXTransformer()])]
+    mapper_pickled = pickle.dumps(mapper)
+
+    loaded_mapper = pickle.loads(mapper_pickled)
+    transformer = loaded_mapper.features[0][1]
+    assert isinstance(transformer, TransformerPipeline)
+    assert isinstance(transformer.steps[0][1], MockXTransformer)
 
 
 def test_sparse_features(simple_dataframe):

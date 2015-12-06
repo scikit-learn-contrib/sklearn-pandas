@@ -194,6 +194,7 @@ Changelog
 *******************
 
 * Use custom ``TransformerPipeline`` class to allow transformation steps accepting only a X argument. Fixes #46.
+* Add compatibility shim for unpickling mappers with list of transformers created before 1.0.0. Fixes #45.
 
 
 1.0.0 (2015-11-28)

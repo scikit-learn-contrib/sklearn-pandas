@@ -8,7 +8,7 @@ from scipy import sparse
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn import cross_validation
 from sklearn import grid_search
-from pipeline import make_transformer_pipeline
+from pipeline import make_transformer_pipeline, TransformerPipeline
 
 # load in the correct stringtype: str for py3, basestring for py2
 string_types = str if sys.version_info >= (3, 0) else basestring
@@ -95,6 +95,12 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
                         for (columns, transformers) in features]
         self.features = features
         self.sparse = sparse
+
+    def __setstate__(self, state):
+        # compatibility shim for pickles created with sklearn-pandas<1.0.0
+        self.features = [(columns, _build_transformer(transformers))
+                         for (columns, transformers) in state['features']]
+        self.sparse = state.get('sparse', False)
 
     def _get_col_subset(self, X, cols):
         """
