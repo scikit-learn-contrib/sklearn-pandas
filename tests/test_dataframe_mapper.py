@@ -26,8 +26,8 @@ from sklearn_pandas import (
     cross_val_score,
     _build_transformer,
     _handle_feature,
-    TransformerPipeline,
 )
+from sklearn_pandas.pipeline import TransformerPipeline
 
 
 class MockXTransformer(object):

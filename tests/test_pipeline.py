@@ -1,5 +1,5 @@
 import pytest
-from pipeline import TransformerPipeline
+from sklearn_pandas.pipeline import TransformerPipeline
 
 
 class NoTransformT(object):

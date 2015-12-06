@@ -8,7 +8,7 @@ from scipy import sparse
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn import cross_validation
 from sklearn import grid_search
-from pipeline import make_transformer_pipeline, TransformerPipeline
+from .pipeline import make_transformer_pipeline
 
 # load in the correct stringtype: str for py3, basestring for py2
 string_types = str if sys.version_info >= (3, 0) else basestring
