@@ -1,13 +1,14 @@
 __version__ = '1.0.0'
 
+
+import sys
 import numpy as np
 import pandas as pd
 from scipy import sparse
 from sklearn.base import BaseEstimator, TransformerMixin
-from sklearn.pipeline import make_pipeline
 from sklearn import cross_validation
 from sklearn import grid_search
-import sys
+from pipeline import make_transformer_pipeline
 
 # load in the correct stringtype: str for py3, basestring for py2
 string_types = str if sys.version_info >= (3, 0) else basestring
@@ -68,7 +69,7 @@ def _handle_feature(fea):
 
 def _build_transformer(transformers):
     if isinstance(transformers, list):
-        transformers = make_pipeline(*transformers)
+        transformers = make_transformer_pipeline(*transformers)
     return transformers
 
 
