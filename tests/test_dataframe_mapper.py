@@ -20,11 +20,7 @@ import numpy as np
 from numpy.testing import assert_array_equal
 import pickle
 
-from sklearn_pandas import (
-    DataFrameMapper,
-    PassthroughTransformer,
-    cross_val_score
-)
+from sklearn_pandas import DataFrameMapper, cross_val_score
 from sklearn_pandas.dataframe_mapper import _handle_feature, _build_transformer
 from sklearn_pandas.pipeline import TransformerPipeline
 
@@ -256,10 +252,10 @@ def cars_dataframe():
 def test_with_iris_dataframe(iris_dataframe):
     pipeline = Pipeline([
         ("preprocess", DataFrameMapper([
-            ("petal length (cm)", PassthroughTransformer()),
-            ("petal width (cm)", PassthroughTransformer()),
-            ("sepal length (cm)", PassthroughTransformer()),
-            ("sepal width (cm)", PassthroughTransformer()),
+            ("petal length (cm)", None),
+            ("petal width (cm)", None),
+            ("sepal length (cm)", None),
+            ("sepal width (cm)", None),
         ])),
         ("classify", SVC(kernel='linear'))
     ])
