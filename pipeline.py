@@ -1,13 +1,36 @@
 import six
 from sklearn.pipeline import _name_estimators, Pipeline
+from sklearn.utils import tosequence
 
 
 class TransformerPipeline(Pipeline):
     """
-    Pipeline that expects all steps to be transformers taking a single argument.
+    Pipeline that expects all steps to be transformers taking a single argument
+    and having fit and transform methods.
 
     Code is copied from sklearn's Pipeline, leaving out the `y=None` argument.
     """
+    def __init__(self, steps):
+        names, estimators = zip(*steps)
+        if len(dict(steps)) != len(steps):
+            raise ValueError("Provided step names are not unique: %s" % (names,))
+
+        # shallow copy of steps
+        self.steps = tosequence(steps)
+        estimator = estimators[-1]
+
+        for e in estimators:
+            if (not (hasattr(e, "fit") or hasattr(e, "fit_transform")) or not
+                    hasattr(e, "transform")):
+                raise TypeError("All steps of the chain should "
+                                "be transforms and implement fit and transform"
+                                " '%s' (type %s) doesn't)" % (e, type(e)))
+
+        if not hasattr(estimator, "fit"):
+            raise TypeError("Last step of chain should implement fit "
+                            "'%s' (type %s) doesn't)"
+                            % (estimator, type(estimator)))
+
     def _pre_transform(self, X, **fit_params):
         fit_params_steps = dict((step, {}) for step, _ in self.steps)
         for pname, pval in six.iteritems(fit_params):
