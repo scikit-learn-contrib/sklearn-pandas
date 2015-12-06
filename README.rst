@@ -193,6 +193,7 @@ Changelog
 1.1.0 (development)
 *******************
 
+* Factor out code in several modules, to avoid having everything in ``__init__.py``.
 * Use custom ``TransformerPipeline`` class to allow transformation steps accepting only a X argument. Fixes #46.
 * Add compatibility shim for unpickling mappers with list of transformers created before 1.0.0. Fixes #45.
 

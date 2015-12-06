@@ -23,10 +23,9 @@ import pickle
 from sklearn_pandas import (
     DataFrameMapper,
     PassthroughTransformer,
-    cross_val_score,
-    _build_transformer,
-    _handle_feature,
+    cross_val_score
 )
+from sklearn_pandas.dataframe_mapper import _handle_feature, _build_transformer
 from sklearn_pandas.pipeline import TransformerPipeline
 
 
