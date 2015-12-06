@@ -190,6 +190,12 @@ Sklearn-pandas' ``cross_val_score`` function provides exactly the same interface
 Changelog
 ---------
 
+1.1.0 (development)
+*******************
+
+* Use custom ``TransformerPipeline`` class to allow transformation steps accepting only a X argument. Fixes #46.
+
+
 1.0.0 (2015-11-28)
 *******************
 

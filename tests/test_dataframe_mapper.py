@@ -28,6 +28,17 @@ from sklearn_pandas import (
 )
 
 
+class MockXTransformer(object):
+    """
+    Mock transformer that accepts no y argument.
+    """
+    def fit(self, X):
+        return self
+
+    def transform(self, X):
+        return X
+
+
 class MockTClassifier(object):
     """
     Mock transformer/classifier.
@@ -146,6 +157,18 @@ def test_build_transformers():
     assert isinstance(pipeline, Pipeline)
     for ix, transformer in enumerate(transformers):
         assert pipeline.steps[ix][1] == transformer
+
+
+def test_list_transformers_single_arg(simple_dataframe):
+    """
+    Multiple transformers can be specified in a list even if some of them
+    only accept one X argument instead of two (X, y).
+    """
+    mapper = DataFrameMapper([
+        ('a', [MockXTransformer()])
+    ])
+    # doesn't fail
+    mapper.fit_transform(simple_dataframe)
 
 
 def test_list_transformers():
