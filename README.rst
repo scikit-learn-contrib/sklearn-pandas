@@ -190,7 +190,7 @@ Sklearn-pandas' ``cross_val_score`` function provides exactly the same interface
 Changelog
 ---------
 
-1.1.0 (development)
+1.1.0 (2015-12-06)
 *******************
 
 * Delete obsolete ``PassThroughTransformer``. If no transformation is desired for a given column, use ``None`` as transformer.
