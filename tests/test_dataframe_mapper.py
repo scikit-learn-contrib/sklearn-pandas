@@ -1,4 +1,5 @@
 import pytest
+from pkg_resources import parse_version
 
 # In py3, mock is included with the unittest standard library
 # In py2, it's a separate package
@@ -10,6 +11,8 @@ except ImportError:
 from pandas import DataFrame
 import pandas as pd
 from scipy import sparse
+from sklearn import __version__ as sklearn_version
+from sklearn.cross_validation import cross_val_score as sklearn_cv_score
 from sklearn.datasets import load_iris
 from sklearn.pipeline import Pipeline
 from sklearn.svm import SVC
@@ -277,3 +280,25 @@ def test_with_car_dataframe(cars_dataframe):
     labels = cars_dataframe["model"]
     scores = cross_val_score(pipeline, data, labels)
     assert scores.mean() > 0.30
+
+
+@pytest.mark.skipIf(parse_version(sklearn_version) < parse_version('0.16'))
+def test_direct_cross_validation(iris_dataframe):
+    """
+    Starting with sklearn>=0.16.0 we no longer need CV wrappers for dataframes.
+    See https://github.com/paulgb/sklearn-pandas/issues/11
+    """
+    pipeline = Pipeline([
+        ("preprocess", DataFrameMapper([
+            ("petal length (cm)", None),
+            ("petal width (cm)", None),
+            ("sepal length (cm)", None),
+            ("sepal width (cm)", None),
+        ])),
+        ("classify", SVC(kernel='linear'))
+    ])
+    data = iris_dataframe.drop("species", axis=1)
+    labels = iris_dataframe["species"]
+    scores = sklearn_cv_score(pipeline, data, labels)
+    assert scores.mean() > 0.96
+    assert (scores.std() * 2) < 0.04
