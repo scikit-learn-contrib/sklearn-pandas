@@ -1,13 +1,24 @@
+import warnings
 from sklearn import cross_validation
 from sklearn import grid_search
 
+DEPRECATION_MSG = '''
+    Custom cross-validation compatibility shims are no longer needed for
+    scikit-learn>=0.16.0 and will be dropped in sklearn-pandas==2.0.
+'''
+
 
 def cross_val_score(model, X, *args, **kwargs):
+    warnings.warn(DEPRECATION_MSG, DeprecationWarning)
     X = DataWrapper(X)
     return cross_validation.cross_val_score(model, X, *args, **kwargs)
 
 
 class GridSearchCV(grid_search.GridSearchCV):
+    def __init__(self, *args, **kwargs):
+        warnings.warn(DEPRECATION_MSG, DeprecationWarning)
+        super(GridSearchCV, self).__init__(*args, **kwargs)
+
     def fit(self, X, *params, **kwparams):
         return super(GridSearchCV, self).fit(DataWrapper(X), *params, **kwparams)
 
@@ -17,6 +28,10 @@ class GridSearchCV(grid_search.GridSearchCV):
 
 try:
     class RandomizedSearchCV(grid_search.RandomizedSearchCV):
+        def __init__(self, *args, **kwargs):
+            warnings.warn(DEPRECATION_MSG, DeprecationWarning)
+            super(RandomizedSearchCV, self).__init__(*args, **kwargs)
+
         def fit(self, X, *params, **kwparams):
             return super(RandomizedSearchCV, self).fit(DataWrapper(X), *params, **kwparams)
 

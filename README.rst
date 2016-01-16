@@ -7,7 +7,7 @@ This module provides a bridge between `Scikit-Learn <http://scikit-learn.org/sta
 In particular, it provides:
 
 1. A way to map ``DataFrame`` columns to transformations, which are later recombined into features.
-2. A way to cross-validate a pipeline that takes a pandas ``DataFrame`` as input.
+2. A compatibility shim for old ``scikit-learn`` versions to cross-validate a pipeline that takes a pandas ``DataFrame`` as input. This is only needed for ``scikit-learn<0.16.0`` (see `#11 <https://github.com/paulgb/sklearn-pandas/issues/11>`__ for details). It is deprecated and will likely be dropped in ``skearn-pandas==2.0``.
 
 Installation
 ------------
@@ -174,7 +174,7 @@ The stacking of the sparse features is done without ever densifying them.
 Cross-Validation
 ----------------
 
-Now that we can combine features from pandas DataFrames, we may want to use cross-validation to see whether our model works. Scikit-learn provides features for cross-validation, but they expect numpy data structures and won't work with ``DataFrameMapper``.
+Now that we can combine features from pandas DataFrames, we may want to use cross-validation to see whether our model works. ``scikit-learn<0.16.0`` provided features for cross-validation, but they expect numpy data structures and won't work with ``DataFrameMapper``.
 
 To get around this, sklearn-pandas provides a wrapper on sklearn's ``cross_val_score`` function which passes a pandas DataFrame to the estimator rather than a numpy array::
 
@@ -189,6 +189,12 @@ Sklearn-pandas' ``cross_val_score`` function provides exactly the same interface
 
 Changelog
 ---------
+
+Development
+***********
+
+* Deprecate custom cross-validation shim classes.
+
 
 1.1.0 (2015-12-06)
 *******************
