@@ -1,3 +1,4 @@
+import itertools
 import sys
 import pandas as pd
 import numpy as np
@@ -50,10 +51,48 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
-        feature_indices_ : array of shape(len(self.features))
+        feature_widths_ : array of shape(len(self.features))
+            Widths of self.features in extracted X array.
+            Feature 'i' in self.features produces output features of given width.
+
+        feature_indices_ : array of shape(len(self.features) + 1)
+            Indicies of self.features in extracted X array.
             Feature 'i' in self.features is mapped to features from
             'feature_indices_[i]' to 'feature_indices_[i+1]' in transformed output.
+
+        X_n_features_: int
+            Number of output features in extracted feature arrays.
+
+        X_features_: array  of shape(X_n_features_, 2)
+            Array of source feature pairs used to generate each output feature.
+
+        X_columns_: array of shape(X_n_features_)
+            Array of column selectors used to generate each output feature.
     """
+
+    @property
+    def feature_indices_(self):
+        """Indicies of self.features in extracted X array."""
+        return np.cumsum([0] + list(self.feature_widths_))
+
+    @property
+    def X_n_features_(self):
+        """Number of output features in extracted feature array."""
+        return np.sum(self.feature_widths_)
+
+    @property
+    def X_features_(self):
+        """Array of source feature pairs used to generate each output feature."""
+        rs = []
+        for width, feature in zip(self.feature_widths_, self.features):
+            for _ in range(width):
+                rs.append(feature)
+        return np.array(rs, dtype=object)
+
+    @property
+    def X_columns_(self):
+        """Array of column selectors used to generate each output feature."""
+        return self.X_features_[:,0]
 
     def __init__(self, features, y_feature = None, sparse=False):
         if isinstance(features, string_types):
@@ -67,7 +106,7 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
                 columns, transformers = f
                 self.features.append((columns, _build_transformer(transformers)))
 
-        self.feature_indices_ = None
+        self.feature_widths_ = None
 
         if y_feature is None:
             self.y_feature = None
@@ -166,11 +205,9 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
                 'target' column source if None.
         """
 
-        feature_indices_ = []
+        feature_widths = []
         cur_index = 0
         for columns, transformers in self.features:
-            feature_indices_.append(cur_index)
-
             # columns could be a string or list of
             # strings; we don't care because pandas
             # will handle either.
@@ -178,8 +215,8 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
             if transformers is not None:
                 transformers.fit(Xt)
                 Xt = transformers.transform(Xt)
-            cur_index += _handle_feature(Xt).shape[1]
-        self.feature_indices_ = np.array(feature_indices_)
+            feature_widths.append(_handle_feature(Xt).shape[1])
+        self.feature_widths_ = np.array(feature_widths)
 
         if self.y_feature is not None:
             if isinstance(y, pd.DataFrame):
