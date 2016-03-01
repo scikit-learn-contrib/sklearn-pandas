@@ -103,6 +103,14 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
 
         return t
 
+    def extract_Xy(self, X, y=None):
+        """Extract X and y values for pipeline from inputs 'X' and 'y'."""
+        return self.extract_X(X), self.extract_y(X, y)
+
+    def extract_X(self, X):
+        """Extract X values for pipeline, equivalent to self.transform."""
+        return self.transform(X)
+
     def extract_y(self, X, y=None):
         """Extract y values for pipeline from input 'y' or 'X'.
 
