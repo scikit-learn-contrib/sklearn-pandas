@@ -33,7 +33,7 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
     sklearn transformation.
     """
 
-    def __init__(self, features, sparse=False):
+    def __init__(self, features, y_feature = None, sparse=False):
         """
         Params:
 
@@ -41,13 +41,30 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
                     selector. This can be a string (for one column) or a list
                     of strings. The second element is an object that supports
                     sklearn's transform interface, or a list of such objects.
+        y_feature   a single pair. Applies logic as per individual selectors
+                    in features to extract 'y' parameterfor for fit interface.
         sparse      will return sparse matrix if set True and any of the
                     extracted features is sparse. Defaults to False.
         """
-        if isinstance(features, list):
-            features = [(columns, _build_transformer(transformers))
-                        for (columns, transformers) in features]
-        self.features = features
+        if isinstance(features, string_types):
+            features = [features]
+
+        self.features = []
+        for f in features:
+            if isinstance(f, string_types):
+                self.features.append((f, None))
+            else:
+                columns, transformers = f
+                self.features.append((columns, _build_transformer(transformers)))
+
+        if y_feature is None:
+            self.y_feature = None
+        elif isinstance(y_feature, string_types):
+            self.y_feature = (y_feature, None)
+        else:
+            y_columns, y_transformers = y_feature
+            self.y_feature = (y_columns, _build_transformer(y_transformers))
+
         self.sparse = sparse
 
     def __setstate__(self, state):
@@ -86,15 +103,65 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
 
         return t
 
+    def extract_y(self, X, y=None):
+        """Extract y values for pipeline from input 'y' or 'X'.
+
+        Extract self.y_feature from dataframe 'y'. Fall back to extraction from
+        dataframe 'X' if y is not null but not DataFrame.
+        """
+        
+
+        if y is None and self.y_feature is None:
+            return None
+
+        if self.y_feature is None:
+            raise ValueError("DataFrameMapper does not support extract_y, self.y_feature is None.")
+
+        if isinstance(y, pd.DataFrame):
+            df = y
+        elif isinstance(y, pd.Series):
+            df = y.to_frame()
+        else:
+            assert isinstance(X, pd.DataFrame)
+            df = X
+
+
+        y_columns, y_transformers = self.y_feature
+        # columns could be a string or list of
+        # strings; we don't care because pandas
+        # will handle either.
+        yt = self._get_col_subset(df, y_columns)
+        if y_transformers is not None:
+            yt = y_transformers.transform(yt)
+
+        return yt
+
     def fit(self, X, y=None):
         """
         Fit a transformation from the pipeline
 
-        X       the data to fit
+        X       the dataframe to fit
+        y       DataFrame from which to extract 'target' columns, 'X' used as
+                'target' column source if None.
         """
+
         for columns, transformers in self.features:
             if transformers is not None:
                 transformers.fit(self._get_col_subset(X, columns))
+
+        if self.y_feature is not None:
+            if isinstance(y, pd.DataFrame):
+                df = y
+            elif isinstance(y, pd.Series):
+                df = y.to_frame()
+            else:
+                assert isinstance(X, pd.DataFrame)
+                df = X
+
+            y_columns, y_transformers = self.y_feature
+            if y_transformers is not None:
+                y_transformers.fit(self._get_col_subset(df, y_columns))
+
         return self
 
     def transform(self, X):
