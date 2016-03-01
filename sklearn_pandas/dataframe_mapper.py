@@ -29,23 +29,33 @@ def _build_transformer(transformers):
 
 class DataFrameMapper(BaseEstimator, TransformerMixin):
     """
-    Map Pandas data frame column subsets to their own
-    sklearn transformation.
+    Map pandas DataFrame column subsets via sklearn transforms to feature
+    arrays.
+
+    Parameters
+    ----------
+        features : list of ((column_selector, [transform]) or column_selector)
+            Each feature is composed of a pandas column selector and an
+            optional transform. A column selector may be a string (for a single
+            column) or a list of strings.  A transform is an object which
+            supports sklearns' transform interface, or a list of such objects.
+
+        y_feature : (column_selector, [transform]) or columns_selector (optional)
+            A single feature, as per entries in features, used to extract a
+            single value from input frames during fitting.
+        
+        sparse : bool, optional (default=False)
+            Return a sparse matrix if set True and any extracted features are
+            sparse.
+
+    Attributes
+    ----------
+        feature_indices_ : array of shape(len(self.features))
+            Feature 'i' in self.features is mapped to features from
+            'feature_indices_[i]' to 'feature_indices_[i+1]' in transformed output.
     """
 
     def __init__(self, features, y_feature = None, sparse=False):
-        """
-        Params:
-
-        features    a list of pairs. The first element is the pandas column
-                    selector. This can be a string (for one column) or a list
-                    of strings. The second element is an object that supports
-                    sklearn's transform interface, or a list of such objects.
-        y_feature   a single pair. Applies logic as per individual selectors
-                    in features to extract 'y' parameterfor for fit interface.
-        sparse      will return sparse matrix if set True and any of the
-                    extracted features is sparse. Defaults to False.
-        """
         if isinstance(features, string_types):
             features = [features]
 
@@ -57,6 +67,8 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
                 columns, transformers = f
                 self.features.append((columns, _build_transformer(transformers)))
 
+        self.feature_indices_ = None
+
         if y_feature is None:
             self.y_feature = None
         elif isinstance(y_feature, string_types):
@@ -66,6 +78,7 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
             self.y_feature = (y_columns, _build_transformer(y_transformers))
 
         self.sparse = sparse
+
 
     def __setstate__(self, state):
         # compatibility shim for pickles created with sklearn-pandas<1.0.0
@@ -153,9 +166,20 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
                 'target' column source if None.
         """
 
+        feature_indices_ = []
+        cur_index = 0
         for columns, transformers in self.features:
+            feature_indices_.append(cur_index)
+
+            # columns could be a string or list of
+            # strings; we don't care because pandas
+            # will handle either.
+            Xt = self._get_col_subset(X, columns)
             if transformers is not None:
-                transformers.fit(self._get_col_subset(X, columns))
+                transformers.fit(Xt)
+                Xt = transformers.transform(Xt)
+            cur_index += _handle_feature(Xt).shape[1]
+        self.feature_indices_ = np.array(feature_indices_)
 
         if self.y_feature is not None:
             if isinstance(y, pd.DataFrame):
