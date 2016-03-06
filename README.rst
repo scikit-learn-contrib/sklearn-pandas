@@ -194,6 +194,7 @@ Development
 ***********
 
 * Deprecate custom cross-validation shim classes.
+* Require ``scikit-learn>=0.15.0``. Resolves #49.
 
 
 1.1.0 (2015-12-06)
