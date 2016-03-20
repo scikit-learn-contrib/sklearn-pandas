@@ -29,21 +29,32 @@ def _build_transformer(transformers):
 
 class DataFrameMapper(BaseEstimator, TransformerMixin):
     """
-    Map Pandas data frame column subsets to their own
-    sklearn transformation.
+    Map pandas DataFrame column subsets via sklearn transforms to feature
+    arrays.
+
+    Parameters
+    ----------
+        features : list of tuples of the form (column_selector, transform)
+            A column selector may be a string (for selecting a single column
+            as a 1-d array) or a list of string (for selecting one or more
+            columns as a 2-d array).
+            A transform is an object which supports sklearns' transform
+            interface, or a list of such objects.
+
+        sparse : bool, optional (default=False)
+            Return a sparse matrix if set True and any of the extracted
+            features are sparse.
+
+    Attributes
+    ----------
+        feature_indices_ : array of shape (len(self.features) + 1,)
+            Indices of self.features in the extracted array.
+            Feature ``i`` in self.features is mapped to features from
+            ``feature_indices_[i]`` to ``feature_indices_[i+1]`` in transformed
+            output.
     """
 
     def __init__(self, features, sparse=False):
-        """
-        Params:
-
-        features    a list of pairs. The first element is the pandas column
-                    selector. This can be a string (for one column) or a list
-                    of strings. The second element is an object that supports
-                    sklearn's transform interface, or a list of such objects.
-        sparse      will return sparse matrix if set True and any of the
-                    extracted features is sparse. Defaults to False.
-        """
         if isinstance(features, list):
             features = [(columns, _build_transformer(transformers))
                         for (columns, transformers) in features]
