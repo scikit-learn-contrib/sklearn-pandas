@@ -17,7 +17,7 @@ from sklearn.datasets import load_iris
 from sklearn.pipeline import Pipeline
 from sklearn.svm import SVC
 from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.preprocessing import Imputer, StandardScaler
+from sklearn.preprocessing import Imputer, StandardScaler, OneHotEncoder
 from sklearn.base import BaseEstimator, TransformerMixin
 import numpy as np
 from numpy.testing import assert_array_equal
@@ -159,6 +159,70 @@ def test_build_transformers():
         assert pipeline.steps[ix][1] == transformer
 
 
+def test_selected_columns():
+    """
+    selected_columns returns a set of the columns appearing in the features
+    of the mapper.
+    """
+    mapper = DataFrameMapper([
+        ('a', None),
+        (['a', 'b'], None)
+    ])
+    assert mapper._selected_columns == {'a', 'b'}
+
+
+def test_unselected_columns():
+    """
+    selected_columns returns a list of the columns not appearing in the
+    features of the mapper but present in the given dataframe.
+    """
+    df = pd.DataFrame({'a': [1], 'b': [2], 'c': [3]})
+    mapper = DataFrameMapper([
+        ('a', None),
+        (['a', 'b'], None)
+    ])
+    assert 'c' in mapper._unselected_columns(df)
+
+
+def test_default_false():
+    """
+    If default=False, non explicitly selected columns are discarded.
+    """
+    df = pd.DataFrame({'a': [1, 2, 3], 'b': [3, 5, 7]})
+    mapper = DataFrameMapper([
+        ('b', None)
+    ], default=False)
+
+    transformed = mapper.fit_transform(df)
+    assert transformed.shape == (3, 1)
+
+
+def test_default_none():
+    """
+    If default=None, non explicitly selected columns are passed through
+    untransformed.
+    """
+    df = pd.DataFrame({'a': [1, 2, 3], 'b': [3, 5, 7]})
+    mapper = DataFrameMapper([
+        (['a'], OneHotEncoder())
+    ], default=None)
+
+    transformed = mapper.fit_transform(df)
+    assert (transformed[:, 3] == np.array([3, 5, 7]).T).all()
+
+
+def test_default_transformer():
+    """
+    If default=Transformer, non explicitly selected columns are applied this
+    transformer.
+    """
+    df = pd.DataFrame({'a': [1, np.nan, 3], })
+    mapper = DataFrameMapper([], default=Imputer())
+
+    transformed = mapper.fit_transform(df)
+    assert (transformed[: 0] == np.array([1., 2., 3.])).all()
+
+
 def test_list_transformers_single_arg(simple_dataframe):
     """
     Multiple transformers can be specified in a list even if some of them
@@ -201,6 +265,17 @@ def test_list_transformers_old_unpickle(simple_dataframe):
     transformer = loaded_mapper.features[0][1]
     assert isinstance(transformer, TransformerPipeline)
     assert isinstance(transformer.steps[0][1], MockXTransformer)
+
+
+def test_default_old_unpickle(simple_dataframe):
+    mapper = DataFrameMapper([('a', None)])
+    # simulate the mapper was pickled before the ``default`` init argument
+    # existed
+    del mapper.default
+    mapper_pickled = pickle.dumps(mapper)
+
+    loaded_mapper = pickle.loads(mapper_pickled)
+    loaded_mapper.fit_transform(simple_dataframe)  # doesn't fail
 
 
 def test_sparse_features(simple_dataframe):

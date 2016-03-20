@@ -33,7 +33,7 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
     sklearn transformation.
     """
 
-    def __init__(self, features, sparse=False):
+    def __init__(self, features, default=False, sparse=False):
         """
         Params:
 
@@ -41,6 +41,13 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
                     selector. This can be a string (for one column) or a list
                     of strings. The second element is an object that supports
                     sklearn's transform interface, or a list of such objects.
+
+        default     default transformer to apply to the columns not
+                    explicitly selected in the mapper. If False (default),
+                    discard them. If None, pass them through untouched. Any
+                    other transformer will be applied to all the unselected
+                    columns as a whole, taken as a 2d-array.
+
         sparse      will return sparse matrix if set True and any of the
                     extracted features is sparse. Defaults to False.
         """
@@ -48,13 +55,45 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
             features = [(columns, _build_transformer(transformers))
                         for (columns, transformers) in features]
         self.features = features
+        self.default = _build_transformer(default)
         self.sparse = sparse
+
+    @property
+    def _selected_columns(self):
+        """
+        Return a set of selected columns in the feature list.
+        """
+        selected_columns = set()
+        for feature in self.features:
+            columns = feature[0]
+            if isinstance(columns, list):
+                selected_columns = selected_columns.union(set(columns))
+            else:
+                selected_columns.add(columns)
+        return selected_columns
+
+    def _unselected_columns(self, X):
+        """
+        Return list of columns present in X and not selected explicitly in the
+        mapper.
+
+        Unselected columns are returned in the order they appear in the
+        dataframe to avoid issues with different ordering during default fit
+        and transform steps.
+        """
+        X_columns = list(X.columns)
+        return [column for column in X_columns if
+                column not in self._selected_columns]
 
     def __setstate__(self, state):
         # compatibility shim for pickles created with sklearn-pandas<1.0.0
         self.features = [(columns, _build_transformer(transformers))
                          for (columns, transformers) in state['features']]
         self.sparse = state.get('sparse', False)
+
+        # compatibility shim for pickles created before ``default`` init
+        # argument existed
+        self.default = state.get('default', False)
 
     def _get_col_subset(self, X, cols):
         """
@@ -95,6 +134,12 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         for columns, transformers in self.features:
             if transformers is not None:
                 transformers.fit(self._get_col_subset(X, columns))
+
+        # handle features not explicitly selected
+        if self.default:  # not False and not None
+            self.default.fit(
+                self._get_col_subset(X, self._unselected_columns(X))
+            )
         return self
 
     def transform(self, X):
@@ -112,6 +157,14 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
             if transformers is not None:
                 Xt = transformers.transform(Xt)
             extracted.append(_handle_feature(Xt))
+
+        # handle features not explicitly selected
+        if self.default is not False:
+            Xt = self._get_col_subset(X, self._unselected_columns(X))
+            if self.default is not None:
+                Xt = self.default.transform(Xt)
+            extracted.append(_handle_feature(Xt))
+
 
         # combine the feature outputs into one array.
         # at this point we lose track of which features
