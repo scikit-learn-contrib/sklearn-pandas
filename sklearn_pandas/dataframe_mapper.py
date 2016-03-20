@@ -104,6 +104,8 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         X       the data to transform
         """
         extracted = []
+        self.feature_indices_ = [0]
+
         for columns, transformers in self.features:
             # columns could be a string or list of
             # strings; we don't care because pandas
@@ -111,7 +113,11 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
             Xt = self._get_col_subset(X, columns)
             if transformers is not None:
                 Xt = transformers.transform(Xt)
-            extracted.append(_handle_feature(Xt))
+
+            feature = _handle_feature(Xt)
+            extracted.append(feature)
+            self.feature_indices_.append(self.feature_indices_[-1] +
+                                         feature.shape[1])
 
         # combine the feature outputs into one array.
         # at this point we lose track of which features
@@ -120,7 +126,7 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
 
         # If any of the extracted features is sparse, combine sparsely.
         # Otherwise, combine as normal arrays.
-        if any(sparse.issparse(fea) for fea in extracted):
+        if any(sparse.issparse(feature) for feature in extracted):
             stacked = sparse.hstack(extracted).tocsr()
             # return a sparse matrix only if the mapper was initialized
             # with sparse=True
