@@ -29,21 +29,32 @@ def _build_transformer(transformers):
 
 class DataFrameMapper(BaseEstimator, TransformerMixin):
     """
-    Map Pandas data frame column subsets to their own
-    sklearn transformation.
+    Map pandas DataFrame column subsets via sklearn transforms to feature
+    arrays.
+
+    Parameters
+    ----------
+        features : list of tuples of the form (column_selector, transform)
+            A column selector may be a string (for selecting a single column
+            as a 1-d array) or a list of string (for selecting one or more
+            columns as a 2-d array).
+            A transform is an object which supports sklearns' transform
+            interface, or a list of such objects.
+
+        sparse : bool, optional (default=False)
+            Return a sparse matrix if set True and any of the extracted
+            features are sparse.
+
+    Attributes
+    ----------
+        feature_indices_ : array of shape (len(self.features) + 1,)
+            Indices of self.features in the extracted array.
+            Feature ``i`` in self.features is mapped to features from
+            ``feature_indices_[i]`` to ``feature_indices_[i+1]`` in transformed
+            output.
     """
 
     def __init__(self, features, sparse=False):
-        """
-        Params:
-
-        features    a list of pairs. The first element is the pandas column
-                    selector. This can be a string (for one column) or a list
-                    of strings. The second element is an object that supports
-                    sklearn's transform interface, or a list of such objects.
-        sparse      will return sparse matrix if set True and any of the
-                    extracted features is sparse. Defaults to False.
-        """
         if isinstance(features, list):
             features = [(columns, _build_transformer(transformers))
                         for (columns, transformers) in features]
@@ -104,6 +115,8 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         X       the data to transform
         """
         extracted = []
+        self.feature_indices_ = [0]
+
         for columns, transformers in self.features:
             # columns could be a string or list of
             # strings; we don't care because pandas
@@ -111,7 +124,11 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
             Xt = self._get_col_subset(X, columns)
             if transformers is not None:
                 Xt = transformers.transform(Xt)
-            extracted.append(_handle_feature(Xt))
+
+            feature = _handle_feature(Xt)
+            extracted.append(feature)
+            self.feature_indices_.append(self.feature_indices_[-1] +
+                                         feature.shape[1])
 
         # combine the feature outputs into one array.
         # at this point we lose track of which features
@@ -120,7 +137,7 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
 
         # If any of the extracted features is sparse, combine sparsely.
         # Otherwise, combine as normal arrays.
-        if any(sparse.issparse(fea) for fea in extracted):
+        if any(sparse.issparse(feature) for feature in extracted):
             stacked = sparse.hstack(extracted).tocsr()
             # return a sparse matrix only if the mapper was initialized
             # with sparse=True

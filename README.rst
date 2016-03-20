@@ -102,6 +102,17 @@ Now that the transformation is trained, we confirm that it works on new data::
     >>> np.round(mapper.transform(sample), 2)
     array([[ 1.  ,  0.  ,  0.  ,  1.04]])
 
+After transformation, the ``feature_indices_` attribute of the mapper
+indicates which columns of the resulting output array correspond to which
+input features. Input feature ``i`` is mapped to features from
+``feature_indices_[i]`` to ``feature_indices_[i+1]`` in transformed output.
+For example:
+
+    >>> mapper.feature_indices_[0], mapper.feature_indices_[1] # pet
+    (0, 3)
+    >>> mapper.feature_indices_[1], mapper.feature_indices_[2]  # children
+    (3, 4)
+
 Transform Multiple Columns
 **************************
 
@@ -195,6 +206,8 @@ Development
 
 * Deprecate custom cross-validation shim classes.
 * Require ``scikit-learn>=0.15.0``. Resolves #49.
+* Add ``feature_indices_`` attribute indicating the mapping between input and
+  ouptut variables.
 
 
 1.1.0 (2015-12-06)

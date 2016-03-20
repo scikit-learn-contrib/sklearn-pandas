@@ -17,7 +17,7 @@ from sklearn.datasets import load_iris
 from sklearn.pipeline import Pipeline
 from sklearn.svm import SVC
 from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.preprocessing import Imputer, StandardScaler
+from sklearn.preprocessing import Imputer, StandardScaler, OneHotEncoder
 from sklearn.base import BaseEstimator, TransformerMixin
 import numpy as np
 from numpy.testing import assert_array_equal
@@ -145,6 +145,34 @@ def test_handle_feature_1dim():
     """
     array = np.array([1, 2])
     assert_array_equal(_handle_feature(array), np.array([[1], [2]]))
+
+
+def test_feature_indices_dense():
+    df = pd.DataFrame({'a': [1, 2, 3], 'b': [3, 2, 7]})
+    mapper = DataFrameMapper([
+        (['a'], OneHotEncoder()),
+        ('b', None)
+    ])
+    transformed = mapper.fit_transform(df)
+
+    indices = mapper.feature_indices_
+    assert len(indices) == len(mapper.features) + 1
+    assert (transformed[:, indices[0]:indices[1]] ==
+            OneHotEncoder(sparse=False).fit_transform(df[['a']])).all()
+    assert (transformed[:, indices[1]:indices[2]] == df[['b']].values).all()
+
+
+def test_feature_indices_sparse(simple_dataframe):
+    mapper = DataFrameMapper([
+        (['a'], OneHotEncoder())
+    ], sparse=True)
+    transformed = mapper.fit_transform(simple_dataframe)
+
+    indices = mapper.feature_indices_
+    assert len(indices) == len(mapper.features) + 1
+    # compare equality by checking that all elements in the difference are 0
+    assert (transformed[:, indices[0]:indices[1]] -
+            OneHotEncoder().fit_transform(simple_dataframe[['a']])).nnz == 0
 
 
 def test_build_transformers():
