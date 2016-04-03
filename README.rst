@@ -157,16 +157,38 @@ Only columns that are listed in the DataFrameMapper are kept. To keep a column b
            [ 1.,  0.,  0.,  5.],
            [ 0.,  0.,  1.,  4.]])
 
+Applying a default transformer
+******************************
+
+A default transformer can be applied to columns not explicitly selected
+passing it as the ``default`` argument to the mapper:
+
+    >>> mapper4 = DataFrameMapper([
+    ...     ('pet', sklearn.preprocessing.LabelBinarizer()),
+    ...     ('children', None)
+    ... ], default=sklearn.preprocessing.StandardScaler())
+    >>> np.round(mapper4.fit_transform(data.copy()))
+    array([[ 1.,  0.,  0.,  4.,  2.],
+           [ 0.,  1.,  0.,  6., -1.],
+           [ 0.,  1.,  0.,  3.,  0.],
+           [ 0.,  0.,  1.,  3., -1.],
+           [ 1.,  0.,  0.,  2., -0.],
+           [ 0.,  1.,  0.,  3.,  1.],
+           [ 1.,  0.,  0.,  5., -0.],
+           [ 0.,  0.,  1.,  4., -1.]])
+
+Using ``default=False`` (the default) drops unselected columns. Using
+``default=None`` pass the unselected columns unchanged.
 
 Working with sparse features
 ****************************
 
 ``DataFrameMapper``s will return a dense feature array by default. Setting ``sparse=True`` in the mapper will return a sparse array whenever any of the extracted features is sparse. Example:
 
-    >>> mapper4 = DataFrameMapper([
+    >>> mapper5 = DataFrameMapper([
     ...     ('pet', CountVectorizer()),
     ... ], sparse=True)
-    >>> type(mapper4.fit_transform(data))
+    >>> type(mapper5.fit_transform(data))
     <class 'scipy.sparse.csr.csr_matrix'>
 
 The stacking of the sparse features is done without ever densifying them.
@@ -195,6 +217,8 @@ Development
 
 * Deprecate custom cross-validation shim classes.
 * Require ``scikit-learn>=0.15.0``. Resolves #49.
+* Allow applying a default transformer to columns not selected explicitly in
+  the mapper. Resolves #55.
 
 
 1.1.0 (2015-12-06)
