@@ -130,16 +130,27 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         Fit a transformation from the pipeline
 
         X       the data to fit
+
+        y       the target vector relative to X, optional
+
         """
         for columns, transformers in self.features:
             if transformers is not None:
-                transformers.fit(self._get_col_subset(X, columns))
+                try:
+                    transformers.fit(self._get_col_subset(X, columns), y)
+                except TypeError:
+                    # fit takes only one argument
+                    transformers.fit(self._get_col_subset(X, columns))
 
         # handle features not explicitly selected
         if self.default:  # not False and not None
-            self.default.fit(
-                self._get_col_subset(X, self._unselected_columns(X))
-            )
+            try:
+                self.default.fit(
+                    self._get_col_subset(X, self._unselected_columns(X)), y)
+            except TypeError:
+                # fit takes only one argument
+                self.default.fit(
+                    self._get_col_subset(X, self._unselected_columns(X)))
         return self
 
     def transform(self, X):

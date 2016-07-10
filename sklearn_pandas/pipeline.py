@@ -5,10 +5,11 @@ from sklearn.utils import tosequence
 
 class TransformerPipeline(Pipeline):
     """
-    Pipeline that expects all steps to be transformers taking a single argument
+    Pipeline that expects all steps to be transformers taking a single X argument,
+    an optional y argument,
     and having fit and transform methods.
 
-    Code is copied from sklearn's Pipeline, leaving out the `y=None` argument.
+    Code is copied from sklearn's Pipeline
     """
     def __init__(self, steps):
         names, estimators = zip(*steps)
@@ -31,7 +32,7 @@ class TransformerPipeline(Pipeline):
                             "'%s' (type %s) doesn't)"
                             % (estimator, type(estimator)))
 
-    def _pre_transform(self, X, **fit_params):
+    def _pre_transform(self, X, y=None, **fit_params):
         fit_params_steps = dict((step, {}) for step, _ in self.steps)
         for pname, pval in six.iteritems(fit_params):
             step, param = pname.split('__', 1)
@@ -39,23 +40,42 @@ class TransformerPipeline(Pipeline):
         Xt = X
         for name, transform in self.steps[:-1]:
             if hasattr(transform, "fit_transform"):
-                Xt = transform.fit_transform(Xt, **fit_params_steps[name])
+                try:
+                    Xt = transform.fit_transform(Xt, y, **fit_params_steps[name])
+                except TypeError:
+                    # fit takes only one argument
+                    Xt = transform.fit_transform(Xt, **fit_params_steps[name])
             else:
-                Xt = transform.fit(Xt, **fit_params_steps[name]) \
-                              .transform(Xt)
+                try:
+                    Xt = transform.fit(Xt, y, **fit_params_steps[name]).transform(Xt)
+                except TypeError:
+                    # fit takes only one argument
+                    Xt = transform.fit(Xt, **fit_params_steps[name]).transform(Xt)
         return Xt, fit_params_steps[self.steps[-1][0]]
 
-    def fit(self, X, **fit_params):
-        Xt, fit_params = self._pre_transform(X, **fit_params)
-        self.steps[-1][-1].fit(Xt, **fit_params)
+    def fit(self, X, y=None, **fit_params):
+        Xt, fit_params = self._pre_transform(X, y, **fit_params)
+        try:
+            self.steps[-1][-1].fit(Xt, y, **fit_params)
+        except TypeError:
+            # fit takes only one argument
+            self.steps[-1][-1].fit(Xt, **fit_params)
         return self
 
-    def fit_transform(self, X, **fit_params):
-        Xt, fit_params = self._pre_transform(X, **fit_params)
+    def fit_transform(self, X, y=None, **fit_params):
+        Xt, fit_params = self._pre_transform(X, y, **fit_params)
         if hasattr(self.steps[-1][-1], 'fit_transform'):
-            return self.steps[-1][-1].fit_transform(Xt, **fit_params)
+            try:
+                return self.steps[-1][-1].fit_transform(Xt, y, **fit_params)
+            except TypeError:
+                # fit_transform takes only one argument
+                return self.steps[-1][-1].fit_transform(Xt, **fit_params)
         else:
-            return self.steps[-1][-1].fit(Xt, **fit_params).transform(Xt)
+            try:
+                return self.steps[-1][-1].fit(Xt, y, **fit_params).transform(Xt)
+            except:
+                # fit takes only one argument
+                return self.steps[-1][-1].fit(Xt, **fit_params).transform(Xt)
 
 
 def make_transformer_pipeline(*steps):
