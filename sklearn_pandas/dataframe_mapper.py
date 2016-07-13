@@ -5,7 +5,7 @@ from scipy import sparse
 from sklearn.base import BaseEstimator, TransformerMixin
 
 from .cross_validation import DataWrapper
-from .pipeline import make_transformer_pipeline
+from .pipeline import make_transformer_pipeline, _call_fit
 
 # load in the correct stringtype: str for py3, basestring for py2
 string_types = str if sys.version_info >= (3, 0) else basestring
@@ -136,21 +136,13 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         """
         for columns, transformers in self.features:
             if transformers is not None:
-                try:
-                    transformers.fit(self._get_col_subset(X, columns), y)
-                except TypeError:
-                    # fit takes only one argument
-                    transformers.fit(self._get_col_subset(X, columns))
+                _call_fit(transformers.fit,
+                          self._get_col_subset(X, columns), y)
 
         # handle features not explicitly selected
         if self.default:  # not False and not None
-            try:
-                self.default.fit(
-                    self._get_col_subset(X, self._unselected_columns(X)), y)
-            except TypeError:
-                # fit takes only one argument
-                self.default.fit(
-                    self._get_col_subset(X, self._unselected_columns(X)))
+            _call_fit(self.default.fit,
+                      self._get_col_subset(X, self._unselected_columns(X)), y)
         return self
 
     def transform(self, X):
