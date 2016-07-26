@@ -1,6 +1,5 @@
 import pytest
 from sklearn_pandas.pipeline import TransformerPipeline, _call_fit
-from functools import partial
 
 # In py3, mock is included with the unittest standard library
 # In py2, it's a separate package
