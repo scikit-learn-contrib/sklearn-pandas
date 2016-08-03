@@ -236,6 +236,8 @@ Development
 * Require ``scikit-learn>=0.15.0``. Resolves #49.
 * Allow applying a default transformer to columns not selected explicitly in
   the mapper. Resolves #55.
+* Allow specifying an optional ``y`` argument during transform for
+  supervised transformations. Resolves #58.
 
 
 1.1.0 (2015-12-06)
@@ -275,3 +277,4 @@ Other contributors:
 * Israel Saeta Pérez
 * Zac Stewart
 * Olivier Grisel
+* Vitaley Zaretskey
