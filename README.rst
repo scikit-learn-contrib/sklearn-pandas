@@ -167,18 +167,35 @@ passing it as the ``default`` argument to the mapper:
     ...     ('pet', sklearn.preprocessing.LabelBinarizer()),
     ...     ('children', None)
     ... ], default=sklearn.preprocessing.StandardScaler())
-    >>> np.round(mapper4.fit_transform(data.copy()))
-    array([[ 1.,  0.,  0.,  4.,  2.],
-           [ 0.,  1.,  0.,  6., -1.],
-           [ 0.,  1.,  0.,  3.,  0.],
-           [ 0.,  0.,  1.,  3., -1.],
-           [ 1.,  0.,  0.,  2., -0.],
-           [ 0.,  1.,  0.,  3.,  1.],
-           [ 1.,  0.,  0.,  5., -0.],
-           [ 0.,  0.,  1.,  4., -1.]])
+    >>> np.round(mapper4.fit_transform(data.copy()), 1)
+    array([[ 1. ,  0. ,  0. ,  4. ,  2.3],
+           [ 0. ,  1. ,  0. ,  6. , -0.9],
+           [ 0. ,  1. ,  0. ,  3. ,  0.1],
+           [ 0. ,  0. ,  1. ,  3. , -0.7],
+           [ 1. ,  0. ,  0. ,  2. , -0.5],
+           [ 0. ,  1. ,  0. ,  3. ,  0.8],
+           [ 1. ,  0. ,  0. ,  5. , -0.3],
+           [ 0. ,  0. ,  1. ,  4. , -0.7]])
 
 Using ``default=False`` (the default) drops unselected columns. Using
 ``default=None`` pass the unselected columns unchanged.
+
+Feature selection and other supervised transformations
+******************************************************
+
+``DataFrameMapper`` supports transformers that require both X and y arguments. An example of this is feature selection. Treating the 'pet' column as the target, we will select the column that best predicts it.
+
+    >>> from sklearn.feature_selection import SelectKBest, chi2
+    >>> mapper_fs = DataFrameMapper([(['children','salary'], SelectKBest(chi2, k=1))])
+    >>> mapper_fs.fit_transform(data[['children','salary']], data['pet'])
+    array([[ 90.],
+           [ 24.],
+           [ 44.],
+           [ 27.],
+           [ 32.],
+           [ 59.],
+           [ 36.],
+           [ 27.]])
 
 Working with sparse features
 ****************************
