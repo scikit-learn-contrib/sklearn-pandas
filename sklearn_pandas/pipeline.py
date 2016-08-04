@@ -1,6 +1,8 @@
 import six
-from sklearn.pipeline import _name_estimators, Pipeline
+from sklearn.pipeline import Pipeline, FeatureUnion
 from sklearn.utils import tosequence
+
+from .utils import PassThroughTransformer, ColumnSelectTransformer
 
 
 def _call_fit(fit_method, X, y=None, **kwargs):
@@ -86,7 +88,52 @@ class TransformerPipeline(Pipeline):
                              Xt, y, **fit_params).transform(Xt)
 
 
-def make_transformer_pipeline(*steps):
-    """Construct a TransformerPipeline from the given estimators.
+def none_to_passthrough(transformer):
+    if transformer is None:
+        return PassThroughTransformer()
+    else:
+        return transformer
+
+
+def make_transformer_pipeline(column_name, transformers):
+    if not isinstance(transformers, list):
+        transformers = [transformers]
+    # transform None into PassThroughTransformer
+    transformers = [none_to_passthrough(t) for t in transformers]
+    column_name_str = column_name
+    if not isinstance(column_name_str, str):
+        column_name_str = str(column_name_str)
+    cst = ColumnSelectTransformer
+    selector = [('%s_selector' % column_name_str, cst(column_name))]
+    # turn extractor into a list for pipelining
+    extractor = [('%s_extractor_%d' % (column_name_str, idx), m)
+                 for idx, m in enumerate(transformers)]
+    pipeline_list = selector
+    if extractor is not None:
+        pipeline_list += extractor
+    # pipeline of selector followed by transformer
+    pipe = TransformerPipeline(pipeline_list)
+    return (column_name_str, pipe)
+
+
+def make_feature_union(mapping, n_jobs=1):
     """
-    return TransformerPipeline(_name_estimators(steps))
+    Create a FeatureUnion from the specified mapping.
+
+    Creates a FeatureUnion of TransformerPipelines that select the columns
+    given in the mapping as first step, then apply the specified transformers
+    sequentially.
+
+    :param mapping: a list of tuples where the first is the column name(s) and
+        the other is the transormation or list of transformation to apply.
+        See ``DataFrameMapper`` for more information.
+    :param n_jobs: number of jobs to run in parallel (default 1)
+    """
+    transformer_list = [make_transformer_pipeline(column_name, transformers)
+                        for column_name, transformers in mapping]
+
+    if transformer_list:  # at least one column to be transformed
+        feature_union = FeatureUnion(transformer_list, n_jobs=n_jobs)
+    else:  # case when no columns were selected, but specifying default
+        feature_union = None
+    return feature_union
