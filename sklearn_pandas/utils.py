@@ -50,4 +50,4 @@ class ColumnSelectTransformer(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X, y=None):
-        return X[self.column_name]
+        return X[self.column_name].values
