@@ -1,5 +1,8 @@
+import pandas as pd
 import pytest
-from sklearn_pandas.pipeline import TransformerPipeline, _call_fit
+
+from sklearn_pandas.pipeline import (
+    TransformerPipeline, _call_fit, make_feature_union, get_feature_names)
 
 # In py3, mock is included with the unittest standard library
 # In py2, it's a separate package
@@ -7,6 +10,11 @@ try:
     from unittest.mock import patch
 except ImportError:
     from mock import patch
+
+
+@pytest.fixture
+def df():
+    return pd.DataFrame({'a': [1, 2], 'b': [3, 4]})
 
 
 class NoTransformT(object):
@@ -98,3 +106,26 @@ def test_raises_type_error(mock_fit):
     """
     with pytest.raises(TypeError):
         _call_fit(Trans().fit, 'X', 'y', kwarg='kwarg')
+
+
+def test_make_feature_union_repeated_names(df):
+    mapping = [
+        ('a', None),
+        ('a', None)
+    ]
+    with pytest.raises(ValueError):
+        mapper = make_feature_union(mapping)
+
+
+def test_make_feature_union_repeated_names_custom_name(df):
+    mapping = [
+        ('a', None),
+        ('a', None, 'a_dupe')
+    ]
+    mapper = make_feature_union(mapping)
+
+
+def test_get_feature_names():
+    mapping = [(['a'], None), ('b', None, 'beta')]
+    names = get_feature_names(mapping)
+    assert names == ["['a']", 'beta']

@@ -355,3 +355,28 @@ def test_with_car_dataframe(cars_dataframe):
     labels = cars_dataframe["model"]
     scores = cross_val_score(pipeline, data, labels)
     assert scores.mean() > 0.30
+
+
+def test_get_params():
+    pipeline = Pipeline([
+        ("preprocess", DataFrameMapper([
+            ("description", CountVectorizer()),
+        ])),
+        ("classify", SVC(kernel='linear'))
+    ])
+    assert ('preprocess__description__countvectorizer__analyzer' in
+            pipeline.get_params())
+
+
+def test_set_params():
+    pipeline = Pipeline([
+        ("preprocess", DataFrameMapper([
+            ("description", CountVectorizer()),
+        ])),
+        ("classify", SVC(kernel='linear'))
+    ])
+    new_par = {'preprocess__description__countvectorizer__analyzer': 'another'}
+    pipeline.set_params(**new_par)
+    params = pipeline.get_params()
+    for k, v in new_par.items():
+        assert params[k] == v

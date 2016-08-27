@@ -132,3 +132,15 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
             stacked = np.hstack(extracted)
 
         return stacked
+
+    def get_params(self, deep=True):
+        base_params = super(DataFrameMapper, self).get_params(deep=False)
+        if not deep:
+            return base_params
+        else:
+            fu_params = self.pipeline.get_params(deep=True)
+            fu_params.update(base_params)
+            return fu_params
+
+    def set_params(self, **params):
+        return self.pipeline.set_params(**params)
