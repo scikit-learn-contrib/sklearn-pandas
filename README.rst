@@ -229,8 +229,8 @@ Sklearn-pandas' ``cross_val_score`` function provides exactly the same interface
 Changelog
 ---------
 
-Development
-***********
+1.2.0 (2016-10-02)
+******************
 
 * Deprecate custom cross-validation shim classes.
 * Require ``scikit-learn>=0.15.0``. Resolves #49.
