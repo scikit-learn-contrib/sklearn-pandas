@@ -1,5 +1,4 @@
 import pytest
-from pkg_resources import parse_version
 
 # In py3, mock is included with the unittest standard library
 # In py2, it's a separate package
@@ -11,10 +10,9 @@ except ImportError:
 from pandas import DataFrame
 import pandas as pd
 from scipy import sparse
-from sklearn import __version__ as sklearn_version
-from sklearn.cross_validation import cross_val_score as sklearn_cv_score
+from sklearn.cross_validation import cross_val_score
 from sklearn.datasets import load_iris
-from sklearn.pipeline import Pipeline
+from sklearn.pipeline import Pipeline, FeatureUnion
 from sklearn.svm import SVC
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.preprocessing import Imputer, StandardScaler, OneHotEncoder
@@ -24,9 +22,8 @@ import numpy as np
 from numpy.testing import assert_array_equal
 import pickle
 
-from sklearn_pandas import DataFrameMapper, cross_val_score
-from sklearn_pandas.dataframe_mapper import _handle_feature, _build_transformer
-from sklearn_pandas.pipeline import TransformerPipeline
+from sklearn_pandas.dataframe_mapper import DataFrameMapper
+from sklearn_pandas.utils import handle_feature
 
 
 class MockXTransformer(object):
@@ -77,38 +74,6 @@ def complex_dataframe():
                          'feat2': [1, 2, 3, 2, 3, 4]})
 
 
-def test_nonexistent_columns_explicit_fail(simple_dataframe):
-    """
-    If a nonexistent column is selected, KeyError is raised.
-    """
-    mapper = DataFrameMapper(None)
-    with pytest.raises(KeyError):
-        mapper._get_col_subset(simple_dataframe, ['nonexistent_feature'])
-
-
-def test_get_col_subset_single_column_array(simple_dataframe):
-    """
-    Selecting a single column should return a 1-dimensional numpy array.
-    """
-    mapper = DataFrameMapper(None)
-    array = mapper._get_col_subset(simple_dataframe, "a")
-
-    assert type(array) == np.ndarray
-    assert array.shape == (len(simple_dataframe["a"]),)
-
-
-def test_get_col_subset_single_column_list(simple_dataframe):
-    """
-    Selecting a list of columns (even if the list contains a single element)
-    should return a 2-dimensional numpy array.
-    """
-    mapper = DataFrameMapper(None)
-    array = mapper._get_col_subset(simple_dataframe, ["a"])
-
-    assert type(array) == np.ndarray
-    assert array.shape == (len(simple_dataframe["a"]), 1)
-
-
 def test_cols_string_array(simple_dataframe):
     """
     If an string specified as the columns, the transformer
@@ -144,7 +109,7 @@ def test_handle_feature_2dim():
     2-dimensional arrays are returned unchanged.
     """
     array = np.array([[1, 2], [3, 4]])
-    assert_array_equal(_handle_feature(array), array)
+    assert_array_equal(handle_feature(array), array)
 
 
 def test_handle_feature_1dim():
@@ -152,19 +117,7 @@ def test_handle_feature_1dim():
     1-dimensional arrays are converted to 2-dimensional column vectors.
     """
     array = np.array([1, 2])
-    assert_array_equal(_handle_feature(array), np.array([[1], [2]]))
-
-
-def test_build_transformers():
-    """
-    When a list of transformers is passed, return a pipeline with
-    each element of the iterable as a step of the pipeline.
-    """
-    transformers = [MockTClassifier(), MockTClassifier()]
-    pipeline = _build_transformer(transformers)
-    assert isinstance(pipeline, Pipeline)
-    for ix, transformer in enumerate(transformers):
-        assert pipeline.steps[ix][1] == transformer
+    assert_array_equal(handle_feature(array), np.array([[1], [2]]))
 
 
 def test_selected_columns():
@@ -228,7 +181,7 @@ def test_default_transformer():
     mapper = DataFrameMapper([], default=Imputer())
 
     transformed = mapper.fit_transform(df)
-    assert (transformed[: 0] == np.array([1., 2., 3.])).all()
+    assert (transformed[:0] == np.array([1., 2., 3.])).all()
 
 
 def test_list_transformers_single_arg(simple_dataframe):
@@ -264,15 +217,23 @@ def test_list_transformers():
 
 
 def test_list_transformers_old_unpickle(simple_dataframe):
-    mapper = DataFrameMapper(None)
+    mapper = DataFrameMapper([('a', [MockXTransformer()])])
     # simulate the mapper was created with < 1.0.0 code
     mapper.features = [('a', [MockXTransformer()])]
     mapper_pickled = pickle.dumps(mapper)
 
     loaded_mapper = pickle.loads(mapper_pickled)
-    transformer = loaded_mapper.features[0][1]
-    assert isinstance(transformer, TransformerPipeline)
-    assert isinstance(transformer.steps[0][1], MockXTransformer)
+    assert isinstance(loaded_mapper.pipeline, FeatureUnion)
+
+
+def test_list_transformers_nofeatunion_unpickle(simple_dataframe):
+    mapper = DataFrameMapper([('a', [MockXTransformer()])])
+    # simulate the mapper was created with < 1.0.0 code
+    del mapper.pipeline
+    mapper_pickled = pickle.dumps(mapper)
+
+    loaded_mapper = pickle.loads(mapper_pickled)
+    assert isinstance(loaded_mapper.pipeline, FeatureUnion)
 
 
 def test_default_old_unpickle(simple_dataframe):
@@ -396,23 +357,26 @@ def test_with_car_dataframe(cars_dataframe):
     assert scores.mean() > 0.30
 
 
-@pytest.mark.skipIf(parse_version(sklearn_version) < parse_version('0.16'))
-def test_direct_cross_validation(iris_dataframe):
-    """
-    Starting with sklearn>=0.16.0 we no longer need CV wrappers for dataframes.
-    See https://github.com/paulgb/sklearn-pandas/issues/11
-    """
+def test_get_params():
     pipeline = Pipeline([
         ("preprocess", DataFrameMapper([
-            ("petal length (cm)", None),
-            ("petal width (cm)", None),
-            ("sepal length (cm)", None),
-            ("sepal width (cm)", None),
+            ("description", CountVectorizer()),
         ])),
         ("classify", SVC(kernel='linear'))
     ])
-    data = iris_dataframe.drop("species", axis=1)
-    labels = iris_dataframe["species"]
-    scores = sklearn_cv_score(pipeline, data, labels)
-    assert scores.mean() > 0.96
-    assert (scores.std() * 2) < 0.04
+    assert ('preprocess__description__countvectorizer__analyzer' in
+            pipeline.get_params())
+
+
+def test_set_params():
+    pipeline = Pipeline([
+        ("preprocess", DataFrameMapper([
+            ("description", CountVectorizer()),
+        ])),
+        ("classify", SVC(kernel='linear'))
+    ])
+    new_par = {'preprocess__description__countvectorizer__analyzer': 'another'}
+    pipeline.set_params(**new_par)
+    params = pipeline.get_params()
+    for k, v in new_par.items():
+        assert params[k] == v

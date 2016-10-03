@@ -1,30 +1,13 @@
 import sys
-import pandas as pd
 import numpy as np
 from scipy import sparse
 from sklearn.base import BaseEstimator, TransformerMixin
 
-from .cross_validation import DataWrapper
-from .pipeline import make_transformer_pipeline, _call_fit
+from .pipeline import make_feature_union
+from .utils import handle_feature
 
 # load in the correct stringtype: str for py3, basestring for py2
 string_types = str if sys.version_info >= (3, 0) else basestring
-
-
-def _handle_feature(fea):
-    """
-    Convert 1-dimensional arrays to 2-dimensional column vectors.
-    """
-    if len(fea.shape) == 1:
-        fea = np.array([fea]).T
-
-    return fea
-
-
-def _build_transformer(transformers):
-    if isinstance(transformers, list):
-        transformers = make_transformer_pipeline(*transformers)
-    return transformers
 
 
 class DataFrameMapper(BaseEstimator, TransformerMixin):
@@ -51,11 +34,9 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         sparse      will return sparse matrix if set True and any of the
                     extracted features is sparse. Defaults to False.
         """
-        if isinstance(features, list):
-            features = [(columns, _build_transformer(transformers))
-                        for (columns, transformers) in features]
+        self.pipeline = make_feature_union(features)
         self.features = features
-        self.default = _build_transformer(default)
+        self.default = default
         self.sparse = sparse
 
     @property
@@ -86,44 +67,18 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
                 column not in self._selected_columns]
 
     def __setstate__(self, state):
+        self.features = state['features']
+
+        # compatibility for pickles before FeatureUnion
+        self.pipeline = state.get('pipeline',
+                                  make_feature_union(state['features']))
+
         # compatibility shim for pickles created with sklearn-pandas<1.0.0
-        self.features = [(columns, _build_transformer(transformers))
-                         for (columns, transformers) in state['features']]
         self.sparse = state.get('sparse', False)
 
         # compatibility shim for pickles created before ``default`` init
         # argument existed
         self.default = state.get('default', False)
-
-    def _get_col_subset(self, X, cols):
-        """
-        Get a subset of columns from the given table X.
-
-        X       a Pandas dataframe; the table to select columns from
-        cols    a string or list of strings representing the columns
-                to select
-
-        Returns a numpy array with the data from the selected columns
-        """
-        return_vector = False
-        if isinstance(cols, string_types):
-            return_vector = True
-            cols = [cols]
-
-        if isinstance(X, list):
-            X = [x[cols] for x in X]
-            X = pd.DataFrame(X)
-
-        elif isinstance(X, DataWrapper):
-            # if it's a datawrapper, unwrap it
-            X = X.df
-
-        if return_vector:
-            t = X[cols[0]].values
-        else:
-            t = X[cols].values
-
-        return t
 
     def fit(self, X, y=None):
         """
@@ -134,15 +89,15 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         y       the target vector relative to X, optional
 
         """
-        for columns, transformers in self.features:
-            if transformers is not None:
-                _call_fit(transformers.fit,
-                          self._get_col_subset(X, columns), y)
+        if self.pipeline is not None:
+            self.pipeline.fit(X, y)
 
         # handle features not explicitly selected
-        if self.default:  # not False and not None
-            _call_fit(self.default.fit,
-                      self._get_col_subset(X, self._unselected_columns(X)), y)
+        if self.default is not False:
+            # build JIT pipeline
+            default_features = [(self._unselected_columns(X), self.default)]
+            self.default_pipeline = make_feature_union(default_features)
+            self.default_pipeline.fit(X, y)
         return self
 
     def transform(self, X):
@@ -152,22 +107,13 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         X       the data to transform
         """
         extracted = []
-        for columns, transformers in self.features:
-            # columns could be a string or list of
-            # strings; we don't care because pandas
-            # will handle either.
-            Xt = self._get_col_subset(X, columns)
-            if transformers is not None:
-                Xt = transformers.transform(Xt)
-            extracted.append(_handle_feature(Xt))
+        if self.pipeline is not None:  # some columns selected
+            extracted.append(handle_feature(self.pipeline.transform(X)))
 
         # handle features not explicitly selected
         if self.default is not False:
-            Xt = self._get_col_subset(X, self._unselected_columns(X))
-            if self.default is not None:
-                Xt = self.default.transform(Xt)
-            extracted.append(_handle_feature(Xt))
-
+            Xt = self.default_pipeline.transform(X)
+            extracted.append(handle_feature(Xt))
 
         # combine the feature outputs into one array.
         # at this point we lose track of which features
@@ -186,3 +132,15 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
             stacked = np.hstack(extracted)
 
         return stacked
+
+    def get_params(self, deep=True):
+        base_params = super(DataFrameMapper, self).get_params(deep=False)
+        if not deep:
+            return base_params
+        else:
+            fu_params = self.pipeline.get_params(deep=True)
+            fu_params.update(base_params)
+            return fu_params
+
+    def set_params(self, **params):
+        return self.pipeline.set_params(**params)

@@ -4,10 +4,7 @@ Sklearn-pandas
 
 This module provides a bridge between `Scikit-Learn <http://scikit-learn.org/stable/>`__'s machine learning methods and `pandas <http://pandas.pydata.org/>`__-style Data Frames.
 
-In particular, it provides:
-
-1. A way to map ``DataFrame`` columns to transformations, which are later recombined into features.
-2. A compatibility shim for old ``scikit-learn`` versions to cross-validate a pipeline that takes a pandas ``DataFrame`` as input. This is only needed for ``scikit-learn<0.16.0`` (see `#11 <https://github.com/paulgb/sklearn-pandas/issues/11>`__ for details). It is deprecated and will likely be dropped in ``skearn-pandas==2.0``.
+In particular, it provides a way to map ``DataFrame`` columns to transformations, which are later recombined into features.
 
 Installation
 ------------
@@ -29,14 +26,9 @@ Usage
 Import
 ******
 
-Import what you need from the ``sklearn_pandas`` package. The choices are:
+Import what you need from the ``sklearn_pandas`` package::
 
-* ``DataFrameMapper``, a class for mapping pandas data frame columns to different sklearn transformations
-* ``cross_val_score``, similar to ``sklearn.cross_validation.cross_val_score`` but working on pandas DataFrames
-
-For this demonstration, we will import both::
-
-    >>> from sklearn_pandas import DataFrameMapper, cross_val_score
+    >>> from sklearn_pandas import DataFrameMapper
 
 For these examples, we'll also use pandas, numpy, and sklearn::
 
@@ -210,21 +202,6 @@ Working with sparse features
 
 The stacking of the sparse features is done without ever densifying them.
 
-Cross-Validation
-----------------
-
-Now that we can combine features from pandas DataFrames, we may want to use cross-validation to see whether our model works. ``scikit-learn<0.16.0`` provided features for cross-validation, but they expect numpy data structures and won't work with ``DataFrameMapper``.
-
-To get around this, sklearn-pandas provides a wrapper on sklearn's ``cross_val_score`` function which passes a pandas DataFrame to the estimator rather than a numpy array::
-
-    >>> pipe = sklearn.pipeline.Pipeline([
-    ...     ('featurize', mapper),
-    ...     ('lm', sklearn.linear_model.LinearRegression())])
-    >>> np.round(cross_val_score(pipe, data.copy(), data.salary, 'r2'), 2)
-    array([ -1.09,  -5.3 , -15.38])
-
-Sklearn-pandas' ``cross_val_score`` function provides exactly the same interface as sklearn's function of the same name.
-
 
 Changelog
 ---------
@@ -238,6 +215,10 @@ Changelog
   the mapper. Resolves #55.
 * Allow specifying an optional ``y`` argument during transform for
   supervised transformations. Resolves #58.
+* Use ``FeatureUnion``s with column selector transformers to perform transformations
+  instead of custom code. This allows tuning the transformers hyper-parameters during
+  grid search and transformation using multiple jobs. Resolves #61.
+* Remove deprecated cross_validation compatibility classes and methods.
 
 
 1.1.0 (2015-12-06)
@@ -278,3 +259,4 @@ Other contributors:
 * Zac Stewart
 * Olivier Grisel
 * Vitaley Zaretskey
+* chanansh

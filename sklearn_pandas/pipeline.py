@@ -1,6 +1,9 @@
 import six
-from sklearn.pipeline import _name_estimators, Pipeline
+import collections
+from sklearn.pipeline import Pipeline, FeatureUnion, _name_estimators
 from sklearn.utils import tosequence
+
+from .utils import PassThroughTransformer, ColumnSelectTransformer
 
 
 def _call_fit(fit_method, X, y=None, **kwargs):
@@ -56,6 +59,12 @@ class TransformerPipeline(Pipeline):
                             "'%s' (type %s) doesn't)"
                             % (estimator, type(estimator)))
 
+    # needed for compatibility with sklearn<=0.16, that doesn't have
+    # this property defined
+    @property
+    def named_steps(self):
+        return dict(self.steps)
+
     def _pre_transform(self, X, y=None, **fit_params):
         fit_params_steps = dict((step, {}) for step, _ in self.steps)
         for pname, pval in six.iteritems(fit_params):
@@ -86,7 +95,64 @@ class TransformerPipeline(Pipeline):
                              Xt, y, **fit_params).transform(Xt)
 
 
-def make_transformer_pipeline(*steps):
-    """Construct a TransformerPipeline from the given estimators.
+def make_transformer_pipeline(feature_selector, transformers, feature_name):
+    if not isinstance(transformers, list):
+        transformers = [transformers]
+    # transform None into PassThroughTransformer
+    transformers = [PassThroughTransformer() if t is None else t
+                    for t in transformers]
+    cst = ColumnSelectTransformer
+    selector = [('selector', cst(feature_selector))]
+    # pipeline of selector followed by transformer
+    pipe = TransformerPipeline(selector + _name_estimators(transformers))
+    return (feature_name, pipe)
+
+
+def make_feature_union(mapping, n_jobs=1):
     """
-    return TransformerPipeline(_name_estimators(steps))
+    Create a FeatureUnion from the specified mapping.
+
+    Creates a FeatureUnion of TransformerPipelines that select the columns
+    given in the mapping as first step, then apply the specified transformers
+    sequentially.
+
+    :param mapping: a list of tuples where the first is the column name(s) and
+        the other is the transormation or list of transformation to apply.
+        See ``DataFrameMapper`` for more information.
+    :param n_jobs: number of jobs to run in parallel (default 1)
+    """
+    feature_names = get_feature_names(mapping)
+    # repeated feature names are not allowed, since they collide when
+    # doing set_params()
+    dupe_feat_names = [item for item, count in
+                       collections.Counter(feature_names).items() if count > 1]
+    if len(dupe_feat_names):
+        raise ValueError(
+            'Duplicated feature column names found: {}. Please '
+            'provide custom feature names to '
+            'disambiguate.'.format(dupe_feat_names))
+
+    feature_selectors = [el[0] for el in mapping]
+    transformers = [el[1] for el in mapping]
+    transformer_pipes = [
+        make_transformer_pipeline(feature_selector, transformers, feature_name)
+        for feature_selector, transformers, feature_name in
+        zip(feature_selectors, transformers, feature_names)]
+
+    if transformer_pipes:  # at least one column to be transformed
+        feature_union = FeatureUnion(transformer_pipes, n_jobs=n_jobs)
+    else:  # case when no columns were selected, but specifying default
+        feature_union = None
+    return feature_union
+
+
+def get_feature_names(mapping):
+    """
+    Derive feature names from given feature definition mapping.
+
+    By default, it takes the string representation of selected column(s) names,
+    but a custom name can be provided as the third argument of the feature
+    definition tuple.
+    """
+    return [feat_def[2] if len(feat_def) == 3 else str(feat_def[0])
+            for feat_def in mapping]
