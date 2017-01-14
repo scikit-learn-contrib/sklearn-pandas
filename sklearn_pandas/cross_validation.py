@@ -1,6 +1,12 @@
 import warnings
-from sklearn import cross_validation
-from sklearn import grid_search
+try:
+    from sklearn.model_selection import cross_val_score as sk_cross_val_score
+    from sklearn.model_selection import GridSearchCV as SKGridSearchCV
+    from sklearn.model_selection import RandomizedSearchCV as SKRandomizedSearchCV
+except ImportError:
+    from sklearn.cross_validation import cross_val_score as sk_cross_val_score
+    from sklearn.grid_search import GridSearchCV as SKGridSearchCV
+    from sklearn.grid_search import RandomizedSearchCV as SKRandomizedSearchCV
 
 DEPRECATION_MSG = '''
     Custom cross-validation compatibility shims are no longer needed for
@@ -11,10 +17,10 @@ DEPRECATION_MSG = '''
 def cross_val_score(model, X, *args, **kwargs):
     warnings.warn(DEPRECATION_MSG, DeprecationWarning)
     X = DataWrapper(X)
-    return cross_validation.cross_val_score(model, X, *args, **kwargs)
+    return sk_cross_val_score(model, X, *args, **kwargs)
 
 
-class GridSearchCV(grid_search.GridSearchCV):
+class GridSearchCV(SKGridSearchCV):
     def __init__(self, *args, **kwargs):
         warnings.warn(DEPRECATION_MSG, DeprecationWarning)
         super(GridSearchCV, self).__init__(*args, **kwargs)
@@ -27,7 +33,7 @@ class GridSearchCV(grid_search.GridSearchCV):
 
 
 try:
-    class RandomizedSearchCV(grid_search.RandomizedSearchCV):
+    class RandomizedSearchCV(SKRandomizedSearchCV):
         def __init__(self, *args, **kwargs):
             warnings.warn(DEPRECATION_MSG, DeprecationWarning)
             super(RandomizedSearchCV, self).__init__(*args, **kwargs)

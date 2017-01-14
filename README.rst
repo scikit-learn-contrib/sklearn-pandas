@@ -220,7 +220,7 @@ To get around this, sklearn-pandas provides a wrapper on sklearn's ``cross_val_s
     >>> pipe = sklearn.pipeline.Pipeline([
     ...     ('featurize', mapper),
     ...     ('lm', sklearn.linear_model.LinearRegression())])
-    >>> np.round(cross_val_score(pipe, data.copy(), data.salary, 'r2'), 2)
+    >>> np.round(cross_val_score(pipe, X=data.copy(), y=data.salary, scoring='r2'), 2)
     array([ -1.09,  -5.3 , -15.38])
 
 Sklearn-pandas' ``cross_val_score`` function provides exactly the same interface as sklearn's function of the same name.
