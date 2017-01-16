@@ -252,6 +252,13 @@ Sklearn-pandas' ``cross_val_score`` function provides exactly the same interface
 Changelog
 ---------
 
+Development
+***********
+
+* Make the mapper return dataframes when ``df_out=True`` (#70).
+* Update imports to avoid deprecation warnings in sklearn 0.18 (#68).
+
+
 1.2.0 (2016-10-02)
 ******************
 
@@ -295,9 +302,10 @@ The code for ``DataFrameMapper`` is based on code originally written by `Ben Ham
 
 Other contributors:
 
-* Paul Butler
 * Cal Paterson
 * Israel Saeta Pérez
-* Zac Stewart
+* Jeremy Howard
 * Olivier Grisel
+* Paul Butler
 * Vitaley Zaretskey
+* Zac Stewart
