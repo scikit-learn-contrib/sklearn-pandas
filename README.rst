@@ -102,6 +102,29 @@ Now that the transformation is trained, we confirm that it works on new data::
     >>> np.round(mapper.transform(sample), 2)
     array([[ 1.  ,  0.  ,  0.  ,  1.04]])
 
+
+Outputting a dataframe
+**********************
+
+By default the output of the dataframe mapper is a numpy array. This is so because most sklearn estimators expect a numpy array as input. If however we want the output of the mapper to be a dataframe, we can do so using the parameter ``df_out`` when creating the mapper::
+
+    >>> mapper_df = DataFrameMapper([
+    ...     ('pet', sklearn.preprocessing.LabelBinarizer()),
+    ...     (['children'], sklearn.preprocessing.StandardScaler())
+    ... ], df_out=True)
+    >>> np.round(mapper_df.fit_transform(data.copy()), 2)
+       pet_cat  pet_dog  pet_fish  children
+    0      1.0      0.0       0.0      0.21
+    1      0.0      1.0       0.0      1.88
+    2      0.0      1.0       0.0     -0.63
+    3      0.0      0.0       1.0     -0.63
+    4      1.0      0.0       0.0     -1.46
+    5      0.0      1.0       0.0     -0.63
+    6      1.0      0.0       0.0      1.04
+    7      0.0      0.0       1.0      0.21
+
+Note this does not work together with the ``default=True`` or ``sparse=True`` arguments to the mapper.
+
 Transform Multiple Columns
 **************************
 
