@@ -27,6 +27,10 @@ def _build_transformer(transformers):
     return transformers
 
 
+def _sparse_to_dense(extracted):
+    return [x.toarray() if sparse.issparse(x) else x for x in extracted]
+
+
 class DataFrameMapper(BaseEstimator, TransformerMixin):
     """
     Map Pandas data frame column subsets to their own
@@ -176,13 +180,12 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
 
         # If any of the extracted features is sparse, combine sparsely.
         # Otherwise, combine as normal arrays.
-        if any(sparse.issparse(fea) for fea in extracted):
-            stacked = sparse.hstack(extracted).tocsr()
-            # return a sparse matrix only if the mapper was initialized
-            # with sparse=True
-            if not self.sparse:
-                stacked = stacked.toarray()
+        if self.sparse:
+            if any(sparse.issparse(fea) for fea in extracted):
+                # fails if array in extracted has dtype=object
+                return sparse.hstack(extracted).tocsr()
+            else:
+                # convert to sparse
+                return sparse.csr_matrix(np.hstack(extracted))
         else:
-            stacked = np.hstack(extracted)
-
-        return stacked
+            return np.hstack(_sparse_to_dense(extracted))
