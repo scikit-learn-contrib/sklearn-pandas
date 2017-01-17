@@ -33,7 +33,7 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
     sklearn transformation.
     """
 
-    def __init__(self, features, default=False, sparse=False):
+    def __init__(self, features, default=False, sparse=False, df_out=False):
         """
         Params:
 
@@ -50,6 +50,13 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
 
         sparse      will return sparse matrix if set True and any of the
                     extracted features is sparse. Defaults to False.
+
+        df_out      return a pandas data frame, with each column named using
+                    the pandas column that created it (if there's only one
+                    input and output) or the input columns joined with '_'
+                    if there's multiple inputs, and the name concatenated with
+                    '_1', '_2' etc if there's multiple outputs. NB: does not
+                    work if *default* or *sparse* are true
         """
         if isinstance(features, list):
             features = [(columns, _build_transformer(transformers))
@@ -57,6 +64,9 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         self.features = features
         self.default = _build_transformer(default)
         self.sparse = sparse
+        self.df_out = df_out
+        if (df_out and (sparse or default)):
+            raise ValueError("Can not use df_out with sparse or default")
 
     @property
     def _selected_columns(self):
@@ -94,6 +104,7 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         # compatibility shim for pickles created before ``default`` init
         # argument existed
         self.default = state.get('default', False)
+        self.df_out = state.get('df_out', False)
 
     def _get_col_subset(self, X, cols):
         """
@@ -145,6 +156,18 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
                       self._get_col_subset(X, self._unselected_columns(X)), y)
         return self
 
+
+    def get_names(self, c, t, x):
+        if type(c)==list:
+            c = '_'.join(c)
+        if hasattr(t, 'classes_') and (len(t.classes_)>2):
+            return [c + '_' + o for o in t.classes_]
+        elif len(x.shape)>1 and x.shape[1]>1:
+            return [c + '_' + str(o) for o in range(x.shape[1])]
+        else:
+            return [c]
+
+
     def transform(self, X):
         """
         Transform the given data. Assumes that fit has already been called.
@@ -152,6 +175,7 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         X       the data to transform
         """
         extracted = []
+        index = []
         for columns, transformers in self.features:
             # columns could be a string or list of
             # strings; we don't care because pandas
@@ -160,10 +184,13 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
             if transformers is not None:
                 Xt = transformers.transform(Xt)
             extracted.append(_handle_feature(Xt))
+            if self.df_out:
+                index = index + self.get_names(columns, transformers, Xt)
 
         # handle features not explicitly selected
         if self.default is not False:
-            Xt = self._get_col_subset(X, self._unselected_columns(X))
+            unsel_cols = self._unselected_columns(X)
+            Xt = self._get_col_subset(X, unsel_cols)
             if self.default is not None:
                 Xt = self.default.transform(Xt)
             extracted.append(_handle_feature(Xt))
@@ -185,4 +212,7 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         else:
             stacked = np.hstack(extracted)
 
-        return stacked
+        if not self.df_out:
+            return stacked
+
+        return pd.DataFrame(stacked, columns=index)

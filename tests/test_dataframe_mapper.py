@@ -17,9 +17,11 @@ from sklearn.datasets import load_iris
 from sklearn.pipeline import Pipeline
 from sklearn.svm import SVC
 from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.preprocessing import Imputer, StandardScaler, OneHotEncoder
+from sklearn.preprocessing import (
+    Imputer, StandardScaler, OneHotEncoder, LabelBinarizer)
 from sklearn.feature_selection import SelectKBest, chi2
 from sklearn.base import BaseEstimator, TransformerMixin
+import sklearn.decomposition
 import numpy as np
 from numpy.testing import assert_array_equal
 import pickle
@@ -75,6 +77,85 @@ def complex_dataframe():
     return pd.DataFrame({'target': ['a', 'a', 'a', 'b', 'b', 'b'],
                          'feat1': [1, 2, 3, 4, 5, 6],
                          'feat2': [1, 2, 3, 2, 3, 4]})
+
+
+def test_simple_df(simple_dataframe):
+    """
+    Get a dataframe from a simple mapped dataframe
+    """
+    df = simple_dataframe
+    mapper = DataFrameMapper([('a', None)], df_out=True)
+    transformed = mapper.fit_transform(df)
+    assert type(transformed) == pd.DataFrame
+    assert len(transformed["a"]) == len(simple_dataframe["a"])
+
+
+def test_complex_df(complex_dataframe):
+    """
+    Get a dataframe from a complex mapped dataframe
+    """
+    df = complex_dataframe
+    mapper = DataFrameMapper(
+        [('target', None), ('feat1', None), ('feat2', None)],
+        df_out=True)
+    transformed = mapper.fit_transform(df)
+    assert len(transformed) == len(complex_dataframe)
+    for c in df.columns:
+        assert len(transformed[c]) == len(df[c])
+
+
+def test_binarizer_df():
+    """
+    Check level names from LabelBinarizer
+    """
+    df = pd.DataFrame({'target': ['a', 'a', 'b', 'b', 'c', 'a']})
+    mapper = DataFrameMapper([('target', LabelBinarizer())], df_out=True)
+    transformed = mapper.fit_transform(df)
+    cols = transformed.columns
+    assert len(cols) == 3
+    assert cols[0] == 'target_a'
+    assert cols[1] == 'target_b'
+    assert cols[2] == 'target_c'
+
+
+def test_binarizer2_df():
+    """
+    Check level names from LabelBinarizer with just one output column
+    """
+    df = pd.DataFrame({'target': ['a', 'a', 'b', 'b', 'a']})
+    mapper = DataFrameMapper([('target', LabelBinarizer())], df_out=True)
+    transformed = mapper.fit_transform(df)
+    cols = transformed.columns
+    assert len(cols) == 1
+    assert cols[0] == 'target'
+
+
+def test_onehot_df():
+    """
+    Check level ids from one-hot
+    """
+    df = pd.DataFrame({'target': [0, 0, 1, 1, 2, 3, 0]})
+    mapper = DataFrameMapper([(['target'], OneHotEncoder())], df_out=True)
+    transformed = mapper.fit_transform(df)
+    cols = transformed.columns
+    assert len(cols) == 4
+    assert cols[0] == 'target_0'
+    assert cols[3] == 'target_3'
+
+
+def test_pca(complex_dataframe):
+    """
+    Check multi in and out with PCA
+    """
+    df = complex_dataframe
+    mapper = DataFrameMapper(
+        [(['feat1', 'feat2'], sklearn.decomposition.PCA(2))],
+        df_out=True)
+    transformed = mapper.fit_transform(df)
+    cols = transformed.columns
+    assert len(cols) == 2
+    assert cols[0] == 'feat1_feat2_0'
+    assert cols[1] == 'feat1_feat2_1'
 
 
 def test_nonexistent_columns_explicit_fail(simple_dataframe):
