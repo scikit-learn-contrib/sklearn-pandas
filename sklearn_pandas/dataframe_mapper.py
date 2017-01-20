@@ -158,12 +158,24 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
 
 
     def get_names(self, c, t, x):
-        if type(c)==list:
+        """
+        Return verbose names for the transformed columns.
+
+        c       name (or list of names) of the original column(s)
+        t       transformer
+        x       transformed columns (numpy.ndarray)
+        """
+        if isinstance(c, list):
             c = '_'.join(c)
-        if hasattr(t, 'classes_') and (len(t.classes_)>2):
-            return [c + '_' + o for o in t.classes_]
-        elif len(x.shape)>1 and x.shape[1]>1:
-            return [c + '_' + str(o) for o in range(x.shape[1])]
+        num_cols = x.shape[1] if len(x.shape) > 1 else 1
+        if num_cols > 1:
+            # If there are as many columns as classes,
+            # infer column names from classes names.
+            if hasattr(t, 'classes_') and (len(t.classes_) == num_cols):
+                return [c + '_' + str(o) for o in t.classes_]
+            # otherwise, return name concatenated with '_1', '_2', etc.
+            else:
+                return [c + '_' + str(o) for o in range(num_cols)]
         else:
             return [c]
 
