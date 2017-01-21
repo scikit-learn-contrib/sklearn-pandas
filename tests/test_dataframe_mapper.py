@@ -70,7 +70,7 @@ class ToSparseTransformer(BaseEstimator, TransformerMixin):
 class CustomTransformer(BaseEstimator, TransformerMixin):
     """
     Example of transformer in which the number of classes
-    is not equals to the number of output columns.
+    is not equal to the number of output columns.
     """
     def fit(self, X, y=None):
         self.min = X.min()
@@ -177,7 +177,7 @@ def test_onehot_df():
 def test_customtransform_df():
     """
     Check level ids from a transformer in which
-    the number of classes is not equals to the number of output columns.
+    the number of classes is not equal to the number of output columns.
     """
     df = pd.DataFrame({'target': [6, 5, 7, 5, 4, 8, 8]})
     mapper = DataFrameMapper([(['target'], CustomTransformer())], df_out=True)
