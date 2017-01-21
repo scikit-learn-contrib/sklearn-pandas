@@ -67,6 +67,23 @@ class ToSparseTransformer(BaseEstimator, TransformerMixin):
         return sparse.csr_matrix(X)
 
 
+class CustomTransformer(BaseEstimator, TransformerMixin):
+    """
+    Example of transformer in which the number of classes
+    is not equals to the number of output columns.
+    """
+    def fit(self, X, y=None):
+        self.min = X.min()
+        self.classes_ = np.unique(X)
+        return self
+
+    def transform(self, X):
+        classes = np.unique(X)
+        if len(np.setdiff1d(classes, self.classes_)) > 0:
+            raise ValueError('Unknown values found.')
+        return X - self.min
+
+
 @pytest.fixture
 def simple_dataframe():
     return pd.DataFrame({'a': [1, 2, 3]})
@@ -118,6 +135,20 @@ def test_binarizer_df():
     assert cols[2] == 'target_c'
 
 
+def test_binarizer_int_df():
+    """
+    Check level names from LabelBinarizer for a numeric array.
+    """
+    df = pd.DataFrame({'target': [5, 5, 6, 6, 7, 5]})
+    mapper = DataFrameMapper([('target', LabelBinarizer())], df_out=True)
+    transformed = mapper.fit_transform(df)
+    cols = transformed.columns
+    assert len(cols) == 3
+    assert cols[0] == 'target_5'
+    assert cols[1] == 'target_6'
+    assert cols[2] == 'target_7'
+
+
 def test_binarizer2_df():
     """
     Check level names from LabelBinarizer with just one output column
@@ -141,6 +172,20 @@ def test_onehot_df():
     assert len(cols) == 4
     assert cols[0] == 'target_0'
     assert cols[3] == 'target_3'
+
+
+def test_customtransform_df():
+    """
+    Check level ids from a transformer in which
+    the number of classes is not equals to the number of output columns.
+    """
+    df = pd.DataFrame({'target': [6, 5, 7, 5, 4, 8, 8]})
+    mapper = DataFrameMapper([(['target'], CustomTransformer())], df_out=True)
+    transformed = mapper.fit_transform(df)
+    cols = transformed.columns
+    assert len(mapper.features[0][1].classes_) == 5
+    assert len(cols) == 1
+    assert cols[0] == 'target'
 
 
 def test_pca(complex_dataframe):
