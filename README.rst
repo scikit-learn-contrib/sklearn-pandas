@@ -252,8 +252,8 @@ Sklearn-pandas' ``cross_val_score`` function provides exactly the same interface
 Changelog
 ---------
 
-Development
-***********
+1.3.0 (2017-01-21)
+******************
 
 * Make the mapper return dataframes when ``df_out=True`` (#70, #74).
 * Update imports to avoid deprecation warnings in sklearn 0.18 (#68).
