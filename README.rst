@@ -255,7 +255,7 @@ Changelog
 Development
 ***********
 
-* Make the mapper return dataframes when ``df_out=True`` (#70).
+* Make the mapper return dataframes when ``df_out=True`` (#70, #74).
 * Update imports to avoid deprecation warnings in sklearn 0.18 (#68).
 
 
@@ -302,6 +302,7 @@ The code for ``DataFrameMapper`` is based on code originally written by `Ben Ham
 
 Other contributors:
 
+* Arnau Gil Amat
 * Cal Paterson
 * Israel Saeta Pérez
 * Jeremy Howard
