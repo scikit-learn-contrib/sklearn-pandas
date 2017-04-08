@@ -8,6 +8,7 @@ In particular, it provides:
 
 1. A way to map ``DataFrame`` columns to transformations, which are later recombined into features.
 2. A compatibility shim for old ``scikit-learn`` versions to cross-validate a pipeline that takes a pandas ``DataFrame`` as input. This is only needed for ``scikit-learn<0.16.0`` (see `#11 <https://github.com/paulgb/sklearn-pandas/issues/11>`__ for details). It is deprecated and will likely be dropped in ``skearn-pandas==2.0``.
+3. A ``CategoricalImputer`` that replaces null-like values with the mode and works with string columns.
 
 Installation
 ------------
@@ -249,7 +250,7 @@ Working with sparse features
 The stacking of the sparse features is done without ever densifying them.
 
 Cross-Validation
-----------------
+****************
 
 Now that we can combine features from pandas DataFrames, we may want to use cross-validation to see whether our model works. ``scikit-learn<0.16.0`` provided features for cross-validation, but they expect numpy data structures and won't work with ``DataFrameMapper``.
 
@@ -263,6 +264,22 @@ To get around this, sklearn-pandas provides a wrapper on sklearn's ``cross_val_s
 
 Sklearn-pandas' ``cross_val_score`` function provides exactly the same interface as sklearn's function of the same name.
 
+``CategoricalImputer``
+**********************
+
+Since the ``scikit-learn``  ``Imputer`` transformer currently only works with
+numbers, ``sklearn-pandas`` provides an equivalent helper transformer that do
+work with strings, substituting null values with the most frequent value in
+that column.
+
+Example:
+
+    >>> from sklearn_pandas import CategoricalImputer
+    >>> data = np.array(['a', 'b', 'b', np.nan], dtype=object)
+    >>> imputer = CategoricalImputer()
+    >>> imputer.fit_transform(data)
+    array(['a', 'b', 'b', 'b'], dtype=object)
+
 
 Changelog
 ---------
@@ -270,6 +287,8 @@ Changelog
 Development
 ***********
 * Capture output columns generated names in ``transformed_names_`` attribute (#78).
+* Add ``CategoricalImputer`` that replaces null-like values with the mode
+  for string-like columns.
 
 
 1.3.0 (2017-01-21)
@@ -324,6 +343,7 @@ Other contributors:
 
 * Arnau Gil Amat
 * Cal Paterson
+* Gustavo Sena Mafra
 * Israel Saeta Pérez
 * Jeremy Howard
 * Olivier Grisel
