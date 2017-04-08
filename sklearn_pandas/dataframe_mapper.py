@@ -65,6 +65,8 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         self.default = _build_transformer(default)
         self.sparse = sparse
         self.df_out = df_out
+        self.transformed_names_ = []
+
         if (df_out and (sparse or default)):
             raise ValueError("Can not use df_out with sparse or default")
 
@@ -187,7 +189,7 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         X       the data to transform
         """
         extracted = []
-        index = []
+        self.transformed_names_ = []
         for columns, transformers in self.features:
             # columns could be a string or list of
             # strings; we don't care because pandas
@@ -196,8 +198,8 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
             if transformers is not None:
                 Xt = transformers.transform(Xt)
             extracted.append(_handle_feature(Xt))
-            if self.df_out:
-                index = index + self.get_names(columns, transformers, Xt)
+
+            self.transformed_names_ += self.get_names(columns, transformers, Xt)
 
         # handle features not explicitly selected
         if self.default is not False:
@@ -206,7 +208,7 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
             if self.default is not None:
                 Xt = self.default.transform(Xt)
             extracted.append(_handle_feature(Xt))
-
+            self.transformed_names_ += self.get_names(unsel_cols, self.default, Xt)
 
         # combine the feature outputs into one array.
         # at this point we lose track of which features
@@ -227,4 +229,4 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         if not self.df_out:
             return stacked
 
-        return pd.DataFrame(stacked, columns=index)
+        return pd.DataFrame(stacked, columns=self.transformed_names_)

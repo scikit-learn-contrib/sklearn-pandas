@@ -96,6 +96,28 @@ def complex_dataframe():
                          'feat2': [1, 2, 3, 2, 3, 4]})
 
 
+def test_transformed_names_simple(simple_dataframe):
+    """
+    Get transformed names of features in `transformed_names` attribute
+    for simple transformation
+    """
+    df = simple_dataframe
+    mapper = DataFrameMapper([('a', None)])
+    mapper.fit_transform(df)
+    assert mapper.transformed_names_ == ['a']
+
+
+def test_transformed_names_binarizer(complex_dataframe):
+    """
+    Get transformed names of features in `transformed_names` attribute
+    for a transformation that multiplies the number of columns
+    """
+    df = complex_dataframe
+    mapper = DataFrameMapper([('target', LabelBinarizer())])
+    mapper.fit_transform(df)
+    mapper.transformed_names_ == ['target_a', 'target_b']
+
+
 def test_simple_df(simple_dataframe):
     """
     Get a dataframe from a simple mapped dataframe
