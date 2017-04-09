@@ -33,7 +33,8 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
     sklearn transformation.
     """
 
-    def __init__(self, features, default=False, sparse=False, df_out=False):
+    def __init__(self, features, default=False, sparse=False, df_out=False,
+                 input_df=False):
         """
         Params:
 
@@ -57,6 +58,10 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
                     if there's multiple inputs, and the name concatenated with
                     '_1', '_2' etc if there's multiple outputs. NB: does not
                     work if *default* or *sparse* are true
+
+        input_df    If ``True`` pass the selected columns to the transformers
+                    as a pandas DataFrame or Series. Otherwise pass them as a
+                    numpy array. Defaults to ``False``.
         """
         if isinstance(features, list):
             features = [(columns, _build_transformer(transformers))
@@ -65,6 +70,7 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         self.default = _build_transformer(default)
         self.sparse = sparse
         self.df_out = df_out
+        self.input_df = input_df
         self.transformed_names_ = []
 
         if (df_out and (sparse or default)):
@@ -108,6 +114,8 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         self.default = state.get('default', False)
         self.df_out = state.get('df_out', False)
 
+        self.input_df = state.get('input_df', False)
+
     def _get_col_subset(self, X, cols):
         """
         Get a subset of columns from the given table X.
@@ -132,10 +140,15 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
             X = X.df
 
         if return_vector:
-            t = X[cols[0]].values
+            t = X[cols[0]]
         else:
-            t = X[cols].values
+            t = X[cols]
 
+        # return either a DataFrame/Series or a numpy array
+        if self.input_df:
+            return t
+        else:
+            return t.values
         return t
 
     def fit(self, X, y=None):

@@ -50,7 +50,7 @@ For these examples, we'll also use pandas, numpy, and sklearn::
 Load some Data
 **************
 
-Normally you'll read the data from a file, but for demonstration purposes I'll create a data frame from a Python dict::
+Normally you'll read the data from a file, but for demonstration purposes we'll create a data frame from a Python dict::
 
     >>> data = pd.DataFrame({'pet':      ['cat', 'dog', 'dog', 'fish', 'cat', 'dog', 'cat', 'fish'],
     ...                      'children': [4., 6, 3, 3, 2, 3, 5, 4],
@@ -114,6 +114,37 @@ the dataframe mapper. We can do so by inspecting the automatically generated
 
     >>> mapper.transformed_names_
     ['pet_cat', 'pet_dog', 'pet_fish', 'children']
+
+
+Passing Series/DataFrames to the transformers
+*********************************************
+
+By default the transformers are passed a numpy array of the selected columns
+as input. This is because ``sklearn`` transformers are historically designed to
+work with numpy arrays, not with pandas dataframes, even though their basic
+indexing interfaces are similar.
+
+However we can pass a dataframe/series to the transformers to handle custom
+cases initializing the dataframe mapper with ``input_df=True`::
+
+    >>> from sklearn.base import TransformerMixin
+    >>> class DateEncoder(TransformerMixin):
+    ...    def fit(self, X, y=None):
+    ...        return self
+    ...
+    ...    def transform(self, X):
+    ...        dt = X.dt
+    ...        return pd.concat([dt.year, dt.month, dt.day], axis=1)
+    >>> dates_df = pd.DataFrame(
+    ...     {'dates': pd.date_range('2015-10-30', '2015-11-02')})
+    >>> mapper_dates = DataFrameMapper([
+    ...     ('dates', DateEncoder())
+    ... ], input_df=True)
+    >>> mapper_dates.fit_transform(dates_df)
+    array([[2015,   10,   30],
+           [2015,   10,   31],
+           [2015,   11,    1],
+           [2015,   11,    2]])
 
 
 Outputting a dataframe
@@ -289,6 +320,8 @@ Development
 * Capture output columns generated names in ``transformed_names_`` attribute (#78).
 * Add ``CategoricalImputer`` that replaces null-like values with the mode
   for string-like columns.
+* Add ``input_df`` init argument to allow inputting a dataframe/series to the
+  transformers instead of a numpy array (#60).
 
 
 1.3.0 (2017-01-21)
