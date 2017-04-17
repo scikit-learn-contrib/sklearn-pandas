@@ -56,6 +56,15 @@ class MockTClassifier(object):
         return True
 
 
+class DateEncoder():
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X):
+        dt = X.dt
+        return pd.concat([dt.year, dt.month, dt.day], axis=1)
+
+
 class ToSparseTransformer(BaseEstimator, TransformerMixin):
     """
     Transforms numpy matrix to sparse format.
@@ -223,6 +232,87 @@ def test_pca(complex_dataframe):
     assert len(cols) == 2
     assert cols[0] == 'feat1_feat2_0'
     assert cols[1] == 'feat1_feat2_1'
+
+
+def test_input_df_true_first_transformer(simple_dataframe, monkeypatch):
+    """
+    If input_df is True, the first transformer is passed
+    a pd.Series instead of an np.array
+    """
+    df = simple_dataframe
+    monkeypatch.setattr(MockXTransformer, 'fit', Mock())
+    monkeypatch.setattr(MockXTransformer, 'transform',
+                        Mock(return_value=np.array([1, 2, 3])))
+    mapper = DataFrameMapper([
+        ('a', MockXTransformer())
+    ], input_df=True)
+    out = mapper.fit_transform(df)
+
+    args, _ = MockXTransformer().fit.call_args
+    assert isinstance(args[0], pd.Series)
+
+    args, _ = MockXTransformer().transform.call_args
+    assert isinstance(args[0], pd.Series)
+
+    assert_array_equal(out, np.array([1, 2, 3]).reshape(-1, 1))
+
+
+def test_input_df_true_next_transformers(simple_dataframe, monkeypatch):
+    """
+    If input_df is True, the subsequent transformers get passed pandas
+    objects instead of numpy arrays (given the previous transformers
+    output pandas objects as well)
+    """
+    df = simple_dataframe
+    monkeypatch.setattr(MockTClassifier, 'fit', Mock())
+    monkeypatch.setattr(MockTClassifier, 'transform',
+                        Mock(return_value=pd.Series([1, 2, 3])))
+    mapper = DataFrameMapper([
+        ('a', [MockXTransformer(), MockTClassifier()])
+    ], input_df=True)
+    out = mapper.fit_transform(df)
+
+    args, _ = MockTClassifier().fit.call_args
+    assert isinstance(args[0], pd.Series)
+
+    assert_array_equal(out, np.array([1, 2, 3]).reshape(-1, 1))
+
+
+def test_input_df_true_multiple_cols(complex_dataframe):
+    """
+    When input_df is True, applying transformers to multiple columns
+    works as expected
+    """
+    df = complex_dataframe
+
+    mapper = DataFrameMapper([
+        ('target', MockXTransformer()),
+        ('feat1',  MockXTransformer()),
+    ], input_df=True)
+    out = mapper.fit_transform(df)
+
+    assert_array_equal(out[:, 0], df['target'].values)
+    assert_array_equal(out[:, 1], df['feat1'].values)
+
+
+def test_input_df_date_encoder():
+    """
+    When input_df is True we can apply a transformer that only works
+    with pandas dataframes like a DateEncoder
+    """
+    df = pd.DataFrame(
+        {'dates': pd.date_range('2015-10-30', '2015-11-02')})
+    mapper = DataFrameMapper([
+        ('dates', DateEncoder())
+    ], input_df=True)
+    out = mapper.fit_transform(df)
+    expected = np.array([
+        [2015, 10, 30],
+        [2015, 10, 31],
+        [2015, 11, 1],
+        [2015, 11, 2]
+    ])
+    assert_array_equal(out, expected)
 
 
 def test_nonexistent_columns_explicit_fail(simple_dataframe):
