@@ -8,7 +8,7 @@ from .cross_validation import DataWrapper
 from .pipeline import make_transformer_pipeline, _call_fit
 
 # load in the correct stringtype: str for py3, basestring for py2
-string_types = str if sys.version_info >= (3, 0) else basestring
+string_types = str if sys.version_info >= (3, 0) else basestring  # NOQA
 
 
 def _handle_feature(fea):
@@ -171,7 +171,6 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
                       self._get_col_subset(X, self._unselected_columns(X)), y)
         return self
 
-
     def get_names(self, c, t, x):
         """
         Return verbose names for the transformed columns.
@@ -194,7 +193,6 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         else:
             return [c]
 
-
     def transform(self, X):
         """
         Transform the given data. Assumes that fit has already been called.
@@ -212,7 +210,8 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
                 Xt = transformers.transform(Xt)
             extracted.append(_handle_feature(Xt))
 
-            self.transformed_names_ += self.get_names(columns, transformers, Xt)
+            self.transformed_names_ += self.get_names(
+                columns, transformers, Xt)
 
         # handle features not explicitly selected
         if self.default is not False:
@@ -221,7 +220,8 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
             if self.default is not None:
                 Xt = self.default.transform(Xt)
             extracted.append(_handle_feature(Xt))
-            self.transformed_names_ += self.get_names(unsel_cols, self.default, Xt)
+            self.transformed_names_ += self.get_names(
+                unsel_cols, self.default, Xt)
 
         # combine the feature outputs into one array.
         # at this point we lose track of which features

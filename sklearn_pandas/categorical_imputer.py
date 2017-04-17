@@ -1,6 +1,7 @@
 """
 
-Impute missing values from a categorical/string np.ndarray or pd.Series with the most frequent value on the training data.
+Impute missing values from a categorical/string np.ndarray or pd.Series with
+the most frequent value on the training data.
 
 """
 
@@ -52,7 +53,8 @@ class CategoricalImputer(TransformerMixin):
 
         """
 
-        Replaces null values in the input data with the most frequent value of the training data.
+        Replaces null values in the input data with the most frequent value
+        of the training data.
 
         Parameters
         ----------
