@@ -35,6 +35,20 @@ def test_unit(input_type, none_value):
 
 
 @pytest.mark.parametrize('input_type', ['np', 'pd'])
+def test_no_mode(input_type):
+
+    data = ['a', 'b', 'c', np.nan]
+
+    if input_type == 'pd':
+        X = pd.Series(data)
+    else:
+        X = np.asarray(data, dtype=object)
+
+    with pytest.raises(ValueError):
+        CategoricalImputer().fit_transform(X)
+
+
+@pytest.mark.parametrize('input_type', ['np', 'pd'])
 def test_missing_values_param(input_type):
 
     data = ['x', 'y', 'a_missing', 'y']

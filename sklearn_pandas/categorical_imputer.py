@@ -1,7 +1,6 @@
 import pandas as pd
 import numpy as np
 
-from collections import Counter
 
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.utils.validation import check_is_fitted
@@ -65,7 +64,12 @@ class CategoricalImputer(BaseEstimator, TransformerMixin):
         mask = _get_mask(X, self.missing_values)
         X = X[~mask]
 
-        self.fill_ = Counter(X).most_common(1)[0][0]
+        modes = pd.Series(X).mode()
+        if modes.shape[0] == 0:
+            raise ValueError('No value is repeated more than '
+                             'once in the column')
+        else:
+            self.fill_ = modes[0]
 
         return self
 
