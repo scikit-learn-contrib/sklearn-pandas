@@ -8,7 +8,7 @@ from .cross_validation import DataWrapper
 from .pipeline import make_transformer_pipeline, _call_fit
 
 # load in the correct stringtype: str for py3, basestring for py2
-string_types = str if sys.version_info >= (3, 0) else basestring
+string_types = str if sys.version_info >= (3, 0) else basestring  # NOQA
 
 
 def _handle_feature(fea):
@@ -69,7 +69,8 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
     sklearn transformation.
     """
 
-    def __init__(self, features, default=False, sparse=False, df_out=False):
+    def __init__(self, features, default=False, sparse=False, df_out=False,
+                 input_df=False):
         """
         Params:
 
@@ -93,6 +94,10 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
                     if there's multiple inputs, and the name concatenated with
                     '_1', '_2' etc if there's multiple outputs. NB: does not
                     work if *default* or *sparse* are true
+
+        input_df    If ``True`` pass the selected columns to the transformers
+                    as a pandas DataFrame or Series. Otherwise pass them as a
+                    numpy array. Defaults to ``False``.
         """
         if isinstance(features, list):
             features = [Feature(*f) for f in features]
@@ -100,6 +105,7 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         self.default = _build_transformer(default)
         self.sparse = sparse
         self.df_out = df_out
+        self.input_df = input_df
         self.transformed_names_ = []
 
         if (df_out and (sparse or default)):
@@ -143,6 +149,8 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         self.default = state.get('default', False)
         self.df_out = state.get('df_out', False)
 
+        self.input_df = state.get('input_df', False)
+
     def _get_col_subset(self, X, cols):
         """
         Get a subset of columns from the given table X.
@@ -167,10 +175,15 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
             X = X.df
 
         if return_vector:
-            t = X[cols[0]].values
+            t = X[cols[0]]
         else:
-            t = X[cols].values
+            t = X[cols]
 
+        # return either a DataFrame/Series or a numpy array
+        if self.input_df:
+            return t
+        else:
+            return t.values
         return t
 
 
@@ -195,7 +208,6 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
             _call_fit(self.default.fit,
                       self._get_col_subset(X, self._unselected_columns(X)), y)
         return self
-
 
     def get_names(self, c, t, x):
         """
@@ -224,7 +236,6 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
                 return [c + '_' + str(o) for o in range(num_cols)]
         else:
             return [c]
-
 
     def transform(self, X):
         """

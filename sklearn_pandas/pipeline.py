@@ -29,16 +29,17 @@ def _call_fit(fit_method, X, y=None, **kwargs):
 
 class TransformerPipeline(Pipeline):
     """
-    Pipeline that expects all steps to be transformers taking a single X argument,
-    an optional y argument,
-    and having fit and transform methods.
+    Pipeline that expects all steps to be transformers taking a single X
+    argument, an optional y argument, and having fit and transform methods.
 
     Code is copied from sklearn's Pipeline
     """
+
     def __init__(self, steps):
         names, estimators = zip(*steps)
         if len(dict(steps)) != len(steps):
-            raise ValueError("Provided step names are not unique: %s" % (names,))
+            raise ValueError(
+                "Provided step names are not unique: %s" % (names,))
 
         # shallow copy of steps
         self.steps = tosequence(steps)
