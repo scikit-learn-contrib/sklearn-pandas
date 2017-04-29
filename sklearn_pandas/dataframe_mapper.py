@@ -26,6 +26,42 @@ def _build_transformer(transformers):
         transformers = make_transformer_pipeline(*transformers)
     return transformers
 
+class Feature(object):
+
+    def __init__(self, columns, transformers, kwargs={}):
+        self.__columns = columns
+        self.__transformers = _build_transformer(transformers)
+
+        if 'alias' in kwargs:
+            self.__alias = kwargs['alias']
+        elif isinstance(columns, list):
+            self.__alias = '_'.join(columns)
+        else:
+            self.__alias = columns
+
+        self.__operate_on_derived = kwargs.get('operate_on_derived', False)
+
+
+    @property
+    def columns(self):
+        return self.__columns
+
+    @property
+    def transformers(self):
+        return self.__transformers
+
+    @property
+    def alias(self):
+        return self.__alias
+
+    @property
+    def operate_on_derived(self):
+        return self.__operate_on_derived
+
+
+
+
+
 
 class DataFrameMapper(BaseEstimator, TransformerMixin):
     """
@@ -64,8 +100,7 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
                     numpy array. Defaults to ``False``.
         """
         if isinstance(features, list):
-            features = [(columns, _build_transformer(transformers))
-                        for (columns, transformers) in features]
+            features = [Feature(*f) for f in features]
         self.features = features
         self.default = _build_transformer(default)
         self.sparse = sparse
@@ -83,7 +118,7 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         """
         selected_columns = set()
         for feature in self.features:
-            columns = feature[0]
+            columns = feature.columns
             if isinstance(columns, list):
                 selected_columns = selected_columns.union(set(columns))
             else:
@@ -105,8 +140,9 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
 
     def __setstate__(self, state):
         # compatibility shim for pickles created with sklearn-pandas<1.0.0
-        self.features = [(columns, _build_transformer(transformers))
-                         for (columns, transformers) in state['features']]
+        self.features = [(feature.columns, _build_transformer(
+            feature.transformers))
+                         for feature in state['features']]
         self.sparse = state.get('sparse', False)
 
         # compatibility shim for pickles created before ``default`` init
@@ -151,6 +187,7 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
             return t.values
         return t
 
+
     def fit(self, X, y=None):
         """
         Fit a transformation from the pipeline
@@ -160,7 +197,9 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         y       the target vector relative to X, optional
 
         """
-        for columns, transformers in self.features:
+        for feature in self.features:
+            columns = feature.columns
+            transformers = feature.transformers
             if transformers is not None:
                 _call_fit(transformers.fit,
                           self._get_col_subset(X, columns), y)
@@ -182,11 +221,17 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         if isinstance(c, list):
             c = '_'.join(c)
         num_cols = x.shape[1] if len(x.shape) > 1 else 1
+
         if num_cols > 1:
+
+
+            if hasattr(t, 'get_feature_names') and len(t.get_feature_names()) == num_cols:
+                return [c + '_' + str(o) for o in t.get_feature_names()]
             # If there are as many columns as classes,
             # infer column names from classes names.
-            if hasattr(t, 'classes_') and (len(t.classes_) == num_cols):
+            elif hasattr(t, 'classes_') and (len(t.classes_) == num_cols):
                 return [c + '_' + str(o) for o in t.classes_]
+
             # otherwise, return name concatenated with '_1', '_2', etc.
             else:
                 return [c + '_' + str(o) for o in range(num_cols)]
@@ -201,27 +246,36 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         """
         extracted = []
         self.transformed_names_ = []
-        for columns, transformers in self.features:
+        for feature in self.features:
+            columns = feature.columns
+            transformers = feature.transformers
+
             # columns could be a string or list of
             # strings; we don't care because pandas
             # will handle either.
+
             Xt = self._get_col_subset(X, columns)
+
             if transformers is not None:
                 Xt = transformers.transform(Xt)
             extracted.append(_handle_feature(Xt))
 
-            self.transformed_names_ += self.get_names(
-                columns, transformers, Xt)
+            self.transformed_names_ += self.get_names(feature.alias,
+                                                      transformers, Xt)
 
         # handle features not explicitly selected
         if self.default is not False:
+
             unsel_cols = self._unselected_columns(X)
             Xt = self._get_col_subset(X, unsel_cols)
             if self.default is not None:
                 Xt = self.default.transform(Xt)
             extracted.append(_handle_feature(Xt))
-            self.transformed_names_ += self.get_names(
-                unsel_cols, self.default, Xt)
+
+            if self.default is not None:
+                self.transformed_names_ += self.get_names(unsel_cols, self.default, Xt)
+            else:
+                self.transformed_names_ += unsel_cols
 
         # combine the feature outputs into one array.
         # at this point we lose track of which features
