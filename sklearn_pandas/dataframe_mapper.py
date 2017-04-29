@@ -140,8 +140,9 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
 
     def __setstate__(self, state):
         # compatibility shim for pickles created with sklearn-pandas<1.0.0
-        self.features = [(columns, _build_transformer(transformers))
-                         for (columns, transformers) in state['features']]
+        self.features = [(feature.columns, _build_transformer(
+            feature.transformers))
+                         for feature in state['features']]
         self.sparse = state.get('sparse', False)
 
         # compatibility shim for pickles created before ``default`` init
