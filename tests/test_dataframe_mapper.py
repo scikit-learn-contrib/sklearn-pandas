@@ -127,6 +127,28 @@ def test_transformed_names_binarizer(complex_dataframe):
     mapper.transformed_names_ == ['target_a', 'target_b']
 
 
+def test_transformed_names_simple_alias(simple_dataframe):
+    """
+    If we specify an alias for a single output column, it is used for the
+    output
+    """
+    df = simple_dataframe
+    mapper = DataFrameMapper([('a', None, {'alias': 'new_name'})])
+    mapper.fit_transform(df)
+    assert mapper.transformed_names_ == ['new_name']
+
+
+def test_transformed_names_complex_alias(complex_dataframe):
+    """
+    If we specify an alias for a multiple output column, it is used for the
+    output
+    """
+    df = complex_dataframe
+    mapper = DataFrameMapper([('target', LabelBinarizer(), {'alias': 'new'})])
+    mapper.fit_transform(df)
+    mapper.transformed_names_ == ['new_a', 'new_b']
+
+
 def test_simple_df(simple_dataframe):
     """
     Get a dataframe from a simple mapped dataframe
