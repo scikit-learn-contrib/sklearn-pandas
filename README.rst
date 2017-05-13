@@ -334,8 +334,8 @@ Example:
 Changelog
 ---------
 
-Development
-***********
+1.4.0 (2017-05-13)
+******************
 * Allow specifying a custom name (alias) for transformed columns (#83).
 * Capture output columns generated names in ``transformed_names_`` attribute (#78).
 * Add ``CategoricalImputer`` that replaces null-like values with the mode
