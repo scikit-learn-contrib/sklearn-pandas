@@ -1,4 +1,5 @@
 import sys
+import inspect
 import pandas as pd
 import numpy as np
 from scipy import sparse
@@ -30,6 +31,19 @@ def _build_transformer(transformers):
 def _build_feature(columns, transformers, options={}):
     return (columns, _build_transformer(transformers), options)
 
+
+def _get_feature_names(estimator):
+    """
+    Attempt to extract feature names based on a given estimator.
+    Note: this might break some of the existing pipeline as there might be
+    actual names instead of _0, _1, ...
+    """
+    if hasattr(estimator, 'classes_'):
+        return estimator.classes_
+    elif hasattr(estimator, 'get_feature_names') \
+            and inspect.ismethod(getattr(estimator, 'get_feature_names')):
+        return estimator.get_feature_names()
+    return None
 
 class DataFrameMapper(BaseEstimator, TransformerMixin):
     """
@@ -193,9 +207,9 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         if num_cols > 1:
             # If there are as many columns as classes in the transformer,
             # infer column names from classes names.
-            if hasattr(transformer, 'classes_') and \
-                    (len(transformer.classes_) == num_cols):
-                return [name + '_' + str(o) for o in transformer.classes_]
+            names = _get_feature_names(transformer)
+            if names is not None and len(names) == num_cols:
+                return [name + '_' + str(o) for o in names]
             # otherwise, return name concatenated with '_1', '_2', etc.
             else:
                 return [name + '_' + str(o) for o in range(num_cols)]

@@ -17,6 +17,7 @@ from sklearn.datasets import load_iris
 from sklearn.pipeline import Pipeline
 from sklearn.svm import SVC
 from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.feature_extraction import DictVectorizer
 from sklearn.preprocessing import (
     Imputer, StandardScaler, OneHotEncoder, LabelBinarizer)
 from sklearn.feature_selection import SelectKBest, chi2
@@ -641,6 +642,24 @@ def test_with_iris_dataframe(iris_dataframe):
     scores = cross_val_score(pipeline, data, labels)
     assert scores.mean() > 0.96
     assert (scores.std() * 2) < 0.04
+
+
+def test_dict_vectorizer():
+    df = pd.DataFrame(
+        [[{'a': 1, 'b': 2}], [{'a': 3}]],
+        columns=['colA']
+    )
+
+    outdf = DataFrameMapper(
+        [('colA', DictVectorizer())],
+        df_out=True,
+        default=False
+    ).fit_transform(df)
+
+    columns =  sorted(list(outdf.columns))
+    assert len(columns) == 2
+    assert columns[0] == 'colA_a'
+    assert columns[1] == 'colA_b'
 
 
 def test_with_car_dataframe(cars_dataframe):
