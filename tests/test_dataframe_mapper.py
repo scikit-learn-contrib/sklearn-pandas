@@ -337,6 +337,26 @@ def test_input_df_date_encoder():
     assert_array_equal(out, expected)
 
 
+def test_local_input_df_date_encoder():
+    """
+    When input_df is True we can apply a transformer that only works
+    with pandas dataframes like a DateEncoder
+    """
+    df = pd.DataFrame(
+        {'dates': pd.date_range('2015-10-30', '2015-11-02')})
+    mapper = DataFrameMapper([
+        ('dates', DateEncoder(), {'input_df': True})
+    ], input_df=False)
+    out = mapper.fit_transform(df)
+    expected = np.array([
+        [2015, 10, 30],
+        [2015, 10, 31],
+        [2015, 11, 1],
+        [2015, 11, 2]
+    ])
+    assert_array_equal(out, expected)
+
+
 def test_nonexistent_columns_explicit_fail(simple_dataframe):
     """
     If a nonexistent column is selected, KeyError is raised.

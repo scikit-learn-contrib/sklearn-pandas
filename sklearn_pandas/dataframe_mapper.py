@@ -119,7 +119,7 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
 
         self.input_df = state.get('input_df', False)
 
-    def _get_col_subset(self, X, cols):
+    def _get_col_subset(self, X, cols, input_df=False):
         """
         Get a subset of columns from the given table X.
 
@@ -148,7 +148,7 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
             t = X[cols]
 
         # return either a DataFrame/Series or a numpy array
-        if self.input_df:
+        if input_df:
             return t
         else:
             return t.values
@@ -163,15 +163,20 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         y       the target vector relative to X, optional
 
         """
+
         for columns, transformers, options in self.features:
+            input_df = options.get('input_df', self.input_df)
+
             if transformers is not None:
                 _call_fit(transformers.fit,
-                          self._get_col_subset(X, columns), y)
+                          self._get_col_subset(X, columns, input_df), y)
 
         # handle features not explicitly selected
         if self.default:  # not False and not None
             _call_fit(self.default.fit,
-                      self._get_col_subset(X, self._unselected_columns(X)), y)
+                      self._get_col_subset(
+                          X, self._unselected_columns(X), self.input_df
+                      ), y)
         return self
 
     def get_names(self, columns, transformer, x, alias=None):
@@ -211,10 +216,11 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         extracted = []
         self.transformed_names_ = []
         for columns, transformers, options in self.features:
+            input_df = options.get('input_df', self.input_df)
             # columns could be a string or list of
             # strings; we don't care because pandas
             # will handle either.
-            Xt = self._get_col_subset(X, columns)
+            Xt = self._get_col_subset(X, columns, input_df)
             if transformers is not None:
                 Xt = transformers.transform(Xt)
             extracted.append(_handle_feature(Xt))
@@ -226,7 +232,7 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         # handle features not explicitly selected
         if self.default is not False:
             unsel_cols = self._unselected_columns(X)
-            Xt = self._get_col_subset(X, unsel_cols)
+            Xt = self._get_col_subset(X, unsel_cols, self.input_df)
             if self.default is not None:
                 Xt = self.default.transform(Xt)
             extracted.append(_handle_feature(Xt))
