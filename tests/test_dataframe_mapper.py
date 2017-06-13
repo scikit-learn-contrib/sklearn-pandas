@@ -106,6 +106,14 @@ def complex_dataframe():
                          'feat2': [1, 2, 3, 2, 3, 4]})
 
 
+@pytest.fixture
+def dictionary_dataframe():
+    return pd.DataFrame(
+        [[{'a': 1, 'b': 2}], [{'a': 3}]],
+        columns=['colA']
+    )
+
+
 def test_transformed_names_simple(simple_dataframe):
     """
     Get transformed names of features in `transformed_names` attribute
@@ -644,19 +652,51 @@ def test_with_iris_dataframe(iris_dataframe):
     assert (scores.std() * 2) < 0.04
 
 
-def test_dict_vectorizer():
-    df = pd.DataFrame(
-        [[{'a': 1, 'b': 2}], [{'a': 3}]],
-        columns=['colA']
-    )
+def test_feature_name_extraction_from_dictvectorizer(dictionary_dataframe):
 
     outdf = DataFrameMapper(
         [('colA', DictVectorizer())],
         df_out=True,
         default=False
-    ).fit_transform(df)
+    ).fit_transform(dictionary_dataframe)
 
-    columns =  sorted(list(outdf.columns))
+    columns = sorted(list(outdf.columns))
+    assert len(columns) == 2
+    assert columns[0] == 'colA_a'
+    assert columns[1] == 'colA_b'
+
+
+def test_without_lineage_for_names(dictionary_dataframe):
+
+    outdf = DataFrameMapper(
+        [
+            ('colA', [DictVectorizer(), MockXTransformer()])
+        ],
+        df_out=True,
+        default=False
+    ).fit_transform(dictionary_dataframe)
+
+    columns = sorted(list(outdf.columns))
+    assert len(columns) == 2
+    assert columns[0] == 'colA_0'
+    assert columns[1] == 'colA_1'
+
+
+def test_with_lineage_for_names(dictionary_dataframe):
+
+    outdf = DataFrameMapper(
+        [
+            (
+                'colA',
+                [DictVectorizer(), MockXTransformer()],
+                {'use_lineage_for_names': True}
+            )
+        ],
+        df_out=True,
+        default=False
+    ).fit_transform(dictionary_dataframe)
+
+    columns = sorted(list(outdf.columns))
     assert len(columns) == 2
     assert columns[0] == 'colA_a'
     assert columns[1] == 'colA_b'
