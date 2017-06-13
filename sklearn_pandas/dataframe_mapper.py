@@ -45,6 +45,7 @@ def _get_feature_names(estimator):
         return estimator.get_feature_names()
     return None
 
+
 class DataFrameMapper(BaseEstimator, TransformerMixin):
     """
     Map Pandas data frame column subsets to their own
@@ -84,6 +85,9 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         input_df    If ``True`` pass the selected columns to the transformers
                     as a pandas DataFrame or Series. Otherwise pass them as a
                     numpy array. Defaults to ``False``.
+
+        use_lineage_for_names   if ``True``, try to extract feature name from
+                                previous estimators in the pipeline.
         """
         if isinstance(features, list):
             features = [_build_feature(*feature) for feature in features]
@@ -199,7 +203,7 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         x             transformed columns (numpy.ndarray)
         alias         base name to use for the selected columns
         use_lineage_for_names         try to extract feature names from
-        previous estimators in the pipeline. 
+        previous estimators in the pipeline.
         """
         if alias is not None:
             name = alias
@@ -216,14 +220,16 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
             # try to extract feature names from other estimators
             # this happens only if use_lineage_for_name is enabled
             if names is None and use_lineage_for_name:
-                for (estimator_name, estimator) in transformer.steps[0:-1][::-2]:
+                for (estimator_name, estimator) in \
+                        transformer.steps[0:-1][::-2]:
                     feature_names = _get_feature_names(estimator)
-                    if names is not None and len(names) == num_cols:
+                    if feature_names is not None \
+                            and len(feature_names) == num_cols:
                         names = feature_names
                         break
 
             if names is not None:
-                return [name + '_' + o for o in range(names)]
+                return [name + '_' + str(o) for o in names]
             else:
                 return [name + '_' + str(o) for o in range(num_cols)]
         else:
