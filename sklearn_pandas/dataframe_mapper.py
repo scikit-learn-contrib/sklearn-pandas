@@ -137,6 +137,7 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         self.df_out = state.get('df_out', False)
 
         self.input_df = state.get('input_df', False)
+        self.use_lineage_for_names = state.get('use_lineage_for_names', False)
 
     def _get_col_subset(self, X, cols):
         """
