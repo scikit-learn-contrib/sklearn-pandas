@@ -347,6 +347,7 @@ Changelog
 Development
 ***********
 * Allow inputting a dataframe/series per group of columns.
+* Get feature names also from ``estimator.get_feature_names()`` if present.
 
 1.4.0 (2017-05-13)
 ******************
