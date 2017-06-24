@@ -676,7 +676,7 @@ def test_dict_vectorizer():
         default=False
     ).fit_transform(df)
 
-    columns =  sorted(list(outdf.columns))
+    columns = sorted(list(outdf.columns))
     assert len(columns) == 2
     assert columns[0] == 'colA_a'
     assert columns[1] == 'colA_b'
