@@ -348,6 +348,9 @@ Development
 ***********
 * Allow inputting a dataframe/series per group of columns.
 * Get feature names also from ``estimator.get_feature_names()`` if present.
+* Attempt to derive feature names from individual transformers when applying a
+  list of transformers.
+
 
 1.4.0 (2017-05-13)
 ******************

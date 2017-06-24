@@ -5,7 +5,7 @@ from scipy import sparse
 from sklearn.base import BaseEstimator, TransformerMixin
 
 from .cross_validation import DataWrapper
-from .pipeline import make_transformer_pipeline, _call_fit
+from .pipeline import make_transformer_pipeline, _call_fit, TransformerPipeline
 
 # load in the correct stringtype: str for py3, basestring for py2
 string_types = str if sys.version_info >= (3, 0) else basestring  # NOQA
@@ -195,7 +195,7 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         Return verbose names for the transformed columns.
 
         columns       name (or list of names) of the original column(s)
-        transformer   transformer
+        transformer   transformer - can be a TransformerPipeline
         x             transformed columns (numpy.ndarray)
         alias         base name to use for the selected columns
         """
@@ -209,7 +209,18 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         if num_cols > 1:
             # If there are as many columns as classes in the transformer,
             # infer column names from classes names.
-            names = _get_feature_names(transformer)
+
+            # If we are dealing with multiple transformers for these columns
+            # attempt to extract the names from each of them, starting from the
+            # last one
+            if isinstance(transformer, TransformerPipeline):
+                inverse_steps = transformer.steps[::-1]
+                estimators = (estimator for name, estimator in inverse_steps)
+                names_steps = (_get_feature_names(e) for e in estimators)
+                names = next((n for n in names_steps if n is not None), None)
+            # Otherwise use the only estimator present
+            else:
+                names = _get_feature_names(transformer)
             if names is not None and len(names) == num_cols:
                 return [name + '_' + str(o) for o in names]
             # otherwise, return name concatenated with '_1', '_2', etc.

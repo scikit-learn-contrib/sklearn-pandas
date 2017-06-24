@@ -128,6 +128,19 @@ def test_transformed_names_binarizer(complex_dataframe):
     assert mapper.transformed_names_ == ['target_a', 'target_b', 'target_c']
 
 
+def test_transformed_names_transformers_list(complex_dataframe):
+    """
+    When using a list of transformers, use them in inverse order to get the
+    transformed names
+    """
+    df = complex_dataframe
+    mapper = DataFrameMapper([
+        ('target', [LabelBinarizer(), MockXTransformer()])
+    ])
+    mapper.fit_transform(df)
+    assert mapper.transformed_names_ == ['target_a', 'target_b', 'target_c']
+
+
 def test_transformed_names_simple_alias(simple_dataframe):
     """
     If we specify an alias for a single output column, it is used for the
