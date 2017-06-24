@@ -350,6 +350,8 @@ Development
 * Get feature names also from ``estimator.get_feature_names()`` if present.
 * Attempt to derive feature names from individual transformers when applying a
   list of transformers.
+* Do not mutate features in ``__init__`` to be compatible with
+  ``sklearn>=0.20`` (#76).
 
 
 1.4.0 (2017-05-13)
@@ -417,6 +419,7 @@ Other contributors:
 * Gustavo Sena Mafra
 * Israel Saeta Pérez
 * Jeremy Howard
+* Jimmy Wan
 * Olivier Grisel
 * Paul Butler
 * Ritesh Agrawal
