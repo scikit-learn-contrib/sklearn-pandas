@@ -9,6 +9,8 @@
 5. Hack out your code. To run the tests and `flake8`, just run `tox`. Tests live in the `tests` subfolder.
 6. Submit a new PR with your code, indicating in the PR which issue/feature it relates to.
 
+Note: You don't need to install `sklearn-pandas` in your virtualenv to run the tests. `tox` will automatically create multiple virtual environments to run them with multiple package versions.
+
 
 ## Guidelines
 
