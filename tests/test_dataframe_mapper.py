@@ -17,6 +17,7 @@ from sklearn.datasets import load_iris
 from sklearn.pipeline import Pipeline
 from sklearn.svm import SVC
 from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.feature_extraction import DictVectorizer
 from sklearn.preprocessing import (
     Imputer, StandardScaler, OneHotEncoder, LabelBinarizer)
 from sklearn.feature_selection import SelectKBest, chi2
@@ -103,6 +104,14 @@ def complex_dataframe():
     return pd.DataFrame({'target': ['a', 'a', 'a', 'b', 'b', 'b'],
                          'feat1': [1, 2, 3, 4, 5, 6],
                          'feat2': [1, 2, 3, 2, 3, 4]})
+
+
+@pytest.fixture
+def dictionary_dataframe():
+    return pd.DataFrame(
+        [[{'a': 1, 'b': 2}], [{'a': 3}]],
+        columns=['colA']
+    )
 
 
 def test_transformed_names_simple(simple_dataframe):
@@ -661,6 +670,56 @@ def test_with_iris_dataframe(iris_dataframe):
     scores = cross_val_score(pipeline, data, labels)
     assert scores.mean() > 0.96
     assert (scores.std() * 2) < 0.04
+
+
+def test_feature_name_extraction_from_dictvectorizer(dictionary_dataframe):
+
+    outdf = DataFrameMapper(
+        [('colA', DictVectorizer())],
+        df_out=True,
+        default=False
+    ).fit_transform(dictionary_dataframe)
+
+    columns = sorted(list(outdf.columns))
+    assert len(columns) == 2
+    assert columns[0] == 'colA_a'
+    assert columns[1] == 'colA_b'
+
+
+def test_without_lineage_for_names(dictionary_dataframe):
+
+    outdf = DataFrameMapper(
+        [
+            ('colA', [DictVectorizer(), MockXTransformer()])
+        ],
+        df_out=True,
+        default=False
+    ).fit_transform(dictionary_dataframe)
+
+    columns = sorted(list(outdf.columns))
+    assert len(columns) == 2
+    assert columns[0] == 'colA_0'
+    assert columns[1] == 'colA_1'
+
+
+def test_with_lineage_for_names(dictionary_dataframe):
+
+    outdf = DataFrameMapper(
+        [
+            (
+                'colA',
+                [DictVectorizer(), MockXTransformer()],
+                {'use_lineage_for_names': True}
+            )
+        ],
+        df_out=True,
+        default=False
+    ).fit_transform(dictionary_dataframe)
+
+    columns = sorted(list(outdf.columns))
+    assert len(columns) == 2
+    assert columns[0] == 'colA_a'
+    assert columns[1] == 'colA_b'
 
 
 def test_with_car_dataframe(cars_dataframe):

@@ -1,4 +1,5 @@
 import sys
+import inspect
 import pandas as pd
 import numpy as np
 from scipy import sparse
@@ -31,6 +32,20 @@ def _build_feature(columns, transformers, options={}):
     return (columns, _build_transformer(transformers), options)
 
 
+def _get_feature_names(estimator):
+    """
+    Attempt to extract feature names based on a given estimator.
+    Note: this might break some of the existing pipeline as there might be
+    actual names instead of _0, _1, ...
+    """
+    if hasattr(estimator, 'classes_'):
+        return estimator.classes_
+    elif hasattr(estimator, 'get_feature_names') \
+            and inspect.ismethod(getattr(estimator, 'get_feature_names')):
+        return estimator.get_feature_names()
+    return None
+
+
 class DataFrameMapper(BaseEstimator, TransformerMixin):
     """
     Map Pandas data frame column subsets to their own
@@ -38,7 +53,7 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
     """
 
     def __init__(self, features, default=False, sparse=False, df_out=False,
-                 input_df=False):
+                 input_df=False, use_lineage_for_names=False):
         """
         Params:
 
@@ -70,6 +85,9 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         input_df    If ``True`` pass the selected columns to the transformers
                     as a pandas DataFrame or Series. Otherwise pass them as a
                     numpy array. Defaults to ``False``.
+
+        use_lineage_for_names   if ``True``, try to extract feature name from
+                                previous estimators in the pipeline.
         """
         if isinstance(features, list):
             features = [_build_feature(*feature) for feature in features]
@@ -78,6 +96,7 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         self.sparse = sparse
         self.df_out = df_out
         self.input_df = input_df
+        self.use_lineage_for_names = use_lineage_for_names
         self.transformed_names_ = []
 
         if (df_out and (sparse or default)):
@@ -118,6 +137,7 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         self.df_out = state.get('df_out', False)
 
         self.input_df = state.get('input_df', False)
+        self.use_lineage_for_names = state.get('use_lineage_for_names', False)
 
     def _get_col_subset(self, X, cols, input_df=False):
         """
@@ -179,7 +199,8 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
                       ), y)
         return self
 
-    def get_names(self, columns, transformer, x, alias=None):
+    def get_names(self, columns, transformer, x, alias=None,
+                  use_lineage_for_name=False):
         """
         Return verbose names for the transformed columns.
 
@@ -187,6 +208,8 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         transformer   transformer
         x             transformed columns (numpy.ndarray)
         alias         base name to use for the selected columns
+        use_lineage_for_names         try to extract feature names from
+        previous estimators in the pipeline.
         """
         if alias is not None:
             name = alias
@@ -195,13 +218,24 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         else:
             name = columns
         num_cols = x.shape[1] if len(x.shape) > 1 else 1
+
         if num_cols > 1:
-            # If there are as many columns as classes in the transformer,
-            # infer column names from classes names.
-            if hasattr(transformer, 'classes_') and \
-                    (len(transformer.classes_) == num_cols):
-                return [name + '_' + str(o) for o in transformer.classes_]
-            # otherwise, return name concatenated with '_1', '_2', etc.
+            # Extract feature name
+            names = _get_feature_names(transformer)
+
+            # try to extract feature names from other estimators
+            # this happens only if use_lineage_for_name is enabled
+            if names is None and use_lineage_for_name:
+                for (estimator_name, estimator) in \
+                        transformer.steps[0:-1][::-2]:
+                    feature_names = _get_feature_names(estimator)
+                    if feature_names is not None \
+                            and len(feature_names) == num_cols:
+                        names = feature_names
+                        break
+
+            if names is not None:
+                return [name + '_' + str(o) for o in names]
             else:
                 return [name + '_' + str(o) for o in range(num_cols)]
         else:
@@ -226,8 +260,12 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
             extracted.append(_handle_feature(Xt))
 
             alias = options.get('alias')
+            use_lineage_for_names = options.get(
+                'use_lineage_for_names',
+                self.use_lineage_for_names
+            )
             self.transformed_names_ += self.get_names(
-                columns, transformers, Xt, alias)
+                columns, transformers, Xt, alias, use_lineage_for_names)
 
         # handle features not explicitly selected
         if self.default is not False:
