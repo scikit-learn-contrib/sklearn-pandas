@@ -344,8 +344,8 @@ Example:
 Changelog
 ---------
 
-Development
-***********
+1.5.0 (2017-06-24)
+******************
 * Allow inputting a dataframe/series per group of columns.
 * Get feature names also from ``estimator.get_feature_names()`` if present.
 * Attempt to derive feature names from individual transformers when applying a
