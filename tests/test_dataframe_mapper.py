@@ -580,6 +580,24 @@ def test_default_old_unpickle(simple_dataframe):
     loaded_mapper.fit_transform(simple_dataframe)  # doesn't fail
 
 
+def test_build_features_old_unpickle(simple_dataframe):
+    """
+    Fitted mappers pickled before the built_features and built_default
+    attributes can correctly transform
+    """
+    df = simple_dataframe
+    mapper = DataFrameMapper([('a', None)])
+    mapper.fit(df)
+
+    # simulate the mapper was pickled before the attributes existed
+    del mapper.built_features
+    del mapper.built_default
+
+    mapper_pickled = pickle.dumps(mapper)
+    loaded_mapper = pickle.loads(mapper_pickled)
+    loaded_mapper.transform(simple_dataframe)  # doesn't fail
+
+
 def test_sparse_features(simple_dataframe):
     """
     If any of the extracted features is sparse and "sparse" argument

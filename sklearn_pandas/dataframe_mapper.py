@@ -82,10 +82,11 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
                     as a pandas DataFrame or Series. Otherwise pass them as a
                     numpy array. Defaults to ``False``.
         """
-        if isinstance(features, list):
-            features = [_build_feature(*feature) for feature in features]
+        # self.features_def = features
         self.features = features
-        self.default = _build_transformer(default)
+        self.built_features = None
+        self.default = default
+        self.built_default = None
         self.sparse = sparse
         self.df_out = df_out
         self.input_df = input_df
@@ -127,8 +128,9 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         self.sparse = state.get('sparse', False)
         self.default = state.get('default', False)
         self.df_out = state.get('df_out', False)
-
         self.input_df = state.get('input_df', False)
+        self.built_features = state.get('built_features', self.features)
+        self.built_default = state.get('built_default', self.default)
 
     def _get_col_subset(self, X, cols, input_df=False):
         """
@@ -174,8 +176,19 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         y       the target vector relative to X, optional
 
         """
+        # if isinstance(self.features_def, list):
+        #     self.features = [_build_feature(*f) for f in self.features_def]
+        # else:
+        #     self.features = self.features_def
 
-        for columns, transformers, options in self.features:
+        if isinstance(self.features, list):
+            self.built_features = [_build_feature(*f) for f in self.features]
+        else:
+            self.built_features = self.features
+
+        self.built_default = _build_transformer(self.default)
+
+        for columns, transformers, options in self.built_features:
             input_df = options.get('input_df', self.input_df)
 
             if transformers is not None:
@@ -183,8 +196,8 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
                           self._get_col_subset(X, columns, input_df), y)
 
         # handle features not explicitly selected
-        if self.default:  # not False and not None
-            _call_fit(self.default.fit,
+        if self.built_default:  # not False and not None
+            _call_fit(self.built_default.fit,
                       self._get_col_subset(
                           X, self._unselected_columns(X), self.input_df
                       ), y)
@@ -237,7 +250,7 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         """
         extracted = []
         self.transformed_names_ = []
-        for columns, transformers, options in self.features:
+        for columns, transformers, options in self.built_features:
             input_df = options.get('input_df', self.input_df)
             # columns could be a string or list of
             # strings; we don't care because pandas
@@ -252,14 +265,14 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
                 columns, transformers, Xt, alias)
 
         # handle features not explicitly selected
-        if self.default is not False:
+        if self.built_default is not False:
             unsel_cols = self._unselected_columns(X)
             Xt = self._get_col_subset(X, unsel_cols, self.input_df)
-            if self.default is not None:
-                Xt = self.default.transform(Xt)
+            if self.built_default is not None:
+                Xt = self.built_default.transform(Xt)
             extracted.append(_handle_feature(Xt))
             self.transformed_names_ += self.get_names(
-                unsel_cols, self.default, Xt)
+                unsel_cols, self.built_default, Xt)
 
         # combine the feature outputs into one array.
         # at this point we lose track of which features
