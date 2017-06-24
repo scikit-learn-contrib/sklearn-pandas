@@ -164,6 +164,17 @@ cases initializing the dataframe mapper with ``input_df=True``::
            [2015,   11,    1],
            [2015,   11,    2]])
 
+We can also specify this option per group of columns instead of for the
+whole mapper::
+
+  >>> mapper_dates = DataFrameMapper([
+  ...     ('dates', DateEncoder(), {'input_df': True})
+  ... ])
+  >>> mapper_dates.fit_transform(dates_df)
+  array([[2015,   10,   30],
+         [2015,   10,   31],
+         [2015,   11,    1],
+         [2015,   11,    2]])
 
 Outputting a dataframe
 **********************
@@ -332,6 +343,10 @@ Example:
 
 Changelog
 ---------
+
+Development
+***********
+* Allow inputting a dataframe/series per group of columns.
 
 1.4.0 (2017-05-13)
 ******************
