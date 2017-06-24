@@ -101,7 +101,7 @@ def simple_dataframe():
 
 @pytest.fixture
 def complex_dataframe():
-    return pd.DataFrame({'target': ['a', 'a', 'a', 'b', 'b', 'b'],
+    return pd.DataFrame({'target': ['a', 'a', 'b', 'b', 'c', 'c'],
                          'feat1': [1, 2, 3, 4, 5, 6],
                          'feat2': [1, 2, 3, 2, 3, 4]})
 
@@ -125,7 +125,7 @@ def test_transformed_names_binarizer(complex_dataframe):
     df = complex_dataframe
     mapper = DataFrameMapper([('target', LabelBinarizer())])
     mapper.fit_transform(df)
-    mapper.transformed_names_ == ['target_a', 'target_b']
+    assert mapper.transformed_names_ == ['target_a', 'target_b', 'target_c']
 
 
 def test_transformed_names_simple_alias(simple_dataframe):
@@ -147,7 +147,7 @@ def test_transformed_names_complex_alias(complex_dataframe):
     df = complex_dataframe
     mapper = DataFrameMapper([('target', LabelBinarizer(), {'alias': 'new'})])
     mapper.fit_transform(df)
-    mapper.transformed_names_ == ['new_a', 'new_b']
+    assert mapper.transformed_names_ == ['new_a', 'new_b', 'new_c']
 
 
 def test_simple_df(simple_dataframe):
