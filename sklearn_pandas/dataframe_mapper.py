@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 from scipy import sparse
 from sklearn.base import BaseEstimator, TransformerMixin
-
+import warnings
 from .cross_validation import DataWrapper
 from .pipeline import make_transformer_pipeline, _call_fit, TransformerPipeline
 
@@ -176,11 +176,6 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         y       the target vector relative to X, optional
 
         """
-        # if isinstance(self.features_def, list):
-        #     self.features = [_build_feature(*f) for f in self.features_def]
-        # else:
-        #     self.features = self.features_def
-
         if isinstance(self.features, list):
             self.built_features = [_build_feature(*f) for f in self.features]
         else:
@@ -240,7 +235,21 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
             else:
                 return [name + '_' + str(o) for o in range(num_cols)]
         else:
-            return [name]
+            feature_name = _get_feature_names(transformer)
+            if alias:
+                return [alias]
+            elif feature_name is not None:
+                if isinstance(feature_name, str):
+                    return [feature_name]
+                elif isinstance(feature_name, list) and len(feature_name) == 1:
+                    return feature_name
+                else:
+                    warnings.warn(
+                        "Expecting feature name to be either a string or list "
+                        "of length 1 but found: {}".format(str(feature_name)))
+                    return [name]
+            else:
+                return [name]
 
     def transform(self, X):
         """

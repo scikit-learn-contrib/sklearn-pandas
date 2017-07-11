@@ -117,6 +117,16 @@ def test_transformed_names_simple(simple_dataframe):
     assert mapper.transformed_names_ == ['a']
 
 
+def test_single_column_transformed_name(simple_dataframe):
+    """
+    Test alias for a transformation that generates a single column
+    """
+    df = simple_dataframe
+    mapper = DataFrameMapper([('a', None, {'alias': 'new_a'})])
+    mapper.fit_transform(df)
+    assert mapper.transformed_names_ == ['new_a']
+
+
 def test_transformed_names_binarizer(complex_dataframe):
     """
     Get transformed names of features in `transformed_names` attribute
