@@ -236,18 +236,21 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
                 return [name + '_' + str(o) for o in range(num_cols)]
         else:
             feature_name = _get_feature_names(transformer)
-            if alias:
-                return [alias]
-            elif feature_name is not None:
+
+            if feature_name is not None:
+                def _name(x):
+                    return alias + '_' + x if alias else x
                 if isinstance(feature_name, str):
-                    return [feature_name]
+                    return [_name(f) for f in feature_name]
                 elif isinstance(feature_name, list) and len(feature_name) == 1:
-                    return feature_name
+                    return [_name(f) for f in feature_name]
                 else:
                     warnings.warn(
                         "Expecting feature name to be either a string or list "
                         "of length 1 but found: {}".format(str(feature_name)))
                     return [name]
+            elif alias:
+                return [alias]
             else:
                 return [name]
 

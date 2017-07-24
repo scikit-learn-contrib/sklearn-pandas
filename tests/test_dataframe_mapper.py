@@ -127,6 +127,22 @@ def test_single_column_transformed_name(simple_dataframe):
     assert mapper.transformed_names_ == ['new_a']
 
 
+def test_single_dictionary_transformed_name(simple_dataframe):
+    df = pd.DataFrame(
+        [[{'a': 1}], [{'a': 3}]],
+        columns=['colA']
+    )
+
+    outdf = DataFrameMapper(
+        [('colA', DictVectorizer(), {'alias': 'colA'})],
+        df_out=True,
+        default=False
+    ).fit_transform(df)
+
+    columns = sorted(list(outdf.columns))
+    assert columns[0] == 'colA_a'
+
+
 def test_transformed_names_binarizer(complex_dataframe):
     """
     Get transformed names of features in `transformed_names` attribute
