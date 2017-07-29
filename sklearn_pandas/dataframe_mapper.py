@@ -270,9 +270,13 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
             Xt = self._get_col_subset(X, unsel_cols, self.input_df)
             if self.built_default is not None:
                 Xt = self.built_default.transform(Xt)
+                self.transformed_names_ += self.get_names(
+                    unsel_cols, self.built_default, Xt)
+            else:
+                # if not applying a default transformer,
+                # keep column names unmodified
+                self.transformed_names_ += unsel_cols
             extracted.append(_handle_feature(Xt))
-            self.transformed_names_ += self.get_names(
-                unsel_cols, self.built_default, Xt)
 
         # combine the feature outputs into one array.
         # at this point we lose track of which features

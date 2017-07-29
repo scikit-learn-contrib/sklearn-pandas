@@ -513,6 +513,17 @@ def test_default_none():
     assert (transformed[:, 3] == np.array([3, 5, 7]).T).all()
 
 
+def test_default_none_names():
+    """
+    If default=None, column names are returned unmodified.
+    """
+    df = pd.DataFrame({'a': [1, 2, 3], 'b': [3, 5, 7]})
+    mapper = DataFrameMapper([], default=None)
+
+    mapper.fit_transform(df)
+    assert mapper.transformed_names_ == ['a', 'b']
+
+
 def test_default_transformer():
     """
     If default=Transformer, non explicitly selected columns are applied this
