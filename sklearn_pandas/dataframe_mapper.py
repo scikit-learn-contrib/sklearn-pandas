@@ -82,7 +82,6 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
                     as a pandas DataFrame or Series. Otherwise pass them as a
                     numpy array. Defaults to ``False``.
         """
-        # self.features_def = features
         self.features = features
         self.built_features = None
         self.default = default
@@ -176,11 +175,6 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         y       the target vector relative to X, optional
 
         """
-        # if isinstance(self.features_def, list):
-        #     self.features = [_build_feature(*f) for f in self.features_def]
-        # else:
-        #     self.features = self.features_def
-
         if isinstance(self.features, list):
             self.built_features = [_build_feature(*f) for f in self.features]
         else:
