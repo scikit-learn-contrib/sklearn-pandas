@@ -347,6 +347,11 @@ Example:
 Changelog
 ---------
 
+Development
+***********
+* Add column name to exception during fit/transform (#110).
+
+
 1.5.0 (2017-06-24)
 ******************
 * Allow inputting a dataframe/series per group of columns.
