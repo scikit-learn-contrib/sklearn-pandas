@@ -290,5 +290,6 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
 
         if not self.df_out:
             return stacked
-
-        return pd.DataFrame(stacked, columns=self.transformed_names_)
+        else:
+            index = X.index if self.input_df else None
+            return pd.DataFrame(stacked, columns=self.transformed_names_, index=index)
