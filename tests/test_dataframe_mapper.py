@@ -163,6 +163,42 @@ def test_transformed_names_complex_alias(complex_dataframe):
     assert mapper.transformed_names_ == ['new_a', 'new_b', 'new_c']
 
 
+def test_exception_column_context_transform(simple_dataframe):
+    """
+    If an exception is raised when transforming a column,
+    the exception includes the name of the column being transformed
+    """
+    class FailingTransformer(object):
+        def fit(self, X):
+            pass
+
+        def transform(self, X):
+            raise Exception('Some exception')
+
+    df = simple_dataframe
+    mapper = DataFrameMapper([('a', FailingTransformer())])
+    mapper.fit(df)
+
+    with pytest.raises(Exception, match='a: Some exception'):
+        mapper.transform(df)
+
+
+def test_exception_column_context_fit(simple_dataframe):
+    """
+    If an exception is raised when fit a column,
+    the exception includes the name of the column being fitted
+    """
+    class FailingFitter(object):
+        def fit(self, X):
+            raise Exception('Some exception')
+
+    df = simple_dataframe
+    mapper = DataFrameMapper([('a', FailingFitter())])
+
+    with pytest.raises(Exception, match='a: Some exception'):
+        mapper.fit(df)
+
+
 def test_simple_df(simple_dataframe):
     """
     Get a dataframe from a simple mapped dataframe
