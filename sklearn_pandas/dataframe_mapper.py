@@ -161,18 +161,21 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
 
         Returns a numpy array with the data from the selected columns
         """
-        return_vector = False
         if isinstance(cols, string_types):
             return_vector = True
             cols = [cols]
+        else:
+            return_vector = False
 
+        # Needed when using the cross-validation compatibility
+        # layer for sklearn<0.16.0.
+        # Will be dropped on sklearn-pandas 2.0.
         if isinstance(X, list):
             X = [x[cols] for x in X]
             X = pd.DataFrame(X)
 
         elif isinstance(X, DataWrapper):
-            # if it's a datawrapper, unwrap it
-            X = X.df
+            X = X.df  # fetch underlying data
 
         if return_vector:
             t = X[cols[0]]
@@ -184,7 +187,6 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
             return t
         else:
             return t.values
-        return t
 
     def fit(self, X, y=None):
         """
