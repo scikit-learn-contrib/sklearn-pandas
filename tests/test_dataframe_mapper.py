@@ -291,6 +291,42 @@ def test_customtransform_df():
     assert cols[0] == 'target'
 
 
+def test_preserve_df_index():
+    """
+    The index is preserved when df_out=True
+    """
+    df = pd.DataFrame({'target': [1, 2, 3]},
+                      index=['a', 'b', 'c'])
+    mapper = DataFrameMapper([('target', None)],
+                             df_out=True)
+
+    transformed = mapper.fit_transform(df)
+
+    assert_array_equal(transformed.index, df.index)
+
+
+def test_preserve_df_index_rows_dropped():
+    """
+    If df_out=True but the original df index length doesn't
+    match the number of final rows, use a numeric index
+    """
+    class DropLastRowTransformer(object):
+        def fit(self, X):
+            return self
+
+        def transform(self, X):
+            return X[:-1]
+
+    df = pd.DataFrame({'target': [1, 2, 3]},
+                      index=['a', 'b', 'c'])
+    mapper = DataFrameMapper([('target', DropLastRowTransformer())],
+                             df_out=True)
+
+    transformed = mapper.fit_transform(df)
+
+    assert_array_equal(transformed.index, np.array([0, 1]))
+
+
 def test_pca(complex_dataframe):
     """
     Check multi in and out with PCA
