@@ -288,9 +288,17 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         else:
             stacked = np.hstack(extracted)
 
-        if not self.df_out:
-            return stacked
+        if self.df_out:
+            # if no rows were dropped preserve the original index,
+            # otherwise use a new integer one
+            no_rows_dropped = len(X) == len(stacked)
+            if no_rows_dropped:
+                index = X.index
+            else:
+                index = None
+
+            return pd.DataFrame(stacked,
+                                columns=self.transformed_names_,
+                                index=index)
         else:
-            index = X.index if self.input_df else None
-            return pd.DataFrame(
-                    stacked, columns=self.transformed_names_, index=index)
+            return stacked
