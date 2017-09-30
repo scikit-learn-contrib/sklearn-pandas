@@ -1,5 +1,11 @@
-import pytest
+from collections import Counter
 
+import pytest
+import numpy as np
+from pandas import DataFrame
+from numpy.testing import assert_array_equal
+
+from sklearn_pandas import DataFrameMapper
 from sklearn_pandas.features_generator import gen_features
 
 
@@ -10,10 +16,33 @@ class MockClass(object):
         self.name = name
 
 
+class MockTransformer(object):
+
+    def __init__(self):
+        self.most_common_ = None
+
+    def fit(self, X, y=None):
+        [(value, _)] = Counter(X).most_common(1)
+        self.most_common_ = value
+        return self
+
+    def transform(self, X, y=None):
+        return np.asarray([self.most_common_] * len(X))
+
+
+@pytest.fixture
+def simple_dataset():
+    return DataFrame({
+        'feat1': [1, 2, 1, 3, 1],
+        'feat2': [1, 2, 2, 2, 3],
+        'feat3': [1, 2, 3, 4, 5],
+    })
+
+
 @pytest.mark.parametrize('columns', [['colA', 'colB', 'colC']])
 def test_generate_features_with_default_parameters(columns):
     """
-    Tests generating features from classes with default init arguments
+    Tests generating features from classes with default init arguments.
     """
     feature_defs = gen_features(columns=columns, classes=[MockClass])
     assert len(feature_defs) == len(columns)
@@ -28,6 +57,9 @@ def test_generate_features_with_default_parameters(columns):
 
 
 def test_generate_features_with_several_classes():
+    """
+    Tests generating features pipeline with different transformers parameters.
+    """
     feature_defs = gen_features(
         columns=['colA', 'colB', 'colC'],
         classes=[
@@ -44,6 +76,10 @@ def test_generate_features_with_several_classes():
 
 
 def test_generate_features_with_none_transformers():
+    """
+    Tests generating "dummy" feature definiton which doesn't apply any
+    transformation.
+    """
     feature_defs = gen_features(
         columns=['colA', 'colB', 'colC'], classes=[None])
 
@@ -52,6 +88,28 @@ def test_generate_features_with_none_transformers():
                 ('colC', None)]
 
     assert feature_defs == expected
+
+
+def test_compatibility_with_data_frame_mapper(simple_dataset):
+    """
+    Tests compatibility of generated feature definition with DataFrameMapper.
+    """
+    features_defs = gen_features(
+        columns=['feat1', 'feat2'],
+        classes=[MockTransformer])
+    features_defs.append(('feat3', None))
+
+    mapper = DataFrameMapper(features_defs)
+    X = mapper.fit_transform(simple_dataset)
+    expected = np.asarray([
+        [1, 2, 1],
+        [1, 2, 2],
+        [1, 2, 3],
+        [1, 2, 4],
+        [1, 2, 5]
+    ])
+
+    assert_array_equal(X, expected)
 
 
 def assert_attributes(obj, **attrs):
