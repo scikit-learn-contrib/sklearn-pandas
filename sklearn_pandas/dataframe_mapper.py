@@ -1,3 +1,8 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*- 
+# Author: hu bi feng
+# Time: 2017-10-15
+
 import sys
 import contextlib
 
@@ -47,6 +52,21 @@ def _get_feature_names(estimator):
         return estimator.get_feature_names()
     return None
 
+def _get_feature_distinct_value(estimator):               #  New Added !
+    """
+    Attempt to extract feature distinct value based on a given estimator
+
+    """
+    if hasattr(estimator, 'n_values_'):
+        return estimator.n_values_
+    return None
+
+def _build_feature_name(name, distinct_value):             #  New Added !
+    cat_name_list = []
+    for index, value in enumerate(name):
+        tt_name = [value + '_' + str(o) for o in range(distinct_value[index])]
+        cat_name_list.extend(tt_name)
+    return cat_name_list
 
 @contextlib.contextmanager
 def add_column_names_to_exception(column_names):
@@ -72,7 +92,6 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
                  input_df=False):
         """
         Params:
-
         features    a list of tuples with features definitions.
                     The first element is the pandas column selector. This can
                     be a string (for one column) or a list of strings.
@@ -81,23 +100,19 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
                     The third element is optional and, if present, must be
                     a dictionary with the options to apply to the
                     transformation. Example: {'alias': 'day_of_week'}
-
         default     default transformer to apply to the columns not
                     explicitly selected in the mapper. If False (default),
                     discard them. If None, pass them through untouched. Any
                     other transformer will be applied to all the unselected
                     columns as a whole, taken as a 2d-array.
-
         sparse      will return sparse matrix if set True and any of the
                     extracted features is sparse. Defaults to False.
-
         df_out      return a pandas data frame, with each column named using
                     the pandas column that created it (if there's only one
                     input and output) or the input columns joined with '_'
                     if there's multiple inputs, and the name concatenated with
                     '_1', '_2' etc if there's multiple outputs. NB: does not
                     work if *default* or *sparse* are true
-
         input_df    If ``True`` pass the selected columns to the transformers
                     as a pandas DataFrame or Series. Otherwise pass them as a
                     numpy array. Defaults to ``False``.
@@ -115,7 +130,7 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
             raise ValueError("Can not use df_out with sparse or default")
 
     @property
-    def _selected_columns(self):
+    def _selected_columns(self):  
         """
         Return a set of selected columns in the feature list.
         """
@@ -132,7 +147,6 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         """
         Return list of columns present in X and not selected explicitly in the
         mapper.
-
         Unselected columns are returned in the order they appear in the
         dataframe to avoid issues with different ordering during default fit
         and transform steps.
@@ -154,11 +168,9 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
     def _get_col_subset(self, X, cols, input_df=False):
         """
         Get a subset of columns from the given table X.
-
         X       a Pandas dataframe; the table to select columns from
         cols    a string or list of strings representing the columns
                 to select
-
         Returns a numpy array with the data from the selected columns
         """
         if isinstance(cols, string_types):
@@ -191,11 +203,8 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
     def fit(self, X, y=None):
         """
         Fit a transformation from the pipeline
-
         X       the data to fit
-
         y       the target vector relative to X, optional
-
         """
         if isinstance(self.features, list):
             self.built_features = [_build_feature(*f) for f in self.features]
@@ -223,7 +232,6 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
     def get_names(self, columns, transformer, x, alias=None):
         """
         Return verbose names for the transformed columns.
-
         columns       name (or list of names) of the original column(s)
         transformer   transformer - can be a TransformerPipeline
         x             transformed columns (numpy.ndarray)
@@ -231,9 +239,7 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         """
         if alias is not None:
             name = alias
-        elif isinstance(columns, list):
-            name = '_'.join(columns)
-        else:
+        else:                                              #  New Removed!
             name = columns
         num_cols = x.shape[1] if len(x.shape) > 1 else 1
         if num_cols > 1:
@@ -251,18 +257,37 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
             # Otherwise use the only estimator present
             else:
                 names = _get_feature_names(transformer)
+
             if names is not None and len(names) == num_cols:
                 return [name + '_' + str(o) for o in names]
             # otherwise, return name concatenated with '_1', '_2', etc.
-            else:
-                return [name + '_' + str(o) for o in range(num_cols)]
+            elif len(name) == num_cols:                            # New Added!
+                return name
+            elif len(name) < num_cols:
+                if len(name) == 1:
+                    name = ''.join(name)
+                    return [name + '_' + str(o) for o in range(num_cols)]
+                else:
+
+                    # Get each feature's distinct value!!!!!!!!!
+                    if isinstance(transformer, TransformerPipeline):        # New Added!
+                        inverse_steps = transformer.steps[::-1]
+                        estimators = (estimator for name, estimator in inverse_steps)
+                        names_steps = (_get_feature_distinct_value(e) for e in estimators)
+                        distinct_value = next((n for n in names_steps if n is not None), None)
+                    # Otherwise use the only estimator present
+                    else:
+                        distinct_value = _get_feature_distinct_value(transformer)
+
+                    distinct_value = distinct_value.tolist()
+                    name = _build_feature_name(name, distinct_value)
+                    return name
         else:
             return [name]
 
     def transform(self, X):
         """
         Transform the given data. Assumes that fit has already been called.
-
         X       the data to transform
         """
         extracted = []
