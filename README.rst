@@ -240,6 +240,7 @@ in a list::
            [ 0.        ],
            [ 1.22474487]])
 
+
 Columns that don't need any transformation
 ******************************************
 
@@ -281,6 +282,59 @@ passing it as the ``default`` argument to the mapper:
 
 Using ``default=False`` (the default) drops unselected columns. Using
 ``default=None`` pass the unselected columns unchanged.
+
+
+Same transformer for the multiple columns
+*****************************************
+
+Sometimes it is required to apply the same transformation to several dataframe columns.
+To simplify this process, the package provides ``gen_features`` function which accepts a list
+of columns and feature transformer class (or list of classes), and generates a feature definition,
+acceptable by ``DataFrameMapper``.
+
+For example, consider a dataset with three categorical columns, 'col1', 'col2', and 'col3',
+To binarize each of them, one could pass column names and ``LabelBinarizer`` transformer class
+into generator, and then use returned definition as ``features`` argument for ``DataFrameMapper``:
+
+    >>> from sklearn_pandas import gen_features
+    >>> feature_def = gen_features(
+    ...     columns=['col1', 'col2', 'col3'],
+    ...     classes=[sklearn.preprocessing.LabelEncoder]
+    ... )
+    >>> feature_def
+    [('col1', [LabelEncoder()]), ('col2', [LabelEncoder()]), ('col3', [LabelEncoder()])]
+    >>> mapper5 = DataFrameMapper(feature_def)
+    >>> data5 = pd.DataFrame({
+    ...     'col1': ['yes', 'no', 'yes'],
+    ...     'col2': [True, False, False],
+    ...     'col3': ['one', 'two', 'three']
+    ... })
+    >>> mapper5.fit_transform(data5)
+    array([[1, 1, 0],
+           [0, 0, 2],
+           [1, 0, 1]])
+
+If it is required to override some of transformer parameters, then a dict with 'class' key and
+transformer parameters should be provided. For example, consider a dataset with missing values.
+Then the following code could be used to override default imputing strategy:
+
+    >>> feature_def = gen_features(
+    ...     columns=[['col1'], ['col2'], ['col3']],
+    ...     classes=[{'class': sklearn.preprocessing.Imputer, 'strategy': 'most_frequent'}]
+    ... )
+    >>> mapper6 = DataFrameMapper(feature_def)
+    >>> data6 = pd.DataFrame({
+    ...     'col1': [None, 1, 1, 2, 3],
+    ...     'col2': [True, False, None, None, True],
+    ...     'col3': [0, 0, 0, None, None]
+    ... })
+    >>> mapper6.fit_transform(data6)
+    array([[ 1.,  1.,  0.],
+           [ 1.,  0.,  0.],
+           [ 1.,  1.,  0.],
+           [ 2.,  1.,  0.],
+           [ 3.,  1.,  0.]])
+
 
 Feature selection and other supervised transformations
 ******************************************************

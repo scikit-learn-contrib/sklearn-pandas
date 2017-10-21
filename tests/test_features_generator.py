@@ -39,17 +39,18 @@ def simple_dataset():
     })
 
 
-@pytest.mark.parametrize('columns', [['colA', 'colB', 'colC']])
-def test_generate_features_with_default_parameters(columns):
+def test_generate_features_with_default_parameters():
     """
     Tests generating features from classes with default init arguments.
     """
+    columns = ['colA', 'colB', 'colC']
     feature_defs = gen_features(columns=columns, classes=[MockClass])
     assert len(feature_defs) == len(columns)
 
     feature_dict = dict(feature_defs)
-    assert columns == sorted(feature_dict)
+    assert columns == sorted(feature_dict.keys())
 
+    # default init arguments for MockClass for clarification.
     expected = {'value': 1, 'name': 'class'}
     for column, transformers in feature_dict.items():
         for obj in transformers:
@@ -75,9 +76,9 @@ def test_generate_features_with_several_classes():
         assert_attributes(transformers[2], name='mockB', value=None)
 
 
-def test_generate_features_with_none_transformers():
+def test_generate_features_with_none_only_transformers():
     """
-    Tests generating "dummy" feature definiton which doesn't apply any
+    Tests generating "dummy" feature definition which doesn't apply any
     transformation.
     """
     feature_defs = gen_features(
