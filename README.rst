@@ -477,15 +477,15 @@ The code for ``DataFrameMapper`` is based on code originally written by `Ben Ham
 
 Other contributors:
 
-* Arnau Gil Amat
-* Cal Paterson
-* Defvorfu
-* Gustavo Sena Mafra
-* Israel Saeta Pérez
-* Jeremy Howard
-* Jimmy Wan
-* Olivier Grisel
-* Paul Butler
-* Ritesh Agrawal
-* Vitaley Zaretskey
-* Zac Stewart
+* Arnau Gil Amat (@arnau126)
+* Cal Paterson (@calpaterson)
+* @defvorfu
+* Gustavo Sena Mafra (@gsmafra)
+* Israel Saeta Pérez (@dukebody)
+* Jeremy Howard (@jph00)
+* Jimmy Wan (@jimmywan)
+* Olivier Grisel (@ogrisel)
+* Paul Butler (@paulgb)
+* Ritesh Agrawal (@ragrawal)
+* Vitaley Zaretskey (@vzaretsk)
+* Zac Stewart (@zacstewart)
