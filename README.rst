@@ -404,6 +404,7 @@ Changelog
 Development
 ***********
 * Add column name to exception during fit/transform (#110).
+* Add ``gen_feature`` helper function to help generating the same transformation for multiple columns (#126).
 
 
 1.5.0 (2017-06-24)
@@ -478,6 +479,7 @@ Other contributors:
 
 * Arnau Gil Amat
 * Cal Paterson
+* Defvorfu
 * Gustavo Sena Mafra
 * Israel Saeta Pérez
 * Jeremy Howard
