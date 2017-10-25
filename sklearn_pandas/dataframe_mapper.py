@@ -268,12 +268,12 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
                     # Get each feature's distinct value
                     if isinstance(transformer, TransformerPipeline):
                         inverse_steps = transformer.steps[::-1]
-                        estimators = \
-                            (estimator for name, estimator in inverse_steps)
-                        names_steps = \
-                           (_get_feature_distinct_value(e) for e in estimators)
-                        distinct_value = \
-                          next((n for n in names_steps if n is not None), None)
+                        estimators = (estimator for name, 
+                                      estimator in inverse_steps)
+                        names_steps = (_get_feature_distinct_value(e) 
+                                       for e in estimators)
+                        distinct_value = next((n for n in names_steps 
+                                               if n is not None), None)
                     # Otherwise use the only estimator present
                     else:
                         distinct_value = \
