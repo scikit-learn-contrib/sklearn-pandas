@@ -1,8 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*- 
-# Author: hu bi feng
-# Time: 2017-10-15
-
 import sys
 import contextlib
 
@@ -52,16 +47,15 @@ def _get_feature_names(estimator):
         return estimator.get_feature_names()
     return None
 
-def _get_feature_distinct_value(estimator):               #  New Added !
+def _get_feature_distinct_value(estimator):             
     """
     Attempt to extract feature distinct value based on a given estimator
-
     """
     if hasattr(estimator, 'n_values_'):
         return estimator.n_values_
     return None
 
-def _build_feature_name(name, distinct_value):             #  New Added !
+def _build_feature_name(name, distinct_value):           
     cat_name_list = []
     for index, value in enumerate(name):
         tt_name = [value + '_' + str(o) for o in range(distinct_value[index])]
@@ -239,7 +233,7 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         """
         if alias is not None:
             name = alias
-        else:                                              #  New Removed!
+        else:                                           
             name = columns
         num_cols = x.shape[1] if len(x.shape) > 1 else 1
         if num_cols > 1:
@@ -261,16 +255,15 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
             if names is not None and len(names) == num_cols:
                 return [name + '_' + str(o) for o in names]
             # otherwise, return name concatenated with '_1', '_2', etc.
-            elif len(name) == num_cols:                            # New Added!
+            elif len(name) == num_cols:                        
                 return name
             elif len(name) < num_cols:
                 if len(name) == 1:
                     name = ''.join(name)
                     return [name + '_' + str(o) for o in range(num_cols)]
                 else:
-
-                    # Get each feature's distinct value!!!!!!!!!
-                    if isinstance(transformer, TransformerPipeline):        # New Added!
+                    # Get each feature's distinct value
+                    if isinstance(transformer, TransformerPipeline):       
                         inverse_steps = transformer.steps[::-1]
                         estimators = (estimator for name, estimator in inverse_steps)
                         names_steps = (_get_feature_distinct_value(e) for e in estimators)
