@@ -271,9 +271,9 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
                         estimators = \
                             (estimator for name, estimator in inverse_steps)
                         names_steps = \
-                            (_get_feature_distinct_value(e) for e in estimators)
+                           (_get_feature_distinct_value(e) for e in estimators)
                         distinct_value = \
-                            next((n for n in names_steps if n is not None), None)
+                          next((n for n in names_steps if n is not None), None)
                     # Otherwise use the only estimator present
                     else:
                         distinct_value = \
