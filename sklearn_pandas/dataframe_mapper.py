@@ -258,7 +258,7 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
             if names is not None and len(names) == num_cols:
                 return [name + '_' + str(o) for o in names]
             # otherwise, return name concatenated with '_1', '_2', etc.
-            elif len(name) == num_cols:        
+            elif len(name) == num_cols:
                 return name
             elif len(name) < num_cols:
                 if len(name) == 1:
@@ -268,16 +268,16 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
                     # Get each feature's distinct value
                     if isinstance(transformer, TransformerPipeline):
                         inverse_steps = transformer.steps[::-1]
-                        estimators = (estimator for name, \
-                                      estimator in inverse_steps)
+                        estimators = \
+                            (estimator for name, estimator in inverse_steps)
                         names_steps = \
-                        (_get_feature_distinct_value(e) for e in estimators)
+                            (_get_feature_distinct_value(e) for e in estimators)
                         distinct_value = \
-                        next((n for n in names_steps if n is not None), None)
+                            next((n for n in names_steps if n is not None), None)
                     # Otherwise use the only estimator present
                     else:
                         distinct_value = \
-                        _get_feature_distinct_value(transformer)
+                            _get_feature_distinct_value(transformer)
 
                     distinct_value = distinct_value.tolist()
                     name = _build_feature_name(name, distinct_value)
