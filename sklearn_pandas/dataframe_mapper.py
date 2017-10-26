@@ -293,7 +293,7 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
                     name = '_'.join(name)
                     return [name + '_' + str(o) for o in range(num_cols)]
         else:
-            if isinstance(name,list):
+            if isinstance(name, list):
                 name = '_'.join(name)
             return [name]
 
