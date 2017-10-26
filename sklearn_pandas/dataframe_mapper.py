@@ -236,6 +236,8 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         """
         if alias is not None:
             name = alias
+        elif isinstance(columns, str):
+            name = [columns]
         else:
             name = columns
         num_cols = x.shape[1] if len(x.shape) > 1 else 1
@@ -256,15 +258,20 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
                 names = _get_feature_names(transformer)
 
             if names is not None and len(names) == num_cols:
+                name = ''.join(name)
                 return [name + '_' + str(o) for o in names]
             # otherwise, return name concatenated with '_1', '_2', etc.
             elif len(name) == num_cols:
-                return name
+                if str(transformer).startswith('PCA'):
+                    name = '_'.join(name)
+                    return [name + '_' + str(o) for o in range(num_cols)]
+                else:
+                    return name
             elif len(name) < num_cols:
                 if len(name) == 1:
                     name = ''.join(name)
                     return [name + '_' + str(o) for o in range(num_cols)]
-                else:
+                elif str(transformer).startswith('OneHotEncoder'):
                     # Get each feature's distinct value
                     if isinstance(transformer, TransformerPipeline):
                         inverse_steps = transformer.steps[::-1]
@@ -282,7 +289,12 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
                     distinct_value = distinct_value.tolist()
                     name = _build_feature_name(name, distinct_value)
                     return name
+                else:
+                    name = '_'.join(name)
+                    return [name + '_' + str(o) for o in range(num_cols)]
         else:
+            if isinstance(name,list):
+                name = '_'.join(name)
             return [name]
 
     def transform(self, X):
