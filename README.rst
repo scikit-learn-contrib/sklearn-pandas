@@ -401,8 +401,8 @@ Example:
 Changelog
 ---------
 
-Development
-***********
+1.6.0 (2017-10-28)
+******************
 * Add column name to exception during fit/transform (#110).
 * Add ``gen_feature`` helper function to help generating the same transformation for multiple columns (#126).
 
