@@ -1,0 +1,23 @@
+version: 2
+jobs:
+  test_py35:
+    docker:
+      - image: circleci/python:3.5
+    steps:
+      - checkout
+      - run: pip install --user tox
+      - run: ~/.local/bin/tox -e py35
+  test_py27:
+    docker:
+      - image: circleci/python:2.7
+    steps:
+      - checkout
+      - run: pip install --user tox
+      - run: ~/.local/bin/tox -e py27
+
+workflows:
+  version: 2
+  build_and_test:
+    jobs:
+      - test_py35
+      - test_py27
