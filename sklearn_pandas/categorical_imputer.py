@@ -33,11 +33,17 @@ class CategoricalImputer(BaseEstimator, TransformerMixin):
     copy : boolean, optional (default=True)
         If True, a copy of X will be created.
 
-    replacement : string, optional (default="mode")
-        The value that all occurrences of missing values are replaced
-        with. Use this to specify an alternative if you don't want to
-        impute with the mode, or if there are multiple modes in your
-        data and you want to choose a particular one.
+    strategy : string, optional (default = 'mode')
+        If set to 'mode', replace all instances of `missing_values`
+        with the modal value. Otherwise, replace with
+        the value specified via `replacement`.
+
+    replacement : string, optional (default='?')
+        The value that all instances of `missing_values` are replaced
+        with if `strategy` is not set to 'mode'. This is useful if
+        you don't want to impute with the mode, or if there are multiple
+        modes in your data and you want to choose a particular one. If
+        `strategy` is set to `mode`, this parameter is ignored.
 
     Attributes
     ----------
@@ -46,10 +52,17 @@ class CategoricalImputer(BaseEstimator, TransformerMixin):
 
     """
 
-    def __init__(self, missing_values='NaN', replacement='mode', copy=True):
+    def __init__(
+        self,
+        missing_values='NaN',
+        strategy='mode',
+        replacement='?',
+        copy=True
+    ):
         self.missing_values = missing_values
         self.copy = copy
         self.replacement = replacement
+        self.strategy = strategy
 
     def fit(self, X, y=None):
         """
@@ -70,7 +83,7 @@ class CategoricalImputer(BaseEstimator, TransformerMixin):
 
         mask = _get_mask(X, self.missing_values)
         X = X[~mask]
-        if self.replacement == 'mode':
+        if self.strategy == 'mode':
             modes = pd.Series(X).mode()
         else:
             modes = np.array([self.replacement])

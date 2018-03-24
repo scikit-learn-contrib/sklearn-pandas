@@ -387,9 +387,9 @@ Sklearn-pandas' ``cross_val_score`` function provides exactly the same interface
 Since the ``scikit-learn``  ``Imputer`` transformer currently only works with
 numbers, ``sklearn-pandas`` provides an equivalent helper transformer that
 works with strings, substituting null values with the most frequent value in
-that column, or a user-specified value.
+that column. Alternatively, you can specify a fixed value to use.
 
-Example:
+Example: imputing with the mode:
 
     >>> from sklearn_pandas import CategoricalImputer
     >>> data = np.array(['a', 'b', 'b', np.nan], dtype=object)
@@ -397,13 +397,21 @@ Example:
     >>> imputer.fit_transform(data)
     array(['a', 'b', 'b', 'b'], dtype=object)
 
+Example: imputing with a fixed value:
+
+    >>> from sklearn_pandas import CategoricalImputer
+    >>> data = np.array(['a', 'b', 'b', np.nan], dtype=object)
+    >>> imputer = CategoricalImputer(strategy='fixed_value', replacement='a')
+    >>> imputer.fit_transform(data)
+    array(['a', 'b', 'b', 'a'], dtype=object)
+
 
 Changelog
 ---------
 
-1.7.0 (2018-03-24)
+Development
 ******************
-* Add ``replacement`` parameter to ``CategoricalImputer`` to allow imputing
+* Add ``strategy`` and ``replacement`` parameters to ``CategoricalImputer`` to allow imputing
   with values other than the mode. (#144)
 
 
@@ -492,7 +500,7 @@ Other contributors:
 * Jimmy Wan (@jimmywan)
 * Olivier Grisel (@ogrisel)
 * Paul Butler (@paulgb)
+* Richard Miller (@rwjmiller)
 * Ritesh Agrawal (@ragrawal)
 * Vitaley Zaretskey (@vzaretsk)
 * Zac Stewart (@zacstewart)
-* Richard Miller (@rwjmiller)
