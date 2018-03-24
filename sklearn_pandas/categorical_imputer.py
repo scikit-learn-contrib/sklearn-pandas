@@ -33,6 +33,12 @@ class CategoricalImputer(BaseEstimator, TransformerMixin):
     copy : boolean, optional (default=True)
         If True, a copy of X will be created.
 
+    replacement : string, optional (default="mode")
+        The value that all occurrences of missing values are replaced
+        with. Use this to specify an alternative if you don't want to
+        impute with the mode, or if there are multiple modes in your
+        data and you want to choose a particular one.
+
     Attributes
     ----------
     fill_ : str
@@ -40,9 +46,10 @@ class CategoricalImputer(BaseEstimator, TransformerMixin):
 
     """
 
-    def __init__(self, missing_values='NaN', copy=True):
+    def __init__(self, missing_values='NaN', replacement='mode', copy=True):
         self.missing_values = missing_values
         self.copy = copy
+        self.replacement = replacement
 
     def fit(self, X, y=None):
         """
@@ -63,8 +70,10 @@ class CategoricalImputer(BaseEstimator, TransformerMixin):
 
         mask = _get_mask(X, self.missing_values)
         X = X[~mask]
-
-        modes = pd.Series(X).mode()
+        if self.replacement == 'mode':
+            modes = pd.Series(X).mode()
+        else:
+            modes = np.array([self.replacement])
         if modes.shape[0] == 0:
             raise ValueError('No value is repeated more than '
                              'once in the column')
