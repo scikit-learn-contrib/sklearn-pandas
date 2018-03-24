@@ -129,3 +129,25 @@ def test_not_fitted():
     imp = CategoricalImputer()
     with pytest.raises(NotFittedError):
         imp.transform(np.array(['a', 'b', 'b', None]))
+
+
+@pytest.mark.parametrize('input_type', ['np', 'pd'])
+@pytest.mark.parametrize('replacement_value', ['a', 'c'])
+def test_custom_replacement(replacement_value, input_type):
+    """
+    If replacement != 'mode', impute with that value instead of mode
+    """
+    data = ['a', np.nan, 'b', 'b']
+
+    if input_type == 'pd':
+        X = pd.Series(data)
+    else:
+        X = np.asarray(data, dtype=object)
+
+    Xc = X.copy()
+
+    Xt = CategoricalImputer(replacement=replacement_value).fit_transform(X)
+
+    assert (np.asarray(X) == np.asarray(Xc)).all()
+    assert type(Xt) == np.ndarray
+    assert (Xt == ['a', replacement_value, 'b', 'b']).all()

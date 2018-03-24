@@ -385,9 +385,9 @@ Sklearn-pandas' ``cross_val_score`` function provides exactly the same interface
 **********************
 
 Since the ``scikit-learn``  ``Imputer`` transformer currently only works with
-numbers, ``sklearn-pandas`` provides an equivalent helper transformer that do
-work with strings, substituting null values with the most frequent value in
-that column.
+numbers, ``sklearn-pandas`` provides an equivalent helper transformer that
+works with strings, substituting null values with the most frequent value in
+that column, or a user-specified value.
 
 Example:
 
@@ -400,6 +400,12 @@ Example:
 
 Changelog
 ---------
+
+1.7.0 (2018-03-24)
+******************
+* Add ``replacement`` parameter to ``CategoricalImputer`` to allow imputing
+  with values other than the mode. (#144)
+
 
 1.6.0 (2017-10-28)
 ******************
@@ -489,3 +495,4 @@ Other contributors:
 * Ritesh Agrawal (@ragrawal)
 * Vitaley Zaretskey (@vzaretsk)
 * Zac Stewart (@zacstewart)
+* Richard Miller (@rwjmiller)
