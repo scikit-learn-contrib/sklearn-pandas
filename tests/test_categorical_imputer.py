@@ -30,7 +30,7 @@ def test_unit(input_type, none_value):
     Xt = CategoricalImputer().fit_transform(X)
 
     assert (np.asarray(X) == np.asarray(Xc)).all()
-    assert type(Xt) == np.ndarray
+    assert isinstance(Xt, np.ndarray)
     assert (Xt == ['a', 'b', 'b', 'b']).all()
 
 
@@ -146,8 +146,11 @@ def test_custom_replacement(replacement_value, input_type):
 
     Xc = X.copy()
 
-    Xt = CategoricalImputer(replacement=replacement_value).fit_transform(X)
+    Xt = CategoricalImputer(
+        strategy='fixed_value',
+        replacement=replacement_value
+    ).fit_transform(X)
 
     assert (np.asarray(X) == np.asarray(Xc)).all()
-    assert type(Xt) == np.ndarray
+    assert isinstance(Xt, np.ndarray)
     assert (Xt == ['a', replacement_value, 'b', 'b']).all()
