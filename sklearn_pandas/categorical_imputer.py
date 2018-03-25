@@ -33,6 +33,18 @@ class CategoricalImputer(BaseEstimator, TransformerMixin):
     copy : boolean, optional (default=True)
         If True, a copy of X will be created.
 
+    strategy : string, optional (default = 'mode')
+        If set to 'mode', replace all instances of `missing_values`
+        with the modal value. Otherwise, replace with
+        the value specified via `replacement`.
+
+    replacement : string, optional (default='?')
+        The value that all instances of `missing_values` are replaced
+        with if `strategy` is not set to 'mode'. This is useful if
+        you don't want to impute with the mode, or if there are multiple
+        modes in your data and you want to choose a particular one. If
+        `strategy` is set to `mode`, this parameter is ignored.
+
     Attributes
     ----------
     fill_ : str
@@ -40,9 +52,29 @@ class CategoricalImputer(BaseEstimator, TransformerMixin):
 
     """
 
-    def __init__(self, missing_values='NaN', copy=True):
+    def __init__(
+        self,
+        missing_values='NaN',
+        strategy='mode',
+        replacement=None,
+        copy=True
+    ):
         self.missing_values = missing_values
         self.copy = copy
+        self.replacement = replacement
+        self.strategy = strategy
+
+        strategies = ['fixed_value', 'mode']
+        if self.strategy not in strategies:
+            raise ValueError(
+                'Strategy {0} not in {1}'.format(self.strategy, strategies)
+            )
+
+        if self.strategy == 'fixed_value' and self.replacement is None:
+            raise ValueError(
+                'Please specify a value for \'replacement\''
+                'when using the fixed_value strategy.'
+            )
 
     def fit(self, X, y=None):
         """
@@ -63,8 +95,10 @@ class CategoricalImputer(BaseEstimator, TransformerMixin):
 
         mask = _get_mask(X, self.missing_values)
         X = X[~mask]
-
-        modes = pd.Series(X).mode()
+        if self.strategy == 'mode':
+            modes = pd.Series(X).mode()
+        elif self.strategy == 'fixed_value':
+            modes = np.array([self.replacement])
         if modes.shape[0] == 0:
             raise ValueError('No value is repeated more than '
                              'once in the column')
