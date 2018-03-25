@@ -154,3 +154,19 @@ def test_custom_replacement(replacement_value, input_type):
     assert (np.asarray(X) == np.asarray(Xc)).all()
     assert isinstance(Xt, np.ndarray)
     assert (Xt == ['a', replacement_value, 'b', 'b']).all()
+
+
+def test_missing_replacement():
+    """
+    Raise error if no replacement value specified and strategy='fixed_value'
+    """
+    with pytest.raises(ValueError):
+        CategoricalImputer(strategy="fixed_value")
+
+
+def test_invalid_strategy():
+    """
+    Raise an error if an invalid strategy is entered
+    """
+    with pytest.raises(ValueError):
+        CategoricalImputer(strategy="not_a_supported_strategy")
