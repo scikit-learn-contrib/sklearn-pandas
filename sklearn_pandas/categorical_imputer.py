@@ -56,13 +56,25 @@ class CategoricalImputer(BaseEstimator, TransformerMixin):
         self,
         missing_values='NaN',
         strategy='mode',
-        replacement='?',
+        replacement=None,
         copy=True
     ):
         self.missing_values = missing_values
         self.copy = copy
         self.replacement = replacement
         self.strategy = strategy
+
+        strategies = ['fixed_value', 'mode']
+        if self.strategy not in strategies:
+            raise ValueError(
+                'Strategy {0} not in {1}'.format(self.strategy, strategies)
+            )
+
+        if self.strategy == 'fixed_value' and self.replacement is None:
+            raise ValueError(
+                'Please specify a value for \'replacement\''
+                'when using the fixed_value strategy.'
+            )
 
     def fit(self, X, y=None):
         """
@@ -85,7 +97,7 @@ class CategoricalImputer(BaseEstimator, TransformerMixin):
         X = X[~mask]
         if self.strategy == 'mode':
             modes = pd.Series(X).mode()
-        else:
+        elif self.strategy == 'fixed_value':
             modes = np.array([self.replacement])
         if modes.shape[0] == 0:
             raise ValueError('No value is repeated more than '
