@@ -30,7 +30,7 @@ def test_unit(input_type, none_value):
     Xt = CategoricalImputer().fit_transform(X)
 
     assert (np.asarray(X) == np.asarray(Xc)).all()
-    assert type(Xt) == np.ndarray
+    assert isinstance(Xt, np.ndarray)
     assert (Xt == ['a', 'b', 'b', 'b']).all()
 
 
@@ -129,3 +129,44 @@ def test_not_fitted():
     imp = CategoricalImputer()
     with pytest.raises(NotFittedError):
         imp.transform(np.array(['a', 'b', 'b', None]))
+
+
+@pytest.mark.parametrize('input_type', ['np', 'pd'])
+@pytest.mark.parametrize('replacement_value', ['a', 'c'])
+def test_custom_replacement(replacement_value, input_type):
+    """
+    If replacement != 'mode', impute with that value instead of mode
+    """
+    data = ['a', np.nan, 'b', 'b']
+
+    if input_type == 'pd':
+        X = pd.Series(data)
+    else:
+        X = np.asarray(data, dtype=object)
+
+    Xc = X.copy()
+
+    Xt = CategoricalImputer(
+        strategy='fixed_value',
+        replacement=replacement_value
+    ).fit_transform(X)
+
+    assert (np.asarray(X) == np.asarray(Xc)).all()
+    assert isinstance(Xt, np.ndarray)
+    assert (Xt == ['a', replacement_value, 'b', 'b']).all()
+
+
+def test_missing_replacement():
+    """
+    Raise error if no replacement value specified and strategy='fixed_value'
+    """
+    with pytest.raises(ValueError):
+        CategoricalImputer(strategy="fixed_value")
+
+
+def test_invalid_strategy():
+    """
+    Raise an error if an invalid strategy is entered
+    """
+    with pytest.raises(ValueError):
+        CategoricalImputer(strategy="not_a_supported_strategy")
