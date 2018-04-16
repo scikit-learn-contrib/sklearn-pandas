@@ -315,6 +315,15 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
             stacked = np.hstack(extracted)
 
         if self.df_out:
+            # preserve original data types
+            dtypes = []
+            for ex in extracted:
+                if isinstance(ex, np.ndarray) or sparse.issparse(ex):
+                    dtypes += [ex.dtype] * ex.shape[1]
+                elif isinstance(ex, pd.DataFrame):
+                    dtypes += list(ex.dtypes)
+                else:
+                    raise TypeError(type(ex))
             # if no rows were dropped preserve the original index,
             # otherwise use a new integer one
             no_rows_dropped = len(X) == len(stacked)
@@ -323,8 +332,10 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
             else:
                 index = None
 
-            return pd.DataFrame(stacked,
-                                columns=self.transformed_names_,
-                                index=index)
+            df_out = pd.DataFrame(dict(zip(
+                self.transformed_names_,
+                [pd.Series(stacked[:, i], index=index, dtype=dtypes[i])
+                 for i in range(stacked.shape[1])])))
+            return df_out
         else:
             return stacked
