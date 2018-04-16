@@ -415,6 +415,11 @@ Development
   with values other than the mode. (#144)
 
 
+1.6.1 (2018-04-16):
+******************
+* Preserve input data types when no transform is supplied (#138)
+
+
 1.6.0 (2017-10-28)
 ******************
 * Add column name to exception during fit/transform (#110).
@@ -504,3 +509,4 @@ Other contributors:
 * Ritesh Agrawal (@ragrawal)
 * Vitaley Zaretskey (@vzaretsk)
 * Zac Stewart (@zacstewart)
+* Timothy Sweetser (@hacktuarial)
