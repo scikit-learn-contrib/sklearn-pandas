@@ -829,3 +829,17 @@ def test_direct_cross_validation(iris_dataframe):
     scores = sklearn_cv_score(pipeline, data, labels)
     assert scores.mean() > 0.96
     assert (scores.std() * 2) < 0.04
+
+
+def test_heterogeneous_output_types_input_df(complex_dataframe):
+    """
+    Modify feat1, but pass feat2 and target (different types!)
+        through unmodified. This fails if input_df == False
+    """
+    complex_dataframe['feat1'] = complex_dataframe['feat1'].astype(float)
+    M = DataFrameMapper([
+        (['feat1'], StandardScaler())
+        ], input_df=True, df_out=True, default=None)
+    expected_dtypes = complex_dataframe.dtypes
+    actual_dtypes = M.fit_transform(complex_dataframe).dtypes
+    assert (expected_dtypes == actual_dtypes).all()
