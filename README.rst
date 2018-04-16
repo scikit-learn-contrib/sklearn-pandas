@@ -190,14 +190,14 @@ By default the output of the dataframe mapper is a numpy array. This is so becau
     ... ], df_out=True)
     >>> np.round(mapper_df.fit_transform(data.copy()), 2)
        pet_cat  pet_dog  pet_fish  children
-    0      1.0      0.0       0.0      0.21
-    1      0.0      1.0       0.0      1.88
-    2      0.0      1.0       0.0     -0.63
-    3      0.0      0.0       1.0     -0.63
-    4      1.0      0.0       0.0     -1.46
-    5      0.0      1.0       0.0     -0.63
-    6      1.0      0.0       0.0      1.04
-    7      0.0      0.0       1.0      0.21
+    0        1        0         0      0.21
+    1        0        1         0      1.88
+    2        0        1         0     -0.63
+    3        0        0         1     -0.63
+    4        1        0         0     -1.46
+    5        0        1         0     -0.63
+    6        1        0         0      1.04
+    7        0        0         1      0.21
 
 The names for the columns are the same ones present in the ``transformed_names_``
 attribute.
@@ -413,6 +413,7 @@ Development
 ******************
 * Add ``strategy`` and ``replacement`` parameters to ``CategoricalImputer`` to allow imputing
   with values other than the mode. (#144)
+* Preserve input data types when no transform is supplied (#138)
 
 
 1.6.0 (2017-10-28)
@@ -502,5 +503,6 @@ Other contributors:
 * Paul Butler (@paulgb)
 * Richard Miller (@rwjmiller)
 * Ritesh Agrawal (@ragrawal)
+* Timothy Sweetser (@hacktuarial)
 * Vitaley Zaretskey (@vzaretsk)
 * Zac Stewart (@zacstewart)
