@@ -315,7 +315,7 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
             stacked = np.hstack(extracted)
 
         if self.df_out:
-            # preserve original data types
+            # output different data types, if appropriate
             dtypes = []
             for ex in extracted:
                 if isinstance(ex, np.ndarray) or sparse.issparse(ex):
@@ -336,6 +336,6 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
                 self.transformed_names_,
                 [pd.Series(stacked[:, i], index=index, dtype=dtypes[i])
                  for i in range(stacked.shape[1])])))
-            return df_out
+            return df_out[self.transformed_names_]  # preserve order
         else:
             return stacked

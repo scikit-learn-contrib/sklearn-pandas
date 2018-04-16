@@ -415,7 +415,7 @@ Development
   with values other than the mode. (#144)
 
 
-1.6.1 (2018-04-16):
+1.6.1 (2018-04-16)
 ******************
 * Preserve input data types when no transform is supplied (#138)
 
