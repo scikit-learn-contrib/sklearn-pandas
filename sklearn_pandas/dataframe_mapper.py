@@ -286,7 +286,7 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
             if transformers is not None:
                 with add_column_names_to_exception(columns):
                     if do_fit and hasattr(transformers, 'fit_transform'):
-                        Xt = transformers.fit_transform(Xt, y)
+                        Xt = _call_fit(transformers.fit_transform, Xt, y)
                     else:
                         if do_fit:
                             _call_fit(transformers.fit, Xt, y)
@@ -304,7 +304,7 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
             if self.built_default is not None:
                 with add_column_names_to_exception(unsel_cols):
                     if do_fit and hasattr(self.built_default, 'fit_transform'):
-                        Xt = self.built_default.fit_transform(Xt, y)
+                        Xt = _call_fit(self.built_default.fit_transform, Xt, y)
                     else:
                         if do_fit:
                             _call_fit(self.built_default.fit, Xt, y)
