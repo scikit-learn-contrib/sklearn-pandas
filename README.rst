@@ -106,7 +106,7 @@ Now that the transformation is trained, we confirm that it works on new data::
 
     >>> sample = pd.DataFrame({'pet': ['cat'], 'children': [5.]})
     >>> np.round(mapper.transform(sample), 2)
-    array([[ 1.  ,  0.  ,  0.  ,  1.04]])
+    array([[1.  , 0.  , 0.  , 1.04]])
 
 
 Output features names
@@ -251,14 +251,14 @@ Only columns that are listed in the DataFrameMapper are kept. To keep a column b
     ...     ('children', None)
     ... ])
     >>> np.round(mapper3.fit_transform(data.copy()))
-    array([[ 1.,  0.,  0.,  4.],
-           [ 0.,  1.,  0.,  6.],
-           [ 0.,  1.,  0.,  3.],
-           [ 0.,  0.,  1.,  3.],
-           [ 1.,  0.,  0.,  2.],
-           [ 0.,  1.,  0.,  3.],
-           [ 1.,  0.,  0.,  5.],
-           [ 0.,  0.,  1.,  4.]])
+    array([[1., 0., 0., 4.],
+           [0., 1., 0., 6.],
+           [0., 1., 0., 3.],
+           [0., 0., 1., 3.],
+           [1., 0., 0., 2.],
+           [0., 1., 0., 3.],
+           [1., 0., 0., 5.],
+           [0., 0., 1., 4.]])
 
 Applying a default transformer
 ******************************
@@ -329,11 +329,11 @@ Then the following code could be used to override default imputing strategy:
     ...     'col3': [0, 0, 0, None, None]
     ... })
     >>> mapper6.fit_transform(data6)
-    array([[ 1.,  1.,  0.],
-           [ 1.,  0.,  0.],
-           [ 1.,  1.,  0.],
-           [ 2.,  1.,  0.],
-           [ 3.,  1.,  0.]])
+    array([[1., 1., 0.],
+           [1., 0., 0.],
+           [1., 1., 0.],
+           [2., 1., 0.],
+           [3., 1., 0.]])
 
 
 Feature selection and other supervised transformations
@@ -344,14 +344,14 @@ Feature selection and other supervised transformations
     >>> from sklearn.feature_selection import SelectKBest, chi2
     >>> mapper_fs = DataFrameMapper([(['children','salary'], SelectKBest(chi2, k=1))])
     >>> mapper_fs.fit_transform(data[['children','salary']], data['pet'])
-    array([[ 90.],
-           [ 24.],
-           [ 44.],
-           [ 27.],
-           [ 32.],
-           [ 59.],
-           [ 36.],
-           [ 27.]])
+    array([[90.],
+           [24.],
+           [44.],
+           [27.],
+           [32.],
+           [59.],
+           [36.],
+           [27.]])
 
 Working with sparse features
 ****************************
