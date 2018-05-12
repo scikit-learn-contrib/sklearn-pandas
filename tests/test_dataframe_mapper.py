@@ -625,7 +625,8 @@ def test_list_transformers():
     Specifying a list of transformers applies them sequentially to the
     selected column.
     """
-    dataframe = pd.DataFrame({"a": [1, np.nan, 3], "b": [1, 5, 7]})
+    dataframe = pd.DataFrame({"a": [1, np.nan, 3], "b": [1, 5, 7]},
+                             dtype=np.float64)
 
     mapper = DataFrameMapper([
         (["a"], [Imputer(), StandardScaler()]),
