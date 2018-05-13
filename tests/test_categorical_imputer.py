@@ -29,7 +29,7 @@ def test_unit(input_type, none_value):
 
     Xt = CategoricalImputer().fit_transform(X)
 
-    assert (np.asarray(X) == np.asarray(Xc)).all()
+    assert pd.core.common.array_equivalent(np.asarray(X), np.asarray(Xc))
     assert isinstance(Xt, np.ndarray)
     assert (Xt == ['a', 'b', 'b', 'b']).all()
 
@@ -151,7 +151,7 @@ def test_custom_replacement(replacement_value, input_type):
         replacement=replacement_value
     ).fit_transform(X)
 
-    assert (np.asarray(X) == np.asarray(Xc)).all()
+    assert pd.core.common.array_equivalent(np.asarray(X), np.asarray(Xc))
     assert isinstance(Xt, np.ndarray)
     assert (Xt == ['a', replacement_value, 'b', 'b']).all()
 
