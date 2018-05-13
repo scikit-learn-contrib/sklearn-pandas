@@ -411,9 +411,10 @@ Changelog
 
 Development
 ******************
+* Update to build using ``numpy==1.14`` and ``python==3.6`` (#154).
 * Add ``strategy`` and ``replacement`` parameters to ``CategoricalImputer`` to allow imputing
-  with values other than the mode. (#144)
-* Preserve input data types when no transform is supplied (#138)
+  with values other than the mode (#144).
+* Preserve input data types when no transform is supplied (#138).
 
 
 1.6.0 (2017-10-28)
@@ -492,6 +493,7 @@ The code for ``DataFrameMapper`` is based on code originally written by `Ben Ham
 
 Other contributors:
 
+* Ariel Rossanigo (@arielrossanigo)
 * Arnau Gil Amat (@arnau126)
 * Cal Paterson (@calpaterson)
 * @defvorfu
