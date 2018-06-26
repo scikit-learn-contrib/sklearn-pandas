@@ -265,6 +265,19 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         else:
             return [name]
 
+    def get_dtypes(self, extracted):
+        dtypes_features = [self.get_dtype(ex) for ex in extracted]
+        return [dtype for dtype_feature in dtypes_features
+                for dtype in dtype_feature]
+
+    def get_dtype(self, ex):
+        if isinstance(ex, np.ndarray) or sparse.issparse(ex):
+            return [ex.dtype] * ex.shape[1]
+        elif isinstance(ex, pd.DataFrame):
+            return list(ex.dtypes)
+        else:
+            raise TypeError(type(ex))
+
     def _transform(self, X, y=None, do_fit=False):
         """
         Transform the given data with possibility to fit in advance.
@@ -342,9 +355,16 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
             else:
                 index = None
 
-            return pd.DataFrame(stacked,
-                                columns=self.transformed_names_,
-                                index=index)
+            # output different data types, if appropriate
+            dtypes = self.get_dtypes(extracted)
+            df_out = pd.DataFrame(
+                stacked,
+                columns=self.transformed_names_,
+                index=index)
+            # preserve types
+            for col, dtype in zip(self.transformed_names_, dtypes):
+                df_out[col] = df_out[col].astype(dtype)
+            return df_out
         else:
             return stacked
 

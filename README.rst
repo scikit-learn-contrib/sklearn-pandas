@@ -57,7 +57,7 @@ Normally you'll read the data from a file, but for demonstration purposes we'll 
 
     >>> data = pd.DataFrame({'pet':      ['cat', 'dog', 'dog', 'fish', 'cat', 'dog', 'cat', 'fish'],
     ...                      'children': [4., 6, 3, 3, 2, 3, 5, 4],
-    ...                      'salary':   [90, 24, 44, 27, 32, 59, 36, 27]})
+    ...                      'salary':   [90., 24, 44, 27, 32, 59, 36, 27]})
 
 Transformation Mapping
 ----------------------
@@ -106,7 +106,7 @@ Now that the transformation is trained, we confirm that it works on new data::
 
     >>> sample = pd.DataFrame({'pet': ['cat'], 'children': [5.]})
     >>> np.round(mapper.transform(sample), 2)
-    array([[ 1.  ,  0.  ,  0.  ,  1.04]])
+    array([[1.  , 0.  , 0.  , 1.04]])
 
 
 Output features names
@@ -190,14 +190,14 @@ By default the output of the dataframe mapper is a numpy array. This is so becau
     ... ], df_out=True)
     >>> np.round(mapper_df.fit_transform(data.copy()), 2)
        pet_cat  pet_dog  pet_fish  children
-    0      1.0      0.0       0.0      0.21
-    1      0.0      1.0       0.0      1.88
-    2      0.0      1.0       0.0     -0.63
-    3      0.0      0.0       1.0     -0.63
-    4      1.0      0.0       0.0     -1.46
-    5      0.0      1.0       0.0     -0.63
-    6      1.0      0.0       0.0      1.04
-    7      0.0      0.0       1.0      0.21
+    0        1        0         0      0.21
+    1        0        1         0      1.88
+    2        0        1         0     -0.63
+    3        0        0         1     -0.63
+    4        1        0         0     -1.46
+    5        0        1         0     -0.63
+    6        1        0         0      1.04
+    7        0        0         1      0.21
 
 The names for the columns are the same ones present in the ``transformed_names_``
 attribute.
@@ -251,14 +251,14 @@ Only columns that are listed in the DataFrameMapper are kept. To keep a column b
     ...     ('children', None)
     ... ])
     >>> np.round(mapper3.fit_transform(data.copy()))
-    array([[ 1.,  0.,  0.,  4.],
-           [ 0.,  1.,  0.,  6.],
-           [ 0.,  1.,  0.,  3.],
-           [ 0.,  0.,  1.,  3.],
-           [ 1.,  0.,  0.,  2.],
-           [ 0.,  1.,  0.,  3.],
-           [ 1.,  0.,  0.,  5.],
-           [ 0.,  0.,  1.,  4.]])
+    array([[1., 0., 0., 4.],
+           [0., 1., 0., 6.],
+           [0., 1., 0., 3.],
+           [0., 0., 1., 3.],
+           [1., 0., 0., 2.],
+           [0., 1., 0., 3.],
+           [1., 0., 0., 5.],
+           [0., 0., 1., 4.]])
 
 Applying a default transformer
 ******************************
@@ -329,11 +329,11 @@ Then the following code could be used to override default imputing strategy:
     ...     'col3': [0, 0, 0, None, None]
     ... })
     >>> mapper6.fit_transform(data6)
-    array([[ 1.,  1.,  0.],
-           [ 1.,  0.,  0.],
-           [ 1.,  1.,  0.],
-           [ 2.,  1.,  0.],
-           [ 3.,  1.,  0.]])
+    array([[1., 1., 0.],
+           [1., 0., 0.],
+           [1., 1., 0.],
+           [2., 1., 0.],
+           [3., 1., 0.]])
 
 
 Feature selection and other supervised transformations
@@ -344,14 +344,14 @@ Feature selection and other supervised transformations
     >>> from sklearn.feature_selection import SelectKBest, chi2
     >>> mapper_fs = DataFrameMapper([(['children','salary'], SelectKBest(chi2, k=1))])
     >>> mapper_fs.fit_transform(data[['children','salary']], data['pet'])
-    array([[ 90.],
-           [ 24.],
-           [ 44.],
-           [ 27.],
-           [ 32.],
-           [ 59.],
-           [ 36.],
-           [ 27.]])
+    array([[90.],
+           [24.],
+           [44.],
+           [27.],
+           [32.],
+           [59.],
+           [36.],
+           [27.]])
 
 Working with sparse features
 ****************************
@@ -413,8 +413,10 @@ Development
 ******************
 * Change behaviour of DataFrameMapper's fit_transform method to invoke each underlying transformers'
   native fit_transform if implemented. (#150)
+* Update to build using ``numpy==1.14`` and ``python==3.6`` (#154).
 * Add ``strategy`` and ``replacement`` parameters to ``CategoricalImputer`` to allow imputing
-  with values other than the mode. (#144)
+  with values other than the mode (#144).
+* Preserve input data types when no transform is supplied (#138).
 
 1.6.0 (2017-10-28)
 ******************
@@ -492,6 +494,7 @@ The code for ``DataFrameMapper`` is based on code originally written by `Ben Ham
 
 Other contributors:
 
+* Ariel Rossanigo (@arielrossanigo)
 * Arnau Gil Amat (@arnau126)
 * Cal Paterson (@calpaterson)
 * @defvorfu
@@ -503,5 +506,6 @@ Other contributors:
 * Paul Butler (@paulgb)
 * Richard Miller (@rwjmiller)
 * Ritesh Agrawal (@ragrawal)
+* Timothy Sweetser (@hacktuarial)
 * Vitaley Zaretskey (@vzaretsk)
 * Zac Stewart (@zacstewart)

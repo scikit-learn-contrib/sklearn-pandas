@@ -100,6 +100,8 @@ class CategoricalImputer(BaseEstimator, TransformerMixin):
         elif self.strategy == 'fixed_value':
             modes = np.array([self.replacement])
         if modes.shape[0] == 0:
+            raise ValueError('Data is empty or all values are null')
+        elif modes.shape[0] > 1:
             raise ValueError('No value is repeated more than '
                              'once in the column')
         else:
