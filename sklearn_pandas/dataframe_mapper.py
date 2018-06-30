@@ -37,6 +37,7 @@ def _get_feature_names(estimator):
         return estimator.get_feature_names()
     return None
 
+
 def _handle_feature(fea):
     """
     Convert 1-dimensional arrays to 2-dimensional column vectors
@@ -44,6 +45,7 @@ def _handle_feature(fea):
     if fea.ndim == 1:
         fea = np.array(fea).reshape((-1, 1))
     return fea
+
 
 @contextlib.contextmanager
 def add_column_names_to_exception(column_names):
