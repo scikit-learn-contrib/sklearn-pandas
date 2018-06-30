@@ -1,13 +1,13 @@
-import sys
 import contextlib
+import sys
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 from scipy import sparse
 from sklearn.base import BaseEstimator, TransformerMixin
 
 from .cross_validation import DataWrapper
-from .pipeline import make_transformer_pipeline, _call_fit, TransformerPipeline
+from .pipeline import TransformerPipeline, _call_fit, make_transformer_pipeline
 
 PY3 = sys.version_info[0] == 3
 if PY3:
@@ -178,7 +178,7 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
             return t
         else:
             return t.values
-    
+
     def _handle_feature(self, fea):
         """
         Convert 1-dimensional arrays to 2-dimensional column vectors
@@ -186,8 +186,8 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         if fea.ndim == 1:
             fea = np.array(fea).reshape((-1, 1))
 
-        return fea    
-    
+        return fea
+
     def fit(self, X, y=None):
         """
         Fit a transformation from the pipeline
@@ -317,7 +317,7 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         columns = []
         if self.df_out:  # if output dataframe
             for features in extracted:
-                columns += np.hsplit(features,features.shape[1])
+                columns += np.hsplit(features, features.shape[1])
             columns = [col.ravel() for col in columns]
             stacked = pd.DataFrame(
                 dict(zip(self.transformed_names_, columns)),
@@ -334,5 +334,5 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
                     stacked = stacked.toarray()
             else:
                 stacked = np.hstack(extracted)
-                
+
         return stacked
