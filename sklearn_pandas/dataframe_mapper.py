@@ -37,6 +37,13 @@ def _get_feature_names(estimator):
         return estimator.get_feature_names()
     return None
 
+def _handle_feature(fea):
+    """
+    Convert 1-dimensional arrays to 2-dimensional column vectors
+    """
+    if fea.ndim == 1:
+        fea = np.array(fea).reshape((-1, 1))
+    return fea
 
 @contextlib.contextmanager
 def add_column_names_to_exception(column_names):
@@ -179,15 +186,6 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         else:
             return t.values
 
-    def _handle_feature(self, fea):
-        """
-        Convert 1-dimensional arrays to 2-dimensional column vectors
-        """
-        if fea.ndim == 1:
-            fea = np.array(fea).reshape((-1, 1))
-
-        return fea
-
     def fit(self, X, y=None):
         """
         Fit a transformation from the pipeline
@@ -289,7 +287,7 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
             if transformers is not None:
                 with add_column_names_to_exception(columns):
                     Xt = transformers.transform(Xt)
-            extracted.append(self._handle_feature(Xt))
+            extracted.append(_handle_feature(Xt))
 
             alias = options.get('alias')
             self.transformed_names_ += self.get_names(
@@ -308,7 +306,7 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
                 # if not applying a default transformer,
                 # keep column names unmodified
                 self.transformed_names_ += unsel_cols
-            extracted.append(self._handle_feature(Xt))
+            extracted.append(_handle_feature(Xt))
 
         # combine the feature outputs into one array.
         # at this point we lose track of which features
