@@ -409,7 +409,7 @@ Example: imputing with a fixed value:
 Changelog
 ---------
 
-Development
+1.7.0 (2018-08-15)
 ******************
 * Fix issues with unicode names in ``get_names`` (#160).
 * Update to build using ``numpy==1.14`` and ``python==3.6`` (#154).
