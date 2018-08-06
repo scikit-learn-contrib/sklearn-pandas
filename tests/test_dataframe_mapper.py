@@ -1,3 +1,5 @@
+# -*- coding: utf8 -*-
+
 import pytest
 from pkg_resources import parse_version
 
@@ -126,6 +128,14 @@ def test_transformed_names_binarizer(complex_dataframe):
     mapper = DataFrameMapper([('target', LabelBinarizer())])
     mapper.fit_transform(df)
     assert mapper.transformed_names_ == ['target_a', 'target_b', 'target_c']
+
+
+def test_transformed_names_binarizer_unicode():
+    df = pd.DataFrame({'target': [u'ñ', u'á', u'é']})
+    mapper = DataFrameMapper([('target', LabelBinarizer())])
+    mapper.fit_transform(df)
+    expected_names = {u'target_ñ', u'target_á', u'target_é'}
+    assert set(mapper.transformed_names_) == expected_names
 
 
 def test_transformed_names_transformers_list(complex_dataframe):
