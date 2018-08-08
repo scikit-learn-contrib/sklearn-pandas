@@ -257,6 +257,20 @@ def test_complex_df(complex_dataframe):
         assert len(transformed[c]) == len(df[c])
 
 
+def test_numeric_column_names(complex_dataframe):
+    """
+    Get a dataframe from a complex mapped dataframe with numeric column names
+    """
+    df = complex_dataframe
+    df.columns = [0, 1, 2]
+    mapper = DataFrameMapper(
+        [(0, None), (1, None), (2, None)], df_out=True)
+    transformed = mapper.fit_transform(df)
+    assert len(transformed) == len(complex_dataframe)
+    for c in df.columns:
+        assert len(transformed[c]) == len(df[c])
+
+
 def test_multiindex_df(multiindex_dataframe_incomplete):
     """
     Get a dataframe from a multiindex dataframe with missing data
@@ -268,7 +282,6 @@ def test_multiindex_df(multiindex_dataframe_incomplete):
     assert len(transformed) == len(multiindex_dataframe_incomplete)
     for c in df.columns:
         assert len(transformed[str(c)]) == len(df[c])
-    assert True
 
 
 def test_binarizer_df():
