@@ -108,6 +108,29 @@ def complex_dataframe():
                          'feat2': [1, 2, 3, 2, 3, 4]})
 
 
+@pytest.fixture
+def multiindex_dataframe():
+    """Example MultiIndex DataFrame, taken from pandas documentation
+    """
+    iterables = [['bar', 'baz', 'foo', 'qux'], ['one', 'two']]
+    index = pd.MultiIndex.from_product(iterables, names=['first', 'second'])
+    df = pd.DataFrame(np.random.randn(10, 8), columns=index)
+    return df
+
+
+@pytest.fixture
+def multiindex_dataframe_with_holes(multiindex_dataframe):
+    """Example MultiIndex DataFrame with missing entries
+    """
+    df = multiindex_dataframe
+    indices_to_delete = np.zeros(df.size)
+    indices_to_delete[:20] = 1
+    np.random.shuffle(indices_to_delete)
+    mask = indices_to_delete.reshape(df.shape).astype(bool)
+    df[mask] = np.nan
+    return df
+
+
 def test_transformed_names_simple(simple_dataframe):
     """
     Get transformed names of features in `transformed_names` attribute
@@ -232,6 +255,21 @@ def test_complex_df(complex_dataframe):
     assert len(transformed) == len(complex_dataframe)
     for c in df.columns:
         assert len(transformed[c]) == len(df[c])
+
+
+def test_multiindex_df(multiindex_dataframe_with_holes):
+    """
+    Get a dataframe from a multiindex dataframe
+    """
+    df = multiindex_dataframe_with_holes
+    print(df)
+    mapper = DataFrameMapper([([c], Imputer()) for c in df.columns],
+                             df_out=True)
+    transformed = mapper.fit_transform(df)
+    assert len(transformed) == len(multiindex_dataframe_with_holes)
+    for c in df.columns:
+        assert len(transformed[str(c)]) == len(df[c])
+    assert True
 
 
 def test_binarizer_df():

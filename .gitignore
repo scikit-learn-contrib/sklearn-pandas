@@ -4,3 +4,5 @@
 build/
 dist/
 .cache/
+.idea/
+.pytest_cache/
