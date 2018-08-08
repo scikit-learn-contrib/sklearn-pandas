@@ -119,15 +119,15 @@ def multiindex_dataframe():
 
 
 @pytest.fixture
-def multiindex_dataframe_with_holes(multiindex_dataframe):
+def multiindex_dataframe_incomplete(multiindex_dataframe):
     """Example MultiIndex DataFrame with missing entries
     """
     df = multiindex_dataframe
-    indices_to_delete = np.zeros(df.size)
-    indices_to_delete[:20] = 1
-    np.random.shuffle(indices_to_delete)
-    mask = indices_to_delete.reshape(df.shape).astype(bool)
-    df[mask] = np.nan
+    mask_array = np.zeros(df.size)
+    mask_array[:20] = 1
+    np.random.shuffle(mask_array)
+    mask = mask_array.reshape(df.shape).astype(bool)
+    df.mask(mask, inplace=True)
     return df
 
 
@@ -257,16 +257,15 @@ def test_complex_df(complex_dataframe):
         assert len(transformed[c]) == len(df[c])
 
 
-def test_multiindex_df(multiindex_dataframe_with_holes):
+def test_multiindex_df(multiindex_dataframe_incomplete):
     """
     Get a dataframe from a multiindex dataframe
     """
-    df = multiindex_dataframe_with_holes
-    print(df)
+    df = multiindex_dataframe_incomplete
     mapper = DataFrameMapper([([c], Imputer()) for c in df.columns],
                              df_out=True)
     transformed = mapper.fit_transform(df)
-    assert len(transformed) == len(multiindex_dataframe_with_holes)
+    assert len(transformed) == len(multiindex_dataframe_incomplete)
     for c in df.columns:
         assert len(transformed[str(c)]) == len(df[c])
     assert True
