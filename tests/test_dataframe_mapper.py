@@ -259,7 +259,7 @@ def test_complex_df(complex_dataframe):
 
 def test_multiindex_df(multiindex_dataframe_incomplete):
     """
-    Get a dataframe from a multiindex dataframe
+    Get a dataframe from a multiindex dataframe with missing data
     """
     df = multiindex_dataframe_incomplete
     mapper = DataFrameMapper([([c], Imputer()) for c in df.columns],
