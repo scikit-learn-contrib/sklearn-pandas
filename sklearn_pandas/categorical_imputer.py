@@ -41,7 +41,7 @@ class CategoricalImputer(BaseEstimator, TransformerMixin):
         - If "constant", then replace missing values with fill_value. Can be
           used with strings or numeric data.
 
-    replacement : string, optional (default='?')
+    fill_value : string, optional (default='?')
         The value that all instances of `missing_values` are replaced
         with if `strategy` is set to `constant`. This is useful if
         you don't want to impute with the mode, or if there are multiple

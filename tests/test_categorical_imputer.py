@@ -147,7 +147,7 @@ def test_custom_replacement(replacement_value, input_type):
     Xc = X.copy()
 
     Xt = CategoricalImputer(
-        strategy='fixed_value',
+        strategy='constant',
         fill_value=replacement_value
     ).fit_transform(X)
 
@@ -158,10 +158,10 @@ def test_custom_replacement(replacement_value, input_type):
 
 def test_missing_replacement():
     """
-    Raise error if no replacement value specified and strategy='fixed_value'
+    Raise error if no replacement value specified and strategy='constant'
     """
     with pytest.raises(ValueError):
-        CategoricalImputer(strategy="fixed_value")
+        CategoricalImputer(strategy="constant")
 
 
 def test_invalid_strategy():
