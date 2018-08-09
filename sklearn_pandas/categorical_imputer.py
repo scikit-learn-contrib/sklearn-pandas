@@ -64,16 +64,16 @@ class CategoricalImputer(BaseEstimator, TransformerMixin):
         self.replacement = replacement
         self.strategy = strategy
 
-        strategies = ['fixed_value', 'most_frequent']
+        strategies = ['constant', 'most_frequent']
         if self.strategy not in strategies:
             raise ValueError(
                 'Strategy {0} not in {1}'.format(self.strategy, strategies)
             )
 
-        if self.strategy == 'fixed_value' and self.replacement is None:
+        if self.strategy == 'constant' and self.replacement is None:
             raise ValueError(
                 'Please specify a value for \'replacement\''
-                'when using the fixed_value strategy.'
+                'when using the constant strategy.'
             )
 
     def fit(self, X, y=None):
@@ -97,7 +97,7 @@ class CategoricalImputer(BaseEstimator, TransformerMixin):
         X = X[~mask]
         if self.strategy == 'most_frequent':
             modes = pd.Series(X).mode()
-        elif self.strategy == 'fixed_value':
+        elif self.strategy == 'constant':
             modes = np.array([self.replacement])
         if modes.shape[0] == 0:
             raise ValueError('Data is empty or all values are null')
