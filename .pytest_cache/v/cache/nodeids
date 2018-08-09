@@ -1,6 +1,0 @@
-[
-  "tests/test_categorical_imputer.py::test_unit[np-None]",
-  "tests/test_categorical_imputer.py::test_unit[np-nan]",
-  "tests/test_categorical_imputer.py::test_unit[pd-None]",
-  "tests/test_categorical_imputer.py::test_unit[pd-nan]"
-]

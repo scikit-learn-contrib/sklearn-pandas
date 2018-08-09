@@ -51,7 +51,7 @@ class CategoricalImputer(BaseEstimator, TransformerMixin):
     Attributes
     ----------
     fill_ : str
-        Most frequent value of the training data.
+        The imputation fill value
 
     """
 
@@ -59,7 +59,7 @@ class CategoricalImputer(BaseEstimator, TransformerMixin):
         self,
         missing_values='NaN',
         strategy='most_frequent',
-        fill_value=None,
+        fill_value='?',
         copy=True
     ):
         self.missing_values = missing_values

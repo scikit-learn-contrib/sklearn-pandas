@@ -1,6 +1,0 @@
-{
-  "tests/test_categorical_imputer.py::test_unit[np-None]": true,
-  "tests/test_categorical_imputer.py::test_unit[np-nan]": true,
-  "tests/test_categorical_imputer.py::test_unit[pd-None]": true,
-  "tests/test_categorical_imputer.py::test_unit[pd-nan]": true
-}
