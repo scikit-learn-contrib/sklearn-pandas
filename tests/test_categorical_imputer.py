@@ -148,7 +148,7 @@ def test_custom_replacement(replacement_value, input_type):
 
     Xt = CategoricalImputer(
         strategy='fixed_value',
-        replacement=replacement_value
+        fill_value=replacement_value
     ).fit_transform(X)
 
     assert pd.core.common.array_equivalent(np.asarray(X), np.asarray(Xc))

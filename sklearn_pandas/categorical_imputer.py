@@ -56,12 +56,12 @@ class CategoricalImputer(BaseEstimator, TransformerMixin):
         self,
         missing_values='NaN',
         strategy='most_frequent',
-        replacement=None,
+        fill_value=None,
         copy=True
     ):
         self.missing_values = missing_values
         self.copy = copy
-        self.replacement = replacement
+        self.fill_value = fill_value
         self.strategy = strategy
 
         strategies = ['constant', 'most_frequent']
@@ -70,9 +70,9 @@ class CategoricalImputer(BaseEstimator, TransformerMixin):
                 'Strategy {0} not in {1}'.format(self.strategy, strategies)
             )
 
-        if self.strategy == 'constant' and self.replacement is None:
+        if self.strategy == 'constant' and self.fill_value is None:
             raise ValueError(
-                'Please specify a value for \'replacement\''
+                'Please specify a value for \'fill_value\''
                 'when using the constant strategy.'
             )
 
@@ -98,7 +98,7 @@ class CategoricalImputer(BaseEstimator, TransformerMixin):
         if self.strategy == 'most_frequent':
             modes = pd.Series(X).mode()
         elif self.strategy == 'constant':
-            modes = np.array([self.replacement])
+            modes = np.array([self.fill_value])
         if modes.shape[0] == 0:
             raise ValueError('Data is empty or all values are null')
         elif modes.shape[0] > 1:
