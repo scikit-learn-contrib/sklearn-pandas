@@ -55,7 +55,7 @@ class CategoricalImputer(BaseEstimator, TransformerMixin):
     def __init__(
         self,
         missing_values='NaN',
-        strategy='mode',
+        strategy='most_frequent',
         replacement=None,
         copy=True
     ):
@@ -64,7 +64,7 @@ class CategoricalImputer(BaseEstimator, TransformerMixin):
         self.replacement = replacement
         self.strategy = strategy
 
-        strategies = ['fixed_value', 'mode']
+        strategies = ['fixed_value', 'most_frequent']
         if self.strategy not in strategies:
             raise ValueError(
                 'Strategy {0} not in {1}'.format(self.strategy, strategies)
@@ -95,7 +95,7 @@ class CategoricalImputer(BaseEstimator, TransformerMixin):
 
         mask = _get_mask(X, self.missing_values)
         X = X[~mask]
-        if self.strategy == 'mode':
+        if self.strategy == 'most_frequent':
             modes = pd.Series(X).mode()
         elif self.strategy == 'fixed_value':
             modes = np.array([self.replacement])
