@@ -33,17 +33,20 @@ class CategoricalImputer(BaseEstimator, TransformerMixin):
     copy : boolean, optional (default=True)
         If True, a copy of X will be created.
 
-    strategy : string, optional (default = 'mode')
-        If set to 'mode', replace all instances of `missing_values`
-        with the modal value. Otherwise, replace with
-        the value specified via `replacement`.
+    strategy : string, optional (default = 'most_frequent')
+        The imputation strategy.
+
+        - If "most_frequent", then replace missing using the most frequent
+          value along each column. Can be used with strings or numeric data.
+        - If "constant", then replace missing values with fill_value. Can be
+          used with strings or numeric data.
 
     replacement : string, optional (default='?')
         The value that all instances of `missing_values` are replaced
-        with if `strategy` is not set to 'mode'. This is useful if
+        with if `strategy` is set to `constant`. This is useful if
         you don't want to impute with the mode, or if there are multiple
         modes in your data and you want to choose a particular one. If
-        `strategy` is set to `mode`, this parameter is ignored.
+        `strategy` is not set to `constant`, this parameter is ignored.
 
     Attributes
     ----------

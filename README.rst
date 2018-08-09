@@ -401,7 +401,7 @@ Example: imputing with a fixed value:
 
     >>> from sklearn_pandas import CategoricalImputer
     >>> data = np.array(['a', 'b', 'b', np.nan], dtype=object)
-    >>> imputer = CategoricalImputer(strategy='fixed_value', replacement='a')
+    >>> imputer = CategoricalImputer(strategy='constant', fill_value='a')
     >>> imputer.fit_transform(data)
     array(['a', 'b', 'b', 'a'], dtype=object)
 
