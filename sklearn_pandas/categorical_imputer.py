@@ -73,12 +73,6 @@ class CategoricalImputer(BaseEstimator, TransformerMixin):
                 'Strategy {0} not in {1}'.format(self.strategy, strategies)
             )
 
-        if self.strategy == 'constant' and self.fill_value is None:
-            raise ValueError(
-                'Please specify a value for \'fill_value\''
-                'when using the constant strategy.'
-            )
-
     def fit(self, X, y=None):
         """
 

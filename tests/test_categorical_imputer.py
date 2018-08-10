@@ -156,14 +156,6 @@ def test_custom_replacement(replacement_value, input_type):
     assert (Xt == ['a', replacement_value, 'b', 'b']).all()
 
 
-def test_missing_replacement():
-    """
-    Raise error if no replacement value specified and strategy='constant'
-    """
-    with pytest.raises(ValueError):
-        CategoricalImputer(strategy="constant")
-
-
 def test_invalid_strategy():
     """
     Raise an error if an invalid strategy is entered
