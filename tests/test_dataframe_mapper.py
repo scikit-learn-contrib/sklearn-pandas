@@ -96,6 +96,20 @@ class CustomTransformer(BaseEstimator, TransformerMixin):
         return X - self.min
 
 
+class NoOpTransformer(BaseEstimator, TransformerMixin):
+
+    def __init__(self, string='', number=0, flag=False):
+        self.string = string
+        self.number = number
+        self.flag = flag
+
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X):
+        return X
+
+
 @pytest.fixture
 def simple_dataframe():
     return pd.DataFrame({'a': [1, 2, 3]})
@@ -857,3 +871,47 @@ def test_heterogeneous_output_types_input_df():
     dft = M.fit_transform(df)
     assert dft['feat1'].dtype == np.dtype('int64')
     assert dft['feat2'].dtype == np.dtype('float64')
+
+
+def test_getting_single_transformer_parameters():
+    """
+    Tests that a data frame mapper with a single transformer exposes its
+    parameters via get_params() method.
+    """
+    noop = NoOpTransformer()
+    nested_keys = list(noop.get_params().keys())
+    step_name = 'data_frame_mapper'
+    transformer_name = 'nested_transformer'
+    expected_keys = [
+        '{step_name}__{transformer_name}__{key}'.format(
+            step_name=step_name,
+            transformer_name=transformer_name,
+            key=nested_key)
+        for nested_key in nested_keys]
+
+    mapper = DataFrameMapper([(transformer_name, noop)], df_out=False)
+    pipeline = Pipeline([(step_name, mapper)])
+    params = pipeline.get_params()
+
+    assert all([key in params for key in expected_keys])
+
+
+def test_setting_single_transformer_parameters():
+    """
+    Tests that a data frame mapper with a single transformer correctly assigns
+    parameters to the transformer when the set_params() method is called.
+    """
+    noop = NoOpTransformer()
+    old_parameters = noop.get_params()
+    mapper = DataFrameMapper([('noop', noop)], df_out=False)
+    pipeline = Pipeline([('mapper', mapper)])
+
+    pipeline.set_params(
+        mapper__noop__string='string',
+        mapper__noop__number=1,
+        mapper__noop__flag=True)
+
+    assert old_parameters != noop.get_params()
+    assert noop.string == 'string'
+    assert noop.number == 1
+    assert noop.flag

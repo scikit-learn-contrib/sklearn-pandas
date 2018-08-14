@@ -1,5 +1,6 @@
 import sys
 import contextlib
+from collections import defaultdict
 
 import pandas as pd
 import numpy as np
@@ -348,3 +349,24 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
             return df_out
         else:
             return stacked
+
+    def get_params(self, deep=True):
+        out = super().get_params(deep=False)
+        if not deep:
+            return out
+        for name, transformer in out['features']:
+            if transformer is None:
+                continue
+            for key, value in transformer.get_params(deep=True).items():
+                out['%s__%s' % (name, key)] = value
+        return out
+
+    def set_params(self, **params):
+        transformers = dict(self.features)
+        assignment = defaultdict(dict)
+        for key, value in params.items():
+            transformer, parameter = key.split('__')
+            assignment[transformer][parameter] = value
+        for name, parameters in assignment.items():
+            if name in transformers:
+                transformers[name].set_params(**parameters)
