@@ -108,6 +108,29 @@ def complex_dataframe():
                          'feat2': [1, 2, 3, 2, 3, 4]})
 
 
+@pytest.fixture
+def multiindex_dataframe():
+    """Example MultiIndex DataFrame, taken from pandas documentation
+    """
+    iterables = [['bar', 'baz', 'foo', 'qux'], ['one', 'two']]
+    index = pd.MultiIndex.from_product(iterables, names=['first', 'second'])
+    df = pd.DataFrame(np.random.randn(10, 8), columns=index)
+    return df
+
+
+@pytest.fixture
+def multiindex_dataframe_incomplete(multiindex_dataframe):
+    """Example MultiIndex DataFrame with missing entries
+    """
+    df = multiindex_dataframe
+    mask_array = np.zeros(df.size)
+    mask_array[:20] = 1
+    np.random.shuffle(mask_array)
+    mask = mask_array.reshape(df.shape).astype(bool)
+    df.mask(mask, inplace=True)
+    return df
+
+
 def test_transformed_names_simple(simple_dataframe):
     """
     Get transformed names of features in `transformed_names` attribute
@@ -232,6 +255,33 @@ def test_complex_df(complex_dataframe):
     assert len(transformed) == len(complex_dataframe)
     for c in df.columns:
         assert len(transformed[c]) == len(df[c])
+
+
+def test_numeric_column_names(complex_dataframe):
+    """
+    Get a dataframe from a complex mapped dataframe with numeric column names
+    """
+    df = complex_dataframe
+    df.columns = [0, 1, 2]
+    mapper = DataFrameMapper(
+        [(0, None), (1, None), (2, None)], df_out=True)
+    transformed = mapper.fit_transform(df)
+    assert len(transformed) == len(complex_dataframe)
+    for c in df.columns:
+        assert len(transformed[c]) == len(df[c])
+
+
+def test_multiindex_df(multiindex_dataframe_incomplete):
+    """
+    Get a dataframe from a multiindex dataframe with missing data
+    """
+    df = multiindex_dataframe_incomplete
+    mapper = DataFrameMapper([([c], Imputer()) for c in df.columns],
+                             df_out=True)
+    transformed = mapper.fit_transform(df)
+    assert len(transformed) == len(multiindex_dataframe_incomplete)
+    for c in df.columns:
+        assert len(transformed[str(c)]) == len(df[c])
 
 
 def test_binarizer_df():

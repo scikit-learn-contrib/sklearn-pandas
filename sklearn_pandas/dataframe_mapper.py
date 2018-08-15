@@ -233,7 +233,7 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         if alias is not None:
             name = alias
         elif isinstance(columns, list):
-            name = '_'.join(columns)
+            name = '_'.join(map(str, columns))
         else:
             name = columns
         num_cols = x.shape[1] if len(x.shape) > 1 else 1
