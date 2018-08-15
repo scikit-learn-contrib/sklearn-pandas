@@ -415,6 +415,8 @@ Unreleased
 
 1.7.0 (2018-08-15)
 ******************
+* Change behaviour of DataFrameMapper's fit_transform method to invoke each underlying transformers'
+  native fit_transform if implemented. (#150)
 * Fix issues with unicode names in ``get_names`` (#160).
 * Update to build using ``numpy==1.14`` and ``python==3.6`` (#154).
 * Add ``strategy`` and ``replacement`` parameters to ``CategoricalImputer`` to allow imputing
