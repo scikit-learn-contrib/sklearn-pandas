@@ -408,8 +408,11 @@ Example: imputing with a fixed value:
 
 Changelog
 ---------
+
 Unreleased
 **********
+* Fix column names derivation for dataframes with multi-index or non-string
+  columns (#166).
 * Change behaviour of DataFrameMapper's fit_transform method to invoke each underlying transformers'
   native fit_transform if implemented. (#150)
 
@@ -506,10 +509,12 @@ Other contributors:
 * Israel Saeta Pérez (@dukebody)
 * Jeremy Howard (@jph00)
 * Jimmy Wan (@jimmywan)
+* Kristof Van Engeland (@kristofve91)
 * Olivier Grisel (@ogrisel)
 * Paul Butler (@paulgb)
 * Richard Miller (@rwjmiller)
 * Ritesh Agrawal (@ragrawal)
+* @SandroCasagrande
 * Timothy Sweetser (@hacktuarial)
 * Vitaley Zaretskey (@vzaretsk)
 * Zac Stewart (@zacstewart)
