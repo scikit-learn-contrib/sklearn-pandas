@@ -1,5 +1,6 @@
 import sys
 import contextlib
+from itertools import chain
 from collections import defaultdict
 
 import pandas as pd
@@ -47,6 +48,10 @@ def _get_feature_names(estimator):
     elif hasattr(estimator, 'get_feature_names'):
         return estimator.get_feature_names()
     return None
+
+
+def _get_lowercased_class_name(inst):
+    return type(inst).__name__.lower()
 
 
 @contextlib.contextmanager
@@ -351,22 +356,51 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
             return stacked
 
     def get_params(self, deep=True):
-        out = super().get_params(deep=False)
+        out = super(DataFrameMapper, self).get_params(deep=False)
         if not deep:
             return out
-        for name, transformer in out['features']:
-            if transformer is None:
-                continue
-            for key, value in transformer.get_params(deep=True).items():
-                out['%s__%s' % (name, key)] = value
+        for feature_name, transformers in out['features']:
+            if isinstance(transformers, list):
+                for transformer in transformers:
+                    if transformer is None:
+                        continue
+                    transformer_name = _get_lowercased_class_name(transformer)
+                    parameters = transformer.get_params(deep=True)
+                    for key, value in parameters.items():
+                        param_path = '{column}__{transformer}__{key}'.format(
+                            column=feature_name,
+                            transformer=transformer_name,
+                            key=key
+                        )
+                        out[param_path] = value
+            else:
+                transformer = transformers
+                if transformer is None:
+                    continue
+                for key, value in transformer.get_params(deep=True).items():
+                    out['%s__%s' % (feature_name, key)] = value
         return out
 
     def set_params(self, **params):
-        transformers = dict(self.features)
+        features = dict(self.features)
         assignment = defaultdict(dict)
+
         for key, value in params.items():
-            transformer, parameter = key.split('__')
-            assignment[transformer][parameter] = value
-        for name, parameters in assignment.items():
-            if name in transformers:
-                transformers[name].set_params(**parameters)
+            feature_name, _, parameter = key.partition('__')
+            if '__' in parameter:
+                transformer_name, _, parameter = parameter.partition('__')
+                transformers = features[feature_name]
+                for transformer in transformers:
+                    class_name = _get_lowercased_class_name(transformer)
+                    if class_name == transformer_name:
+                        assignment[id(transformer)][parameter] = value
+            else:
+                transformer = features[feature_name]
+                assignment[id(transformer)][parameter] = value
+
+        transformers_instances = chain(*[
+            x if isinstance(x, list) else [x]
+            for name, x in self.features])
+
+        for instance in transformers_instances:
+            instance.set_params(**assignment[id(instance)])

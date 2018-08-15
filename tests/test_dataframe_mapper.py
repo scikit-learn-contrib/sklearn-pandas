@@ -1,6 +1,7 @@
 # -*- coding: utf8 -*-
 
 import pytest
+from itertools import product
 from pkg_resources import parse_version
 
 # In py3, mock is included with the unittest standard library
@@ -108,6 +109,30 @@ class NoOpTransformer(BaseEstimator, TransformerMixin):
 
     def transform(self, X):
         return X
+
+
+class Adder(BaseEstimator, TransformerMixin):
+
+    def __init__(self, num_to_add):
+        self.num_to_add = num_to_add
+
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X):
+        return X + self.num_to_add
+
+
+class Divider(BaseEstimator, TransformerMixin):
+
+    def __init__(self, denominator):
+        self.denominator = denominator
+
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X):
+        return X / self.denominator
 
 
 @pytest.fixture
@@ -915,3 +940,38 @@ def test_setting_single_transformer_parameters():
     assert noop.string == 'string'
     assert noop.number == 1
     assert noop.flag
+
+
+def test_getting_parameters_from_a_list_of_transformers():
+    expected_keys = [
+        'mapper__{column}__{name}__{value}'.format(
+            column=column, name=name, value=value)
+        for column, (name, value) in product(
+            ('colA', 'colB'),
+            (('adder', 'num_to_add'), ('divider', 'denominator'))
+        )
+    ]
+    mapper = Pipeline([
+        ('mapper', DataFrameMapper([
+            ('colA', [Adder(1), Divider(2)]),
+            ('colB', [Divider(1), Adder(2)])
+        ]))
+    ])
+
+    params = mapper.get_params()
+
+    assert all([key in params for key in expected_keys])
+
+
+def test_setting_parameters_to_a_list_of_transformers():
+    transformers = adder, divider = Adder(1), Divider(2)
+    mapper = DataFrameMapper([('colA', list(transformers))], df_out=False)
+    pipeline = Pipeline([('mapper', mapper)])
+
+    pipeline.set_params(
+        mapper__colA__adder__num_to_add=0,
+        mapper__colA__divider__denominator=1
+    )
+
+    assert adder.num_to_add == 0
+    assert divider.denominator == 1
