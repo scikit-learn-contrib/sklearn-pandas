@@ -408,6 +408,10 @@ Example: imputing with a fixed value:
 
 Changelog
 ---------
+Unreleased
+**********
+* Change behaviour of DataFrameMapper's fit_transform method to invoke each underlying transformers'
+  native fit_transform if implemented. (#150)
 
 1.7.0 (2018-08-15)
 ******************
@@ -416,7 +420,6 @@ Changelog
 * Add ``strategy`` and ``replacement`` parameters to ``CategoricalImputer`` to allow imputing
   with values other than the mode (#144).
 * Preserve input data types when no transform is supplied (#138).
-
 
 1.6.0 (2017-10-28)
 ******************
