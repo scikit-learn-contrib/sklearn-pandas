@@ -162,3 +162,19 @@ def test_invalid_strategy():
     """
     with pytest.raises(ValueError):
         CategoricalImputer(strategy="not_a_supported_strategy")
+
+
+@pytest.mark.parametrize('input_type', ['np', 'pd'])
+def test_default_fill_value_for_constant_strategy(input_type):
+    data = ['a', np.nan, 'b', 'b']
+
+    if input_type == 'pd':
+        X = pd.Series(data)
+    else:
+        X = np.asarray(data, dtype=object)
+
+    imputer = CategoricalImputer(strategy='constant')
+    Xt = imputer.fit_transform(X)
+
+    assert imputer.fill_ == '?'
+    assert (Xt == ['a', imputer.fill_, 'b', 'b']).all()
