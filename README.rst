@@ -401,7 +401,7 @@ Example: imputing with a fixed value:
 
     >>> from sklearn_pandas import CategoricalImputer
     >>> data = np.array(['a', 'b', 'b', np.nan], dtype=object)
-    >>> imputer = CategoricalImputer(strategy='fixed_value', replacement='a')
+    >>> imputer = CategoricalImputer(strategy='constant', fill_value='a')
     >>> imputer.fit_transform(data)
     array(['a', 'b', 'b', 'a'], dtype=object)
 
@@ -420,8 +420,8 @@ Unreleased
 ******************
 * Fix issues with unicode names in ``get_names`` (#160).
 * Update to build using ``numpy==1.14`` and ``python==3.6`` (#154).
-* Add ``strategy`` and ``replacement`` parameters to ``CategoricalImputer`` to allow imputing
-  with values other than the mode (#144).
+* Add ``strategy`` and ``fill_value`` parameters to ``CategoricalImputer`` to allow imputing
+  with values other than the mode (#144), (#161).
 * Preserve input data types when no transform is supplied (#138).
 
 1.6.0 (2017-10-28)
@@ -503,6 +503,7 @@ Other contributors:
 * Ariel Rossanigo (@arielrossanigo)
 * Arnau Gil Amat (@arnau126)
 * Assaf Ben-David (@AssafBenDavid)
+* Brendan Herger (@bjherger)
 * Cal Paterson (@calpaterson)
 * @defvorfu
 * Gustavo Sena Mafra (@gsmafra)

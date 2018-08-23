@@ -147,21 +147,13 @@ def test_custom_replacement(replacement_value, input_type):
     Xc = X.copy()
 
     Xt = CategoricalImputer(
-        strategy='fixed_value',
-        replacement=replacement_value
+        strategy='constant',
+        fill_value=replacement_value
     ).fit_transform(X)
 
     assert pd.core.common.array_equivalent(np.asarray(X), np.asarray(Xc))
     assert isinstance(Xt, np.ndarray)
     assert (Xt == ['a', replacement_value, 'b', 'b']).all()
-
-
-def test_missing_replacement():
-    """
-    Raise error if no replacement value specified and strategy='fixed_value'
-    """
-    with pytest.raises(ValueError):
-        CategoricalImputer(strategy="fixed_value")
 
 
 def test_invalid_strategy():
@@ -170,3 +162,19 @@ def test_invalid_strategy():
     """
     with pytest.raises(ValueError):
         CategoricalImputer(strategy="not_a_supported_strategy")
+
+
+@pytest.mark.parametrize('input_type', ['np', 'pd'])
+def test_default_fill_value_for_constant_strategy(input_type):
+    data = ['a', np.nan, 'b', 'b']
+
+    if input_type == 'pd':
+        X = pd.Series(data)
+    else:
+        X = np.asarray(data, dtype=object)
+
+    imputer = CategoricalImputer(strategy='constant')
+    Xt = imputer.fit_transform(X)
+
+    assert imputer.fill_ == '?'
+    assert (Xt == ['a', imputer.fill_, 'b', 'b']).all()
