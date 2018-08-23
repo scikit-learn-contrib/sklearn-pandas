@@ -120,6 +120,16 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         if (df_out and (sparse or default)):
             raise ValueError("Can not use df_out with sparse or default")
 
+    def _build(self):
+        """
+        Build attributes built_features and built_default.
+        """
+        if isinstance(self.features, list):
+            self.built_features = [_build_feature(*f) for f in self.features]
+        else:
+            self.built_features = self.features
+        self.built_default = _build_transformer(self.default)
+
     @property
     def _selected_columns(self):
         """
@@ -204,12 +214,7 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         y       the target vector relative to X, optional
 
         """
-        if isinstance(self.features, list):
-            self.built_features = [_build_feature(*f) for f in self.features]
-        else:
-            self.built_features = self.features
-
-        self.built_default = _build_transformer(self.default)
+        self._build()
 
         for columns, transformers, options in self.built_features:
             input_df = options.get('input_df', self.input_df)
@@ -239,7 +244,7 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         if alias is not None:
             name = alias
         elif isinstance(columns, list):
-            name = '_'.join(columns)
+            name = '_'.join(map(str, columns))
         else:
             name = columns
         num_cols = x.shape[1] if len(x.shape) > 1 else 1
@@ -279,23 +284,32 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         else:
             raise TypeError(type(ex))
 
-    def transform(self, X):
+    def _transform(self, X, y=None, do_fit=False):
         """
-        Transform the given data. Assumes that fit has already been called.
+        Transform the given data with possibility to fit in advance.
+        Avoids code duplication for implementation of transform and
+        fit_transform.
+        """
+        if do_fit:
+            self._build()
 
-        X       the data to transform
-        """
         extracted = []
         self.transformed_names_ = []
         for columns, transformers, options in self.built_features:
             input_df = options.get('input_df', self.input_df)
+
             # columns could be a string or list of
             # strings; we don't care because pandas
             # will handle either.
             Xt = self._get_col_subset(X, columns, input_df)
             if transformers is not None:
                 with add_column_names_to_exception(columns):
-                    Xt = transformers.transform(Xt)
+                    if do_fit and hasattr(transformers, 'fit_transform'):
+                        Xt = _call_fit(transformers.fit_transform, Xt, y)
+                    else:
+                        if do_fit:
+                            _call_fit(transformers.fit, Xt, y)
+                        Xt = transformers.transform(Xt)
             extracted.append(_handle_feature(Xt))
 
             alias = options.get('alias')
@@ -308,7 +322,12 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
             Xt = self._get_col_subset(X, unsel_cols, self.input_df)
             if self.built_default is not None:
                 with add_column_names_to_exception(unsel_cols):
-                    Xt = self.built_default.transform(Xt)
+                    if do_fit and hasattr(self.built_default, 'fit_transform'):
+                        Xt = _call_fit(self.built_default.fit_transform, Xt, y)
+                    else:
+                        if do_fit:
+                            _call_fit(self.built_default.fit, Xt, y)
+                        Xt = self.built_default.transform(Xt)
                 self.transformed_names_ += self.get_names(
                     unsel_cols, self.built_default, Xt)
             else:
@@ -354,6 +373,25 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
             return df_out
         else:
             return stacked
+
+    def transform(self, X):
+        """
+        Transform the given data. Assumes that fit has already been called.
+
+        X       the data to transform
+        """
+        return self._transform(X)
+
+    def fit_transform(self, X, y=None):
+        """
+        Fit a transformation from the pipeline and directly apply
+        it to the given data.
+
+        X       the data to fit
+
+        y       the target vector relative to X, optional
+        """
+        return self._transform(X, y, True)
 
     def get_params(self, deep=True):
         out = super(DataFrameMapper, self).get_params(deep=False)
@@ -404,3 +442,5 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
 
         for instance in transformers_instances:
             instance.set_params(**assignment[id(instance)])
+
+

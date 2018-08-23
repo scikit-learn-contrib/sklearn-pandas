@@ -147,6 +147,29 @@ def complex_dataframe():
                          'feat2': [1, 2, 3, 2, 3, 4]})
 
 
+@pytest.fixture
+def multiindex_dataframe():
+    """Example MultiIndex DataFrame, taken from pandas documentation
+    """
+    iterables = [['bar', 'baz', 'foo', 'qux'], ['one', 'two']]
+    index = pd.MultiIndex.from_product(iterables, names=['first', 'second'])
+    df = pd.DataFrame(np.random.randn(10, 8), columns=index)
+    return df
+
+
+@pytest.fixture
+def multiindex_dataframe_incomplete(multiindex_dataframe):
+    """Example MultiIndex DataFrame with missing entries
+    """
+    df = multiindex_dataframe
+    mask_array = np.zeros(df.size)
+    mask_array[:20] = 1
+    np.random.shuffle(mask_array)
+    mask = mask_array.reshape(df.shape).astype(bool)
+    df.mask(mask, inplace=True)
+    return df
+
+
 def test_transformed_names_simple(simple_dataframe):
     """
     Get transformed names of features in `transformed_names` attribute
@@ -273,6 +296,33 @@ def test_complex_df(complex_dataframe):
         assert len(transformed[c]) == len(df[c])
 
 
+def test_numeric_column_names(complex_dataframe):
+    """
+    Get a dataframe from a complex mapped dataframe with numeric column names
+    """
+    df = complex_dataframe
+    df.columns = [0, 1, 2]
+    mapper = DataFrameMapper(
+        [(0, None), (1, None), (2, None)], df_out=True)
+    transformed = mapper.fit_transform(df)
+    assert len(transformed) == len(complex_dataframe)
+    for c in df.columns:
+        assert len(transformed[c]) == len(df[c])
+
+
+def test_multiindex_df(multiindex_dataframe_incomplete):
+    """
+    Get a dataframe from a multiindex dataframe with missing data
+    """
+    df = multiindex_dataframe_incomplete
+    mapper = DataFrameMapper([([c], Imputer()) for c in df.columns],
+                             df_out=True)
+    transformed = mapper.fit_transform(df)
+    assert len(transformed) == len(multiindex_dataframe_incomplete)
+    for c in df.columns:
+        assert len(transformed[str(c)]) == len(df[c])
+
+
 def test_binarizer_df():
     """
     Check level names from LabelBinarizer
@@ -391,6 +441,50 @@ def test_pca(complex_dataframe):
     assert cols[1] == 'feat1_feat2_1'
 
 
+def test_fit_transform(simple_dataframe):
+    """
+    Check that custom fit_transform methods of the transformers are invoked.
+    """
+    df = simple_dataframe
+    mock_transformer = Mock()
+    # return something of measurable length but does nothing
+    mock_transformer.fit_transform.return_value = np.array([1, 2, 3])
+    mapper = DataFrameMapper([("a", mock_transformer)])
+    mapper.fit_transform(df)
+    assert mock_transformer.fit_transform.called
+
+
+def test_fit_transform_equiv_mock(simple_dataframe):
+    """
+    Check for equivalent results for code paths fit_transform
+    versus fit and transform in DataFrameMapper using the mock
+    transformer which does not implement a custom fit_transform.
+    """
+    df = simple_dataframe
+    mapper = DataFrameMapper([('a', MockXTransformer())])
+    transformed_combined = mapper.fit_transform(df)
+    transformed_separate = mapper.fit(df).transform(df)
+    assert np.all(transformed_combined == transformed_separate)
+
+
+def test_fit_transform_equiv_pca(complex_dataframe):
+    """
+    Check for equivalent results for code paths fit_transform
+    versus fit and transform in DataFrameMapper and transformer
+    using PCA which implements a custom fit_transform. The
+    equivalence of both paths in the transformer only can be
+    asserted since this is tested in the sklearn tests
+    scikit-learn/sklearn/decomposition/tests/test_pca.py
+    """
+    df = complex_dataframe
+    mapper = DataFrameMapper(
+        [(['feat1', 'feat2'], sklearn.decomposition.PCA(2))],
+        df_out=True)
+    transformed_combined = mapper.fit_transform(df)
+    transformed_separate = mapper.fit(df).transform(df)
+    assert np.allclose(transformed_combined, transformed_separate)
+
+
 def test_input_df_true_first_transformer(simple_dataframe, monkeypatch):
     """
     If input_df is True, the first transformer is passed
@@ -427,7 +521,8 @@ def test_input_df_true_next_transformers(simple_dataframe, monkeypatch):
     mapper = DataFrameMapper([
         ('a', [MockXTransformer(), MockTClassifier()])
     ], input_df=True)
-    out = mapper.fit_transform(df)
+    mapper.fit(df)
+    out = mapper.transform(df)
 
     args, _ = MockTClassifier().fit.call_args
     assert isinstance(args[0], pd.Series)
@@ -526,15 +621,14 @@ def test_get_col_subset_single_column_list(simple_dataframe):
 
 def test_cols_string_array(simple_dataframe):
     """
-    If an string specified as the columns, the transformer
+    If a string is specified as the columns, the transformer
     is called with a 1-d array as input.
     """
     df = simple_dataframe
     mock_transformer = Mock()
-    mock_transformer.transform.return_value = np.array([1, 2, 3])  # do nothing
     mapper = DataFrameMapper([("a", mock_transformer)])
 
-    mapper.fit_transform(df)
+    mapper.fit(df)
     args, kwargs = mock_transformer.fit.call_args
     assert args[0].shape == (3,)
 
@@ -546,10 +640,9 @@ def test_cols_list_column_vector(simple_dataframe):
     """
     df = simple_dataframe
     mock_transformer = Mock()
-    mock_transformer.transform.return_value = np.array([1, 2, 3])  # do nothing
     mapper = DataFrameMapper([(["a"], mock_transformer)])
 
-    mapper.fit_transform(df)
+    mapper.fit(df)
     args, kwargs = mock_transformer.fit.call_args
     assert args[0].shape == (3, 1)
 
