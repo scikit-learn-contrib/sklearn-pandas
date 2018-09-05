@@ -39,6 +39,12 @@ def _build_feature(columns, transformers, options={}):
     return (columns, _build_transformer(transformers), options)
 
 
+def _build_feature_name(values):
+    if isinstance(values, list):
+        values = '-'.join([str(value) for value in values])
+    return values
+
+
 def _get_feature_names(estimator):
     """
     Attempt to extract feature names based on a given estimator
@@ -420,7 +426,11 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         return out
 
     def set_params(self, **params):
-        features = dict(self.features)
+        features = {}
+        for column_names, transformers in self.features:
+            key = _build_feature_name(column_names)
+            features[key] = transformers
+
         assignment = defaultdict(dict)
 
         for key, value in params.items():
@@ -442,5 +452,3 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
 
         for instance in transformers_instances:
             instance.set_params(**assignment[id(instance)])
-
-

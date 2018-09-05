@@ -16,6 +16,7 @@ import pandas as pd
 from scipy import sparse
 from sklearn import __version__ as sklearn_version
 from sklearn.cross_validation import cross_val_score as sklearn_cv_score
+from sklearn.grid_search import GridSearchCV as sklearn_grid_search
 from sklearn.datasets import load_iris
 from sklearn.pipeline import Pipeline
 from sklearn.svm import SVC
@@ -113,7 +114,7 @@ class NoOpTransformer(BaseEstimator, TransformerMixin):
 
 class Adder(BaseEstimator, TransformerMixin):
 
-    def __init__(self, num_to_add):
+    def __init__(self, num_to_add=0):
         self.num_to_add = num_to_add
 
     def fit(self, X, y=None):
@@ -125,7 +126,7 @@ class Adder(BaseEstimator, TransformerMixin):
 
 class Divider(BaseEstimator, TransformerMixin):
 
-    def __init__(self, denominator):
+    def __init__(self, denominator=1):
         self.denominator = denominator
 
     def fit(self, X, y=None):
@@ -1068,3 +1069,28 @@ def test_setting_parameters_to_a_list_of_transformers():
 
     assert adder.num_to_add == 0
     assert divider.denominator == 1
+
+
+def test_compliant_with_grid_search(iris_dataframe):
+    pipeline = Pipeline([
+        ('mapper', DataFrameMapper([
+            (['petal length (cm)'], StandardScaler()),
+            (['petal width (cm)'], StandardScaler()),
+            (['sepal length (cm)'], StandardScaler()),
+            (['sepal width (cm)'], StandardScaler()),
+        ])),
+        ('classifier', SVC(kernel='linear'))
+    ])
+    param_grid = {
+        'mapper__petal length (cm)__with_mean': [True, False],
+        'mapper__petal width (cm)__with_mean': [True, False],
+        'mapper__sepal length (cm)__with_mean': [True, False],
+        'mapper__sepal width (cm)__with_mean': [True, False]
+    }
+    data = iris_dataframe.drop("species", axis=1)
+    labels = iris_dataframe["species"]
+
+    grid_search = sklearn_grid_search(pipeline, param_grid=param_grid)
+    grid_search.fit(data, labels)
+
+    assert len(grid_search.grid_scores_) == 2**len(param_grid)
