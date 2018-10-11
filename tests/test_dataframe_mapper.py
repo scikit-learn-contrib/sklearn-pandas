@@ -32,6 +32,7 @@ import pickle
 from sklearn_pandas import DataFrameMapper, cross_val_score
 from sklearn_pandas.dataframe_mapper import _handle_feature, _build_transformer
 from sklearn_pandas.pipeline import TransformerPipeline
+from sklearn_pandas import ActAsTransformer
 
 
 class MockXTransformer(object):
@@ -950,3 +951,17 @@ def test_heterogeneous_output_types_input_df():
     dft = M.fit_transform(df)
     assert dft['feat1'].dtype == np.dtype('int64')
     assert dft['feat2'].dtype == np.dtype('float64')
+
+
+def test_actastransformer():
+    """
+    Test whether random transformations works
+    """
+    df = pd.DataFrame({
+        'feat1': [10, 100],
+    })
+    M = DataFrameMapper([
+        ('feat1', ActAsTransformer(np.log10))
+    ], input_df=True, df_out=True, default=None)
+    dft = M.fit_transform(df)
+    assert_array_equal([1., 2.], dft['feat1'].values)
