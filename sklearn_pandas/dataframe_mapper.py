@@ -288,10 +288,12 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
             self._build()
 
         extracted = []
+        unmodified_columns = np.array([])
         self.transformed_names_ = []
+        self.un_transformed_names_ = []
         for columns, transformers, options in self.built_features:
             input_df = options.get('input_df', self.input_df)
-
+            alias = options.get('alias')
             # columns could be a string or list of
             # strings; we don't care because pandas
             # will handle either.
@@ -304,11 +306,20 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
                         if do_fit:
                             _call_fit(transformers.fit, Xt, y)
                         Xt = transformers.transform(Xt)
-            extracted.append(_handle_feature(Xt))
-
-            alias = options.get('alias')
-            self.transformed_names_ += self.get_names(
-                columns, transformers, Xt, alias)
+                extracted.append(_handle_feature(Xt))
+                self.transformed_names_ += self.get_names(
+                    columns, transformers, Xt, alias)
+            elif Xt.dtype.type != np.string_:
+                extracted.append(_handle_feature(Xt))
+                self.transformed_names_ += self.get_names(
+                    columns, transformers, Xt, alias)
+            else:
+                if unmodified_columns.shape[0] == 0:
+                    unmodified_columns = _handle_feature(Xt)
+                else:
+                    unmodified_columns = np.concatenate(
+                        (unmodified_columns, _handle_feature(Xt)), axis=1)
+                self.un_transformed_names_ += [columns]
 
         # handle features not explicitly selected
         if self.built_default is not False:
@@ -324,11 +335,21 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
                         Xt = self.built_default.transform(Xt)
                 self.transformed_names_ += self.get_names(
                     unsel_cols, self.built_default, Xt)
+                extracted.append(_handle_feature(Xt))
+            elif (not (isinstance(Xt, pd.DataFrame))and
+                    Xt.dtype.type != np.string_)or\
+                    all(_type for _type in Xt.dtypes):
+                extracted.append(_handle_feature(Xt))
+                self.transformed_names_ += unsel_cols
             else:
                 # if not applying a default transformer,
                 # keep column names unmodified
-                self.transformed_names_ += unsel_cols
-            extracted.append(_handle_feature(Xt))
+                self.un_transformed_names_ += unsel_cols
+                if unmodified_columns.shape[0] == 0:
+                    unmodified_columns = _handle_feature(Xt)
+                else:
+                    unmodified_columns = np.concatenate(
+                        (unmodified_columns, _handle_feature(Xt)), axis=1)
 
         # combine the feature outputs into one array.
         # at this point we lose track of which features
@@ -343,8 +364,14 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
             # with sparse=True
             if not self.sparse:
                 stacked = stacked.toarray()
+                if unmodified_columns.shape[0] != 0:
+                    stacked = np.concatenate(
+                        (stacked, unmodified_columns),
+                        axis=1)
         else:
             stacked = np.hstack(extracted)
+            if unmodified_columns.shape[0] != 0:
+                stacked = np.concatenate((stacked, unmodified_columns), axis=1)
 
         if self.df_out:
             # if no rows were dropped preserve the original index,
@@ -359,7 +386,7 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
             dtypes = self.get_dtypes(extracted)
             df_out = pd.DataFrame(
                 stacked,
-                columns=self.transformed_names_,
+                columns=self.transformed_names_+self.un_transformed_names_,
                 index=index)
             # preserve types
             for col, dtype in zip(self.transformed_names_, dtypes):
