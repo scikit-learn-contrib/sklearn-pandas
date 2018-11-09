@@ -110,6 +110,7 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         self.df_out = df_out
         self.input_df = input_df
         self.transformed_names_ = []
+        self.transformed_cols_ = []
 
         if (df_out and (sparse or default)):
             raise ValueError("Can not use df_out with sparse or default")
@@ -289,6 +290,7 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
 
         extracted = []
         self.transformed_names_ = []
+        self.transformed_cols_ = []
         for columns, transformers, options in self.built_features:
             input_df = options.get('input_df', self.input_df)
 
@@ -309,6 +311,10 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
             alias = options.get('alias')
             self.transformed_names_ += self.get_names(
                 columns, transformers, Xt, alias)
+
+            self.transformed_cols_ += [
+              (columns, transformers,
+               self.get_names(columns, transformers, Xt, alias))]
 
         # handle features not explicitly selected
         if self.built_default is not False:
@@ -386,3 +392,34 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         y       the target vector relative to X, optional
         """
         return self._transform(X, y, True)
+
+    def inverse_transform(self, X):
+        """
+        Inverse transform the given data. Assumes that fit has already been
+        called.
+
+        X       the data to inverse transform
+        """
+
+        X_inv = pd.DataFrame()
+        # We will populate the inverse transformed dataframe column by column
+
+        # Let's keep track of the column we've processed
+        prev_col = 0
+        for columns, transformers, transformed_cols in self.transformed_cols_:
+            # Determine the column number of the last column in X
+            # corresponding to the original column we're computing
+            last_col = prev_col + len(transformed_cols)
+
+            # Inverse transform the columns in X for the current transformer
+            col_inv = pd.DataFrame(transformers.inverse_transform(
+                                      X[:, prev_col:last_col]),
+                                   columns=[columns])
+
+            # Append the inverse transformed column to the output data frame
+            X_inv = pd.concat([X_inv, col_inv], axis=1)
+
+            # For the next iteration, update the last column processed
+            prev_col = last_col
+
+        return X_inv

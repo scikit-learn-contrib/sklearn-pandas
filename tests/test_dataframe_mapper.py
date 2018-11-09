@@ -21,7 +21,7 @@ from sklearn.svm import SVC
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.preprocessing import (
-    Imputer, StandardScaler, OneHotEncoder, LabelBinarizer)
+    Imputer, StandardScaler, OneHotEncoder, LabelBinarizer, LabelEncoder)
 from sklearn.feature_selection import SelectKBest, chi2
 from sklearn.base import BaseEstimator, TransformerMixin
 import sklearn.decomposition
@@ -950,3 +950,34 @@ def test_heterogeneous_output_types_input_df():
     dft = M.fit_transform(df)
     assert dft['feat1'].dtype == np.dtype('int64')
     assert dft['feat2'].dtype == np.dtype('float64')
+
+
+def test_inverse_transform_simple():
+    df = pd.DataFrame({'colA': list('ynyyn'), 'colB': list('abcab')})
+    mapper = DataFrameMapper([
+        ('colA', LabelEncoder()),
+        ('colB', LabelEncoder()),
+    ])
+
+    transformed = mapper.fit_transform(df)
+    restored = mapper.inverse_transform(transformed)
+
+    assert isinstance(restored, pd.DataFrame)
+    assert restored.equals(df)
+
+
+def test_inverse_transform_multicolumn():
+    df = pd.DataFrame({'colA': list('ynyyn'),
+                       'colB': list('abcab'),
+                       'colC': list('sttts')})
+    mapper = DataFrameMapper([
+        ('colA', LabelEncoder()),
+        ('colB', LabelBinarizer()),
+        ('colC', LabelEncoder()),
+    ])
+
+    transformed = mapper.fit_transform(df)
+    restored = mapper.inverse_transform(transformed)
+
+    assert isinstance(restored, pd.DataFrame)
+    assert restored.equals(df)
