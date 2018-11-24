@@ -65,7 +65,7 @@ Transformation Mapping
 Map the Columns to Transformations
 **********************************
 
-The mapper takes a list of tuples. The first is a column name from the pandas DataFrame, or a list containing one or multiple columns (we will see an example with multiple columns later). The second is an object which will perform the transformation which will be applied to that column. The third is optional and is a dictionary containing the transformation options, if applicable (see "custom column names for transformed features" below).
+The mapper takes a list of tuples. The first element of each tuple is a column name from the pandas DataFrame, or a list containing one or multiple columns (we will see an example with multiple columns later). The second element is an object which will perform the transformation which will be applied to that column. The third one is optional and is a dictionary containing the transformation options, if applicable (see "custom column names for transformed features" below).
 
 Let's see an example::
 
