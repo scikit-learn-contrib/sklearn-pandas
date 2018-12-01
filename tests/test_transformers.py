@@ -2,8 +2,9 @@ import pytest
 
 import numpy as np
 import pandas as pd
+from numpy.testing import assert_array_equal
 
-from sklearn_pandas import CategoricalImputer
+from sklearn_pandas import CategoricalImputer, FunctionTransformer
 from sklearn_pandas import DataFrameMapper
 
 # In sklearn18 NotFittedError was moved from utils.validation
@@ -178,3 +179,15 @@ def test_default_fill_value_for_constant_strategy(input_type):
 
     assert imputer.fill_ == '?'
     assert (Xt == ['a', imputer.fill_, 'b', 'b']).all()
+
+
+def test_function_transformer():
+    """
+    Test whether random transformations using FunctionTransformer work.
+    """
+    array = np.array([10, 100])
+    transformer = FunctionTransformer(np.log10)
+
+    transformed = transformer.fit_transform(array)
+
+    assert_array_equal(np.array([1., 2.]), transformed)

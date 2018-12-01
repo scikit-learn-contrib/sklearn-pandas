@@ -11,7 +11,7 @@ In particular, it provides:
 
 1. A way to map ``DataFrame`` columns to transformations, which are later recombined into features.
 2. A compatibility shim for old ``scikit-learn`` versions to cross-validate a pipeline that takes a pandas ``DataFrame`` as input. This is only needed for ``scikit-learn<0.16.0`` (see `#11 <https://github.com/paulgb/sklearn-pandas/issues/11>`__ for details). It is deprecated and will likely be dropped in ``skearn-pandas==2.0``.
-3. A ``CategoricalImputer`` that replaces null-like values with the mode and works with string columns.
+3. A couple of special transformers that work well with pandas inputs: ``CategoricalImputer`` and ``FunctionTransformer`.`
 
 Installation
 ------------
@@ -406,11 +406,26 @@ Example: imputing with a fixed value:
     array(['a', 'b', 'b', 'a'], dtype=object)
 
 
+``FunctionTransformer``
+***********************
+
+Often one wants to apply simple transformations to data such as ``np.log``. ``FunctionTransformer`` is a simple wrapper that takes any function and applies vectorization so that it can be used as a transformer.
+
+Example:
+
+    >>> from sklearn_pandas import FunctionTransformer
+    >>> array = np.array([10, 100])
+    >>> transformer = FunctionTransformer(np.log10)
+
+    >>> transformer.fit_transform(array)
+    array([1., 2.])
+
 Changelog
 ---------
 
 Unreleased
 **********
+* Add ``FunctionTransformer`` class (#117).
 * Fix column names derivation for dataframes with multi-index or non-string
   columns (#166).
 * Change behaviour of DataFrameMapper's fit_transform method to invoke each underlying transformers'
