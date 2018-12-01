@@ -423,8 +423,8 @@ Example:
 Changelog
 ---------
 
-Unreleased
-**********
+1.8.0 (2018-12-01)
+******************
 * Add ``FunctionTransformer`` class (#117).
 * Fix column names derivation for dataframes with multi-index or non-string
   columns (#166).
