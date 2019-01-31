@@ -11,7 +11,7 @@ In particular, it provides:
 
 1. A way to map ``DataFrame`` columns to transformations, which are later recombined into features.
 2. A compatibility shim for old ``scikit-learn`` versions to cross-validate a pipeline that takes a pandas ``DataFrame`` as input. This is only needed for ``scikit-learn<0.16.0`` (see `#11 <https://github.com/paulgb/sklearn-pandas/issues/11>`__ for details). It is deprecated and will likely be dropped in ``skearn-pandas==2.0``.
-3. A couple of special transformers that work well with pandas inputs: ``CategoricalImputer`` and ``FunctionTransformer`.`
+3. A couple of special transformers that work well with pandas inputs: ``CategoricalImputer`` and ``FunctionTransformer``.
 
 Installation
 ------------
