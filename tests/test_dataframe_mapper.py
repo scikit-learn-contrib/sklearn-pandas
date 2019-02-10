@@ -1,6 +1,7 @@
 # -*- coding: utf8 -*-
 
 import pytest
+from itertools import product
 from pkg_resources import parse_version
 
 # In py3, mock is included with the unittest standard library
@@ -15,6 +16,7 @@ import pandas as pd
 from scipy import sparse
 from sklearn import __version__ as sklearn_version
 from sklearn.cross_validation import cross_val_score as sklearn_cv_score
+from sklearn.grid_search import GridSearchCV as sklearn_grid_search
 from sklearn.datasets import load_iris
 from sklearn.pipeline import Pipeline
 from sklearn.svm import SVC
@@ -94,6 +96,44 @@ class CustomTransformer(BaseEstimator, TransformerMixin):
         if len(np.setdiff1d(classes, self.classes_)) > 0:
             raise ValueError('Unknown values found.')
         return X - self.min
+
+
+class NoOpTransformer(BaseEstimator, TransformerMixin):
+
+    def __init__(self, string='', number=0, flag=False):
+        self.string = string
+        self.number = number
+        self.flag = flag
+
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X):
+        return X
+
+
+class Adder(BaseEstimator, TransformerMixin):
+
+    def __init__(self, num_to_add=0):
+        self.num_to_add = num_to_add
+
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X):
+        return X + self.num_to_add
+
+
+class Divider(BaseEstimator, TransformerMixin):
+
+    def __init__(self, denominator=1):
+        self.denominator = denominator
+
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X):
+        return X / self.denominator
 
 
 @pytest.fixture
@@ -950,3 +990,107 @@ def test_heterogeneous_output_types_input_df():
     dft = M.fit_transform(df)
     assert dft['feat1'].dtype == np.dtype('int64')
     assert dft['feat2'].dtype == np.dtype('float64')
+
+
+def test_getting_single_transformer_parameters():
+    """
+    Tests that a data frame mapper with a single transformer exposes its
+    parameters via get_params() method.
+    """
+    noop = NoOpTransformer()
+    nested_keys = list(noop.get_params().keys())
+    step_name = 'data_frame_mapper'
+    transformer_name = 'nested_transformer'
+    expected_keys = [
+        '{step_name}__{transformer_name}__{key}'.format(
+            step_name=step_name,
+            transformer_name=transformer_name,
+            key=nested_key)
+        for nested_key in nested_keys]
+
+    mapper = DataFrameMapper([(transformer_name, noop)], df_out=False)
+    pipeline = Pipeline([(step_name, mapper)])
+    params = pipeline.get_params()
+
+    assert all([key in params for key in expected_keys])
+
+
+def test_setting_single_transformer_parameters():
+    """
+    Tests that a data frame mapper with a single transformer correctly assigns
+    parameters to the transformer when the set_params() method is called.
+    """
+    noop = NoOpTransformer()
+    old_parameters = noop.get_params()
+    mapper = DataFrameMapper([('noop', noop)], df_out=False)
+    pipeline = Pipeline([('mapper', mapper)])
+
+    pipeline.set_params(
+        mapper__noop__string='string',
+        mapper__noop__number=1,
+        mapper__noop__flag=True)
+
+    assert old_parameters != noop.get_params()
+    assert noop.string == 'string'
+    assert noop.number == 1
+    assert noop.flag
+
+
+def test_getting_parameters_from_a_list_of_transformers():
+    expected_keys = [
+        'mapper__{column}__{name}__{value}'.format(
+            column=column, name=name, value=value)
+        for column, (name, value) in product(
+            ('colA', 'colB'),
+            (('adder', 'num_to_add'), ('divider', 'denominator'))
+        )
+    ]
+    mapper = Pipeline([
+        ('mapper', DataFrameMapper([
+            ('colA', [Adder(1), Divider(2)]),
+            ('colB', [Divider(1), Adder(2)])
+        ]))
+    ])
+
+    params = mapper.get_params()
+
+    assert all([key in params for key in expected_keys])
+
+
+def test_setting_parameters_to_a_list_of_transformers():
+    transformers = adder, divider = Adder(1), Divider(2)
+    mapper = DataFrameMapper([('colA', list(transformers))], df_out=False)
+    pipeline = Pipeline([('mapper', mapper)])
+
+    pipeline.set_params(
+        mapper__colA__adder__num_to_add=0,
+        mapper__colA__divider__denominator=1
+    )
+
+    assert adder.num_to_add == 0
+    assert divider.denominator == 1
+
+
+def test_compliant_with_grid_search(iris_dataframe):
+    pipeline = Pipeline([
+        ('mapper', DataFrameMapper([
+            (['petal length (cm)'], StandardScaler()),
+            (['petal width (cm)'], StandardScaler()),
+            (['sepal length (cm)'], StandardScaler()),
+            (['sepal width (cm)'], StandardScaler()),
+        ])),
+        ('classifier', SVC(kernel='linear'))
+    ])
+    param_grid = {
+        'mapper__petal length (cm)__with_mean': [True, False],
+        'mapper__petal width (cm)__with_mean': [True, False],
+        'mapper__sepal length (cm)__with_mean': [True, False],
+        'mapper__sepal width (cm)__with_mean': [True, False]
+    }
+    data = iris_dataframe.drop("species", axis=1)
+    labels = iris_dataframe["species"]
+
+    grid_search = sklearn_grid_search(pipeline, param_grid=param_grid)
+    grid_search.fit(data, labels)
+
+    assert len(grid_search.grid_scores_) == 2**len(param_grid)
