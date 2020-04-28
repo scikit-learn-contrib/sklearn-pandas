@@ -37,10 +37,12 @@ def _build_feature(columns, transformers, options={}):
     return (columns, _build_transformer(transformers), options)
 
 
-def _get_feature_names(estimator):
+def _get_feature_names(estimator, x):
     """
     Attempt to extract feature names based on a given estimator
     """
+    if isinstance(x, pd.DataFrame):
+        return list(x.columns)
     if hasattr(estimator, 'classes_'):
         return estimator.classes_
     elif hasattr(estimator, 'get_feature_names'):
@@ -255,7 +257,8 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
 
         columns       name (or list of names) of the original column(s)
         transformer   transformer - can be a TransformerPipeline
-        x             transformed columns (numpy.ndarray)
+        x             transformed columns (numpy.ndarray or
+                      pd.DataFrame)
         alias         base name to use for the selected columns
         mode          if not None, either "nonecols" (cols is None
                       indicating to use all) or "nonecolstransforms"
@@ -278,11 +281,11 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
             if isinstance(transformer, TransformerPipeline):
                 inverse_steps = transformer.steps[::-1]
                 estimators = (estimator for name, estimator in inverse_steps)
-                names_steps = (_get_feature_names(e) for e in estimators)
+                names_steps = (_get_feature_names(e, x) for e in estimators)
                 names = next((n for n in names_steps if n is not None), None)
             # Otherwise use the only estimator present
             else:
-                names = _get_feature_names(transformer)
+                names = _get_feature_names(transformer, x)
 
             if mode == "nonecolstransforms":
                 return columns
@@ -298,6 +301,20 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
                 else:
                     return [name + '_' + str(o) for o in range(num_cols)]
         else:
+            if isinstance(transformer, TransformerPipeline):
+                inverse_steps = transformer.steps[::-1]
+                estimators = (estimator for name, estimator in inverse_steps)
+                names_steps = (_get_feature_names(e, x) for e in estimators)
+                names = next((n for n in names_steps if n is not None), None)
+            # Otherwise use the only estimator present
+            else:
+                names = _get_feature_names(transformer, x)
+
+            if mode == "nonecols":
+                if names is not None and len(names) == num_cols:
+                    return [str(o) for o in names]
+                else:
+                    return [str(o) for o in range(num_cols)]
             return [name]
 
     def get_dtypes(self, extracted):
