@@ -75,7 +75,8 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
 
         features    a list of tuples with features definitions.
                     The first element is the pandas column selector. This can
-                    be a string (for one column) or a list of strings.
+                    be a string (for one column), a list of strings, or None
+                    (for all columns).
                     The second element is an object that supports
                     sklearn's transform interface, or a list of such objects.
                     The third element is optional and, if present, must be
@@ -162,13 +163,32 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         self.built_default = state.get('built_default', self.default)
         self.transformed_names_ = state.get('transformed_names_', [])
 
+    def _build_cols(self, X, cols):
+        """
+        Build columns, replacing None sentinel with all cols of X.
+
+        X       a Pandas dataframe; the table to select columns from
+        cols    a string or list of strings representing the columns
+                to select. if None, will be converted to a list of
+                all columns in X.
+
+        Returns a numpy array with the data from the selected columns
+        """
+        if cols is None:
+            if isinstance(X, DataWrapper):
+                cols = list(X.df.columns)
+            else:
+                cols = list(X.columns)
+        return cols
+
     def _get_col_subset(self, X, cols, input_df=False):
         """
         Get a subset of columns from the given table X.
 
         X       a Pandas dataframe; the table to select columns from
         cols    a string or list of strings representing the columns
-                to select
+                to select. if None, will be converted to a list of
+                all columns in X.
 
         Returns a numpy array with the data from the selected columns
         """
@@ -177,6 +197,9 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
             cols = [cols]
         else:
             return_vector = False
+
+        # None is a sentinel to select all columns
+        cols = self._build_cols(X, cols)
 
         # Needed when using the cross-validation compatibility
         # layer for sklearn<0.16.0.
@@ -308,7 +331,7 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
 
             alias = options.get('alias')
             self.transformed_names_ += self.get_names(
-                columns, transformers, Xt, alias)
+                self._build_cols(X, columns), transformers, Xt, alias)
 
         # handle features not explicitly selected
         if self.built_default is not False:

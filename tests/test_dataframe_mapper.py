@@ -257,6 +257,20 @@ def test_complex_df(complex_dataframe):
         assert len(transformed[c]) == len(df[c])
 
 
+def test_none_all_col_sentinel(complex_dataframe):
+    """
+    Get a dataframe from a complex mapped dataframe returning all cols
+     without spec.
+    """
+    df = complex_dataframe
+    mapper = DataFrameMapper([(None, None)], df_out=True)
+    transformed = mapper.fit_transform(df)
+    print(transformed)
+    assert len(transformed) == len(complex_dataframe)
+    for c in df.columns:
+        assert len(transformed[c]) == len(df[c])
+
+
 def test_numeric_column_names(complex_dataframe):
     """
     Get a dataframe from a complex mapped dataframe with numeric column names
