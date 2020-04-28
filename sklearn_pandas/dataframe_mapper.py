@@ -249,7 +249,7 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
                 _call_fit(self.built_default.fit, Xt, y)
         return self
 
-    def get_names(self, columns, transformer, x, alias=None):
+    def get_names(self, columns, transformer, x, alias=None, mode=None):
         """
         Return verbose names for the transformed columns.
 
@@ -257,6 +257,9 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         transformer   transformer - can be a TransformerPipeline
         x             transformed columns (numpy.ndarray)
         alias         base name to use for the selected columns
+        mode          if not None, either "nonecols" (cols is None
+                      indicating to use all) or "nonecolstransforms"
+                      (cols and transformer is None)
         """
         if alias is not None:
             name = alias
@@ -280,11 +283,20 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
             # Otherwise use the only estimator present
             else:
                 names = _get_feature_names(transformer)
-            if names is not None and len(names) == num_cols:
-                return ['%s_%s' % (name, o) for o in names]
-            # otherwise, return name concatenated with '_1', '_2', etc.
+
+            if mode == "nonecolstransforms":
+                return columns
+            elif mode == "nonecols":
+                if names is not None and len(names) == num_cols:
+                    return [str(o) for o in names]
+                else:
+                    return [str(o) for o in range(num_cols)]
             else:
-                return [name + '_' + str(o) for o in range(num_cols)]
+                if names is not None and len(names) == num_cols:
+                    return ['%s_%s' % (name, o) for o in names]
+                # otherwise, return name concatenated with '_1', '_2', etc.
+                else:
+                    return [name + '_' + str(o) for o in range(num_cols)]
         else:
             return [name]
 
@@ -330,8 +342,14 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
             extracted.append(_handle_feature(Xt))
 
             alias = options.get('alias')
+            mode = None
+            if columns is None and transformers is None:
+                mode = "nonecolstransforms"
+            elif columns is None:
+                mode = "nonecols"
             self.transformed_names_ += self.get_names(
-                self._build_cols(X, columns), transformers, Xt, alias)
+                self._build_cols(X, columns), transformers, Xt, alias,
+                mode)
 
         # handle features not explicitly selected
         if self.built_default is not False:
