@@ -404,6 +404,13 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
                 index=index)
             # preserve types
             for col, dtype in zip(self.transformed_names_, dtypes):
+                # this ensures that int types with null values are
+                # correctly cast to float
+                if ((np.issubdtype(df_out[col].values.dtype, np.floating) and
+                     np.issubdtype(dtype, np.integer)) and
+                        not np.isfinite(df_out[col].values).all()):
+                    dtype = np.float64
+
                 df_out[col] = df_out[col].astype(dtype)
             return df_out
         else:
