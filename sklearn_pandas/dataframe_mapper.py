@@ -211,7 +211,7 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         """
         self._build()
 
-        for columns, transformers, options in tqdm(self.built_features):
+        for columns, transformers, options in tqdm(self.built_features, desc='fit'):
             input_df = options.get('input_df', self.input_df)
 
             if transformers is not None:
@@ -288,9 +288,11 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         if do_fit:
             self._build()
 
+
         extracted = []
         self.transformed_names_ = []
-        for columns, transformers, options in tqdm(self.built_features):
+
+        for columns, transformers, options in tqdm(self.built_features, desc='transform'):
             input_df = options.get('input_df', self.input_df)
 
             # columns could be a string or list of
