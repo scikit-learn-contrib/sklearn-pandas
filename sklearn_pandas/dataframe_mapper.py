@@ -1,6 +1,7 @@
 import sys
 import contextlib
 
+from tqdm import tqdm
 import pandas as pd
 import numpy as np
 from scipy import sparse
@@ -210,7 +211,7 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         """
         self._build()
 
-        for columns, transformers, options in self.built_features:
+        for columns, transformers, options in tqdm(self.built_features):
             input_df = options.get('input_df', self.input_df)
 
             if transformers is not None:
@@ -289,7 +290,7 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
 
         extracted = []
         self.transformed_names_ = []
-        for columns, transformers, options in self.built_features:
+        for columns, transformers, options in tqdm(self.built_features):
             input_df = options.get('input_df', self.input_df)
 
             # columns could be a string or list of
