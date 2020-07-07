@@ -1,4 +1,4 @@
-def gen_features(columns, classes=None):
+def gen_features(columns, classes=None, arguments={}):
     """Generates a feature definition list which can be passed
     into DataFrameMapper
 
@@ -25,6 +25,9 @@ def gen_features(columns, classes=None):
 
                 If None value selected, then each feature left as is.
 
+    arguments   a dictionary of additional values such as {'prefix': 'x',
+                'suffix': 'na'}
+
     """
     if classes is None:
         return [(column, None) for column in columns]
@@ -50,6 +53,6 @@ def gen_features(columns, classes=None):
             if not feature_transformers:
                 feature_transformers = None
 
-            feature_defs.append((column, feature_transformers))
+            feature_defs.append((column, feature_transformers, arguments))
 
     return feature_defs

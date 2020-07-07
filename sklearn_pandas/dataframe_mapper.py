@@ -228,7 +228,8 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
                 _call_fit(self.built_default.fit, Xt, y)
         return self
 
-    def get_names(self, columns, transformer, x, alias=None):
+    def get_names(self, columns, transformer, x, alias=None, prefix='',
+                  suffix=''):
         """
         Return verbose names for the transformed columns.
 
@@ -244,6 +245,9 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         else:
             name = columns
         num_cols = x.shape[1] if len(x.shape) > 1 else 1
+
+        output = []
+
         if num_cols > 1:
             # If there are as many columns as classes in the transformer,
             # infer column names from classes names.
@@ -260,12 +264,17 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
             else:
                 names = _get_feature_names(transformer)
             if names is not None and len(names) == num_cols:
-                return ['%s_%s' % (name, o) for o in names]
+                output = ['%s_%s' % (name, o) for o in names]
             # otherwise, return name concatenated with '_1', '_2', etc.
             else:
-                return [name + '_' + str(o) for o in range(num_cols)]
+                output = [name + '_' + str(o) for o in range(num_cols)]
         else:
-            return [name]
+            output = [name]
+
+        prefix = prefix or ''
+        suffix = suffix or ''
+        return ['{}_{}_{}'.format(prefix, n, suffix) for x in output]
+
 
     def get_dtypes(self, extracted):
         dtypes_features = [self.get_dtype(ex) for ex in extracted]
@@ -312,8 +321,10 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
             extracted.append(_handle_feature(Xt))
 
             alias = options.get('alias')
+            prefix = options.get('prefix')
+            suffix = options.get('suffix')
             self.transformed_names_ += self.get_names(
-                columns, transformers, Xt, alias)
+                columns, transformers, Xt, alias, prefix, suffix)
 
         # handle features not explicitly selected
         if self.built_default is not False:
