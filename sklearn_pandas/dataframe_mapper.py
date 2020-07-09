@@ -70,7 +70,7 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
     """
 
     def __init__(self, features, default=False, sparse=False, df_out=False,
-                 input_df=False):
+                 input_df=False, show_progress=False):
         """
         Params:
 
@@ -111,6 +111,7 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         self.df_out = df_out
         self.input_df = input_df
         self.transformed_names_ = []
+        self.show_progress = show_progress
 
         if (df_out and (sparse or default)):
             raise ValueError("Can not use df_out with sparse or default")
@@ -210,7 +211,7 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
 
         """
         self._build()
-        pbar = tqdm(self.built_features)
+        pbar = tqdm(self.built_features, disable=not self.show_progress)
         for columns, transformers, options in pbar:
             pbar.set_description("[Fit] %s" % columns)
             input_df = options.get('input_df', self.input_df)
@@ -292,7 +293,7 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
 
         extracted = []
         self.transformed_names_ = []
-        pbar = tqdm(self.built_features)
+        pbar = tqdm(self.built_features, disable=not self.show_progress)
         for columns, transformers, options in pbar:
             pbar.set_description("[Transform] %s" % columns)
             input_df = options.get('input_df', self.input_df)
