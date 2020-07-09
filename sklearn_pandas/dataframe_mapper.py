@@ -274,7 +274,7 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
 
         prefix = prefix or ''
         suffix = suffix or ''
-        return ['{}_{}_{}'.format(prefix, n, suffix) for x in output]
+        return ['{}{}{}'.format(prefix, x, suffix) for x in output]
 
 
     def get_dtypes(self, extracted):
