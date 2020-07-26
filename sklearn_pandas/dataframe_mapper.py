@@ -70,7 +70,7 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
     """
 
     def __init__(self, features, default=False, sparse=False, df_out=False,
-                 input_df=False, show_progress=False):
+                 input_df=False, show_progressbar=False):
         """
         Params:
 
@@ -102,6 +102,9 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         input_df    If ``True`` pass the selected columns to the transformers
                     as a pandas DataFrame or Series. Otherwise pass them as a
                     numpy array. Defaults to ``False``.
+
+        show_progressbar    if ``True`` a progress bar will be shown during fit
+                            and transform method. Defaults to ``False``
         """
         self.features = features
         self.built_features = None
@@ -111,7 +114,7 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         self.df_out = df_out
         self.input_df = input_df
         self.transformed_names_ = []
-        self.show_progress = show_progress
+        self.show_progressbar = show_progressbar
 
         if (df_out and (sparse or default)):
             raise ValueError("Can not use df_out with sparse or default")
@@ -211,7 +214,7 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
 
         """
         self._build()
-        pbar = tqdm(self.built_features, disable=not self.show_progress)
+        pbar = tqdm(self.built_features, disable=not self.show_progressbar)
         for columns, transformers, options in pbar:
             pbar.set_description("[Fit] %s" % columns)
             input_df = options.get('input_df', self.input_df)
@@ -290,10 +293,9 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         if do_fit:
             self._build()
 
-
         extracted = []
         self.transformed_names_ = []
-        pbar = tqdm(self.built_features, disable=not self.show_progress)
+        pbar = tqdm(self.built_features, disable=not self.show_progressbar)
         for columns, transformers, options in pbar:
             pbar.set_description("[Transform] %s" % columns)
             input_df = options.get('input_df', self.input_df)
