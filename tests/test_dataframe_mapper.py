@@ -14,7 +14,7 @@ from pandas import DataFrame
 import pandas as pd
 from scipy import sparse
 from sklearn import __version__ as sklearn_version
-from sklearn.cross_validation import cross_val_score as sklearn_cv_score
+from sklearn.model_selection import cross_val_score as sklearn_cv_score
 from sklearn.datasets import load_iris
 from sklearn.pipeline import Pipeline
 from sklearn.svm import SVC
