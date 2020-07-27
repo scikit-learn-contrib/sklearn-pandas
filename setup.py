@@ -29,13 +29,13 @@ class PyTest(TestCommand):
         raise SystemExit(errno)
 
 
-setup(name='sklearn-pandas',
+setup(name='sklearn-pandas2',
       version=__version__,
       description='Pandas integration with sklearn',
-      maintainer='Israel Saeta Pérez',
-      maintainer_email='israel.saeta@dukebody.com',
-      url='https://github.com/paulgb/sklearn-pandas',
-      packages=['sklearn_pandas'],
+      maintainer='Ritesh Agrawal',
+      maintainer_email='ragrawal@gmail.com',
+      url='https://github.com/ragrawal/sklearn-pandas',
+      packages=['sklearn_pandas2'],
       keywords=['scikit', 'sklearn', 'pandas'],
       install_requires=[
           'scikit-learn>=0.15.0',
