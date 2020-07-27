@@ -1,7 +1,6 @@
 # -*- coding: utf8 -*-
 
 import pytest
-from pkg_resources import parse_version
 
 # In py3, mock is included with the unittest standard library
 # In py2, it's a separate package
@@ -13,15 +12,14 @@ except ImportError:
 from pandas import DataFrame
 import pandas as pd
 from scipy import sparse
-from sklearn import __version__ as sklearn_version
-from sklearn.model_selection import cross_val_score as sklearn_cv_score
 from sklearn.datasets import load_iris
 from sklearn.pipeline import Pipeline
 from sklearn.svm import SVC
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.preprocessing import (
-    Imputer, StandardScaler, OneHotEncoder, LabelBinarizer)
+    StandardScaler, OneHotEncoder, LabelBinarizer)
+from sklearn.impute import SimpleImputer as Imputer
 from sklearn.feature_selection import SelectKBest, chi2
 from sklearn.base import BaseEstimator, TransformerMixin
 import sklearn.decomposition
@@ -333,8 +331,8 @@ def test_onehot_df():
     transformed = mapper.fit_transform(df)
     cols = transformed.columns
     assert len(cols) == 4
-    assert cols[0] == 'target_0'
-    assert cols[3] == 'target_3'
+    assert cols[0] == 'target_x0_0'
+    assert cols[3] == 'target_x0_3'
 
 
 def test_customtransform_df():
@@ -756,35 +754,6 @@ def test_list_transformers_old_unpickle(simple_dataframe):
     assert isinstance(transformer.steps[0][1], MockXTransformer)
 
 
-def test_default_old_unpickle(simple_dataframe):
-    mapper = DataFrameMapper([('a', None)])
-    # simulate the mapper was pickled before the ``default`` init argument
-    # existed
-    del mapper.default
-    mapper_pickled = pickle.dumps(mapper)
-
-    loaded_mapper = pickle.loads(mapper_pickled)
-    loaded_mapper.fit_transform(simple_dataframe)  # doesn't fail
-
-
-def test_build_features_old_unpickle(simple_dataframe):
-    """
-    Fitted mappers pickled before the built_features and built_default
-    attributes can correctly transform
-    """
-    df = simple_dataframe
-    mapper = DataFrameMapper([('a', None)])
-    mapper.fit(df)
-
-    # simulate the mapper was pickled before the attributes existed
-    del mapper.built_features
-    del mapper.built_default
-
-    mapper_pickled = pickle.dumps(mapper)
-    loaded_mapper = pickle.loads(mapper_pickled)
-    loaded_mapper.transform(simple_dataframe)  # doesn't fail
-
-
 def test_sparse_features(simple_dataframe):
     """
     If any of the extracted features is sparse and "sparse" argument
@@ -911,28 +880,6 @@ def test_with_car_dataframe(cars_dataframe):
     labels = cars_dataframe["model"]
     scores = cross_val_score(pipeline, data, labels)
     assert scores.mean() > 0.30
-
-
-@pytest.mark.skipIf(parse_version(sklearn_version) < parse_version('0.16'))
-def test_direct_cross_validation(iris_dataframe):
-    """
-    Starting with sklearn>=0.16.0 we no longer need CV wrappers for dataframes.
-    See https://github.com/paulgb/sklearn-pandas/issues/11
-    """
-    pipeline = Pipeline([
-        ("preprocess", DataFrameMapper([
-            ("petal length (cm)", None),
-            ("petal width (cm)", None),
-            ("sepal length (cm)", None),
-            ("sepal width (cm)", None),
-        ])),
-        ("classify", SVC(kernel='linear'))
-    ])
-    data = iris_dataframe.drop("species", axis=1)
-    labels = iris_dataframe["species"]
-    scores = sklearn_cv_score(pipeline, data, labels)
-    assert scores.mean() > 0.96
-    assert (scores.std() * 2) < 0.04
 
 
 def test_heterogeneous_output_types_input_df():
