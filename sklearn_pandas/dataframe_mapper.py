@@ -275,6 +275,9 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         else:
             output = [name]
 
+        if not prefix and not suffix:
+            return output
+
         prefix = prefix or ''
         suffix = suffix or ''
         return ['{}{}{}'.format(prefix, x, suffix) for x in output]
