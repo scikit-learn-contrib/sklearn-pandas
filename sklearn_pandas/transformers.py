@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 
+
 def _get_mask(X, value):
     """
     Compute the boolean mask X == missing_values.
