@@ -267,9 +267,10 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
             # Otherwise use the only estimator present
             else:
                 names = _get_feature_names(transformer)
+
             if names is not None and len(names) == num_cols:
-                output = ['%s_%s' % (name, o) for o in names]
-            # otherwise, return name concatenated with '_1', '_2', etc.
+                output = [f"{name}_{o}" for o in names]
+                # otherwise, return name concatenated with '_1', '_2', etc.
             else:
                 output = [name + '_' + str(o) for o in range(num_cols)]
         else:
@@ -281,7 +282,6 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         prefix = prefix or ''
         suffix = suffix or ''
         return ['{}{}{}'.format(prefix, x, suffix) for x in output]
-
 
     def get_dtypes(self, extracted):
         dtypes_features = [self.get_dtype(ex) for ex in extracted]
@@ -329,6 +329,7 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
             alias = options.get('alias')
             prefix = options.get('prefix')
             suffix = options.get('suffix')
+
             self.transformed_names_ += self.get_names(
                 columns, transformers, Xt, alias, prefix, suffix)
 

@@ -2,8 +2,8 @@
 Sklearn-pandas
 ==============
 
-.. image:: https://circleci.com/gh/scikit-learn-contrib/sklearn-pandas.svg?style=svg
-    :target: https://circleci.com/gh/scikit-learn-contrib/sklearn-pandas
+.. image:: https://circleci.com/gh/ragrawal/sklearn-pandas.svg?style=svg
+    :target: https://circleci.com/gh/ragrawal/sklearn-pandas
 
 This module provides a bridge between `Scikit-Learn <http://scikit-learn.org/stable>`__'s machine learning methods and `pandas <https://pandas.pydata.org>`__-style Data Frames.
 
@@ -231,8 +231,9 @@ Multiple transformers for the same column
 Multiple transformers can be applied to the same column specifying them
 in a list::
 
+    >>> from sklearn.impute import SimpleImputer
     >>> mapper3 = DataFrameMapper([
-    ...     (['age'], [sklearn.preprocessing.Imputer(),
+    ...     (['age'], [SimpleImputer(),
     ...                sklearn.preprocessing.StandardScaler()])])
     >>> data_3 = pd.DataFrame({'age': [1, np.nan, 3]})
     >>> mapper3.fit_transform(data_3)
@@ -302,7 +303,7 @@ into generator, and then use returned definition as ``features`` argument for ``
     ...     classes=[sklearn.preprocessing.LabelEncoder]
     ... )
     >>> feature_def
-    [('col1', [LabelEncoder()]), ('col2', [LabelEncoder()]), ('col3', [LabelEncoder()])]
+    [('col1', [LabelEncoder()], {}), ('col2', [LabelEncoder()], {}), ('col3', [LabelEncoder()], {})]
     >>> mapper5 = DataFrameMapper(feature_def)
     >>> data5 = pd.DataFrame({
     ...     'col1': ['yes', 'no', 'yes'],
@@ -318,22 +319,24 @@ If it is required to override some of transformer parameters, then a dict with '
 transformer parameters should be provided. For example, consider a dataset with missing values.
 Then the following code could be used to override default imputing strategy:
 
+    >>> from sklearn.impute import SimpleImputer
+    >>> import numpy as np
     >>> feature_def = gen_features(
     ...     columns=[['col1'], ['col2'], ['col3']],
-    ...     classes=[{'class': sklearn.preprocessing.Imputer, 'strategy': 'most_frequent'}]
+    ...     classes=[{'class': SimpleImputer, 'strategy':'most_frequent'}]
     ... )
     >>> mapper6 = DataFrameMapper(feature_def)
     >>> data6 = pd.DataFrame({
-    ...     'col1': [None, 1, 1, 2, 3],
-    ...     'col2': [True, False, None, None, True],
-    ...     'col3': [0, 0, 0, None, None]
+    ...     'col1': [np.nan, 1, 1, 2, 3],
+    ...     'col2': [True, False, np.nan, np.nan, True],
+    ...     'col3': [0, 0, 0, np.nan, np.nan]
     ... })
     >>> mapper6.fit_transform(data6)
-    array([[1., 1., 0.],
-           [1., 0., 0.],
-           [1., 1., 0.],
-           [2., 1., 0.],
-           [3., 1., 0.]])
+    array([[1.0, True, 0.0],
+           [1.0, False, 0.0],
+           [1.0, True, 0.0],
+           [2.0, True, 0.0],
+           [3.0, True, 0.0]], dtype=object)
 
 
 Feature selection and other supervised transformations
@@ -366,59 +369,6 @@ A ``DataFrameMapper`` will return a dense feature array by default. Setting ``sp
 
 The stacking of the sparse features is done without ever densifying them.
 
-Cross-Validation
-****************
-
-Now that we can combine features from pandas DataFrames, we may want to use cross-validation to see whether our model works. ``scikit-learn<0.16.0`` provided features for cross-validation, but they expect numpy data structures and won't work with ``DataFrameMapper``.
-
-To get around this, sklearn-pandas provides a wrapper on sklearn's ``cross_val_score`` function which passes a pandas DataFrame to the estimator rather than a numpy array::
-
-    >>> pipe = sklearn.pipeline.Pipeline([
-    ...     ('featurize', mapper),
-    ...     ('lm', sklearn.linear_model.LinearRegression())])
-    >>> np.round(cross_val_score(pipe, X=data.copy(), y=data.salary, scoring='r2'), 2)
-    array([ -1.09,  -5.3 , -15.38])
-
-Sklearn-pandas' ``cross_val_score`` function provides exactly the same interface as sklearn's function of the same name.
-
-``CategoricalImputer``
-**********************
-
-Since the ``scikit-learn``  ``Imputer`` transformer currently only works with
-numbers, ``sklearn-pandas`` provides an equivalent helper transformer that
-works with strings, substituting null values with the most frequent value in
-that column. Alternatively, you can specify a fixed value to use.
-
-Example: imputing with the mode:
-
-    >>> from sklearn_pandas import CategoricalImputer
-    >>> data = np.array(['a', 'b', 'b', np.nan], dtype=object)
-    >>> imputer = CategoricalImputer()
-    >>> imputer.fit_transform(data)
-    array(['a', 'b', 'b', 'b'], dtype=object)
-
-Example: imputing with a fixed value:
-
-    >>> from sklearn_pandas import CategoricalImputer
-    >>> data = np.array(['a', 'b', 'b', np.nan], dtype=object)
-    >>> imputer = CategoricalImputer(strategy='constant', fill_value='a')
-    >>> imputer.fit_transform(data)
-    array(['a', 'b', 'b', 'a'], dtype=object)
-
-
-``FunctionTransformer``
-***********************
-
-Often one wants to apply simple transformations to data such as ``np.log``. ``FunctionTransformer`` is a simple wrapper that takes any function and applies vectorization so that it can be used as a transformer.
-
-Example:
-
-    >>> from sklearn_pandas import FunctionTransformer
-    >>> array = np.array([10, 100])
-    >>> transformer = FunctionTransformer(np.log10)
-
-    >>> transformer.fit_transform(array)
-    array([1., 2.])
 
 Changelog
 ---------
