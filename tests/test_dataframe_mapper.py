@@ -828,6 +828,7 @@ def iris_dataframe():
         }
     )
 
+
 @pytest.fixture
 def cars_dataframe():
     return pd.read_csv("tests/test_data/cars.csv.gz", compression='gzip')
@@ -879,7 +880,6 @@ def test_with_car_dataframe(cars_dataframe):
     labels = cars_dataframe["model"]
     scores = cross_val_score(pipeline, data, labels)
     assert scores.mean() > 0.30
-
 
 
 def test_heterogeneous_output_types_input_df():
