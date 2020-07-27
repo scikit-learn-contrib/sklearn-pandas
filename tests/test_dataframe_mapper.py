@@ -1,7 +1,6 @@
 # -*- coding: utf8 -*-
 
 import pytest
-from pkg_resources import parse_version
 
 # In py3, mock is included with the unittest standard library
 # In py2, it's a separate package
@@ -13,8 +12,6 @@ except ImportError:
 from pandas import DataFrame
 import pandas as pd
 from scipy import sparse
-from sklearn import __version__ as sklearn_version
-from sklearn.model_selection import cross_val_score as sklearn_cv_score
 from sklearn.datasets import load_iris
 from sklearn.pipeline import Pipeline
 from sklearn.svm import SVC
