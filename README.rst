@@ -2,8 +2,8 @@
 Sklearn-pandas
 ==============
 
-.. image:: https://circleci.com/gh/ragrawal/sklearn-pandas.svg?style=svg
-    :target: https://circleci.com/gh/ragrawal/sklearn-pandas
+.. image:: https://circleci.com/gh/scikit-learn-contrib/sklearn-pandas.svg?style=svg
+    :target: https://circleci.com/gh/scikit-learn-contrib/sklearn-pandas
 
 This module provides a bridge between `Scikit-Learn <http://scikit-learn.org/stable>`__'s machine learning methods and `pandas <https://pandas.pydata.org>`__-style Data Frames.
 
