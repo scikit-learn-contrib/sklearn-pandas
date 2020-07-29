@@ -14,6 +14,7 @@ import pandas as pd
 from scipy import sparse
 from sklearn.datasets import load_iris
 from sklearn.pipeline import Pipeline
+from sklearn.model_selection import cross_val_score
 from sklearn.svm import SVC
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction import DictVectorizer
@@ -27,7 +28,7 @@ import numpy as np
 from numpy.testing import assert_array_equal
 import pickle
 
-from sklearn_pandas import DataFrameMapper, cross_val_score
+from sklearn_pandas import DataFrameMapper
 from sklearn_pandas.dataframe_mapper import _handle_feature, _build_transformer
 from sklearn_pandas.pipeline import TransformerPipeline
 
@@ -880,6 +881,27 @@ def test_with_car_dataframe(cars_dataframe):
     labels = cars_dataframe["model"]
     scores = cross_val_score(pipeline, data, labels)
     assert scores.mean() > 0.30
+
+
+def test_direct_cross_validation(iris_dataframe):
+    """
+    Starting with sklearn>=0.16.0 we no longer need CV wrappers for dataframes.
+    See https://github.com/paulgb/sklearn-pandas/issues/11
+    """
+    pipeline = Pipeline([
+        ("preprocess", DataFrameMapper([
+            ("petal length (cm)", None),
+            ("petal width (cm)", None),
+            ("sepal length (cm)", None),
+            ("sepal width (cm)", None),
+        ])),
+        ("classify", SVC(kernel='linear'))
+    ])
+    data = iris_dataframe.drop("species", axis=1)
+    labels = iris_dataframe["species"]
+    scores = cross_val_score(pipeline, data, labels)
+    assert scores.mean() > 0.96
+    assert (scores.std() * 2) < 0.04
 
 
 def test_heterogeneous_output_types_input_df():

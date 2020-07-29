@@ -5,7 +5,7 @@ from pandas import DataFrame
 import joblib
 
 from sklearn_pandas import DataFrameMapper
-from sklearn_pandas.transformers import NumericalTransformer
+from sklearn_pandas import NumericalTransformer
 
 
 @pytest.fixture

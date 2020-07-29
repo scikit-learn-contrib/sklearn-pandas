@@ -32,11 +32,11 @@ Import
 Import what you need from the ``sklearn_pandas`` package. The choices are:
 
 * ``DataFrameMapper``, a class for mapping pandas data frame columns to different sklearn transformations
-* ``cross_val_score``, similar to ``sklearn.cross_validation.cross_val_score`` but working on pandas DataFrames
+
 
 For this demonstration, we will import both::
 
-    >>> from sklearn_pandas import DataFrameMapper, cross_val_score
+    >>> from sklearn_pandas import DataFrameMapper
 
 For these examples, we'll also use pandas, numpy, and sklearn::
 
