@@ -34,7 +34,7 @@ setup(name='sklearn-pandas2',
       description='Pandas integration with sklearn',
       maintainer='Ritesh Agrawal',
       maintainer_email='ragrawal@gmail.com',
-      url='https://github.com/ragrawal/sklearn-pandas',
+      url='https://github.com/scikit-learn-contrib/sklearn-pandas',
       packages=['sklearn_pandas'],
       keywords=['scikit', 'sklearn', 'pandas'],
       install_requires=[
@@ -42,7 +42,11 @@ setup(name='sklearn-pandas2',
           'scipy>=1.4.1',
           'pandas>=1.0.5',
           'numpy>=1.18.1',
-          'tqdm>=4.46.0'],
+          'tqdm>=4.46.0'
+      ],
+      extras_require={
+          "progress-bar": ['tqdm>=4.46.0']
+      },
       tests_require=['pytest', 'mock'],
       cmdclass={'test': PyTest},
       )

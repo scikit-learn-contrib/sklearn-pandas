@@ -7,11 +7,8 @@ Sklearn-pandas
 
 This module provides a bridge between `Scikit-Learn <http://scikit-learn.org/stable>`__'s machine learning methods and `pandas <https://pandas.pydata.org>`__-style Data Frames.
 
-In particular, it provides:
 
-1. A way to map ``DataFrame`` columns to transformations, which are later recombined into features.
-2. A compatibility shim for old ``scikit-learn`` versions to cross-validate a pipeline that takes a pandas ``DataFrame`` as input. This is only needed for ``scikit-learn<0.16.0`` (see `#11 <https://github.com/paulgb/sklearn-pandas/issues/11>`__ for details). It is deprecated and will likely be dropped in ``skearn-pandas==2.0``.
-3. A couple of special transformers that work well with pandas inputs: ``CategoricalImputer`` and ``FunctionTransformer``.
+In particular, it provides a way to map ``DataFrame`` columns to transformations, which are later recombined into features.
 
 Installation
 ------------
@@ -19,6 +16,7 @@ Installation
 You can install ``sklearn-pandas`` with ``pip``::
 
     # pip install sklearn-pandas
+
 
 Tests
 -----
@@ -136,8 +134,18 @@ of the feature definition::
   >>> mapper_alias.transformed_names_
   ['children_scaled']
 
+Alternatively, you can also specify prefix and/or suffix to add to the column name. For example::
 
-Passing Series/DataFrames to the transformers
+
+  >>> mapper_alias = DataFrameMapper([
+  ...     (['children'], sklearn.preprocessing.StandardScaler(), {'prefix': 'standard_scaled_'}),
+  ...     (['children'], sklearn.preprocessing.StandardScaler(), {'suffix': '_raw'})
+  ... ])
+  >>> _ = mapper_alias.fit_transform(data.copy())
+  >>> mapper_alias.transformed_names_
+  ['standard_scaled_children', 'children_raw']
+
+Passing Series/DataFrames to the transformerså
 *********************************************
 
 By default the transformers are passed a numpy array of the selected columns
@@ -338,6 +346,23 @@ Then the following code could be used to override default imputing strategy:
            [2.0, True, 0.0],
            [3.0, True, 0.0]], dtype=object)
 
+You can also specify global prefix or suffix for the generated transformed column names using the prefix and suffix
+parameters::
+
+    >>> feature_def = gen_features(
+    ...     columns=['col1', 'col2', 'col3'],
+    ...     classes=[sklearn.preprocessing.LabelEncoder],
+    ...     prefix="lblencoder_"
+    ... )
+    >>> mapper5 = DataFrameMapper(feature_def)
+    >>> data5 = pd.DataFrame({
+    ...     'col1': ['yes', 'no', 'yes'],
+    ...     'col2': [True, False, False],
+    ...     'col3': ['one', 'two', 'three']
+    ... })
+    >>> _ = mapper5.fit_transform(data5)
+    >>> mapper5.transformed_names_
+    ['lblencoder_col1', 'lblencoder_col2', 'lblencoder_col3']
 
 Feature selection and other supervised transformations
 ******************************************************

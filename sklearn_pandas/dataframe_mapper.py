@@ -276,11 +276,9 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         else:
             output = [name]
 
-        if not prefix and not suffix:
+        if prefix == suffix == "":
             return output
 
-        prefix = prefix or ''
-        suffix = suffix or ''
         return ['{}{}{}'.format(prefix, x, suffix) for x in output]
 
     def get_dtypes(self, extracted):
@@ -327,8 +325,8 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
             extracted.append(_handle_feature(Xt))
 
             alias = options.get('alias')
-            prefix = options.get('prefix')
-            suffix = options.get('suffix')
+            prefix = options.get('prefix', '')
+            suffix = options.get('suffix', '')
 
             self.transformed_names_ += self.get_names(
                 columns, transformers, Xt, alias, prefix, suffix)
