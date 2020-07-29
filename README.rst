@@ -6,8 +6,6 @@ Sklearn-pandas
     :target: https://circleci.com/gh/scikit-learn-contrib/sklearn-pandas
 
 This module provides a bridge between `Scikit-Learn <http://scikit-learn.org/stable>`__'s machine learning methods and `pandas <https://pandas.pydata.org>`__-style Data Frames.
-
-
 In particular, it provides a way to map ``DataFrame`` columns to transformations, which are later recombined into features.
 
 Installation
@@ -393,6 +391,29 @@ A ``DataFrameMapper`` will return a dense feature array by default. Setting ``sp
     <class 'scipy.sparse.csr.csr_matrix'>
 
 The stacking of the sparse features is done without ever densifying them.
+
+
+Using Numerical Transformer
+****************************
+
+While you can use FunctionTransformation to generate artibtrary transformer but they cannot not serialized (pickled).
+NumericalTransformer takes function name as a string parameter and hence can be easily serialized.
+
+    >>> from sklearn_pandas import NumericalTransformer
+    >>> mapper5 = DataFrameMapper([
+    ...     ('children', NumericalTransformer('log')),
+    ... ])
+    >>> mapper5.fit_transform(data)
+    array([[1.38629436],
+           [1.79175947],
+           [1.09861229],
+           [1.09861229],
+           [0.69314718],
+           [1.09861229],
+           [1.60943791],
+           [1.38629436]])
+
+
 
 
 Changelog
