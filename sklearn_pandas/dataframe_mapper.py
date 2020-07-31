@@ -1,7 +1,6 @@
 import sys
 import contextlib
 
-from tqdm import tqdm
 import pandas as pd
 import numpy as np
 from scipy import sparse
@@ -10,12 +9,7 @@ from sklearn.base import BaseEstimator, TransformerMixin
 from .cross_validation import DataWrapper
 from .pipeline import make_transformer_pipeline, _call_fit, TransformerPipeline
 
-PY3 = sys.version_info[0] == 3
-if PY3:
-    string_types = text_type = str
-else:
-    string_types = basestring  # noqa
-    text_type = unicode  # noqa
+string_types = text_type = str
 
 
 def _handle_feature(fea):
@@ -70,7 +64,7 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
     """
 
     def __init__(self, features, default=False, sparse=False, df_out=False,
-                 input_df=False, show_progressbar=False):
+                 input_df=False):
         """
         Params:
 
@@ -103,8 +97,6 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
                     as a pandas DataFrame or Series. Otherwise pass them as a
                     numpy array. Defaults to ``False``.
 
-        show_progressbar    if ``True`` a progress bar will be shown during fit
-                            and transform method. Defaults to ``False``
         """
         self.features = features
         self.built_features = None
@@ -114,7 +106,6 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         self.df_out = df_out
         self.input_df = input_df
         self.transformed_names_ = []
-        self.show_progressbar = show_progressbar
 
         if (df_out and (sparse or default)):
             raise ValueError("Can not use df_out with sparse or default")
@@ -166,7 +157,6 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         self.built_features = state.get('built_features', self.features)
         self.built_default = state.get('built_default', self.default)
         self.transformed_names_ = state.get('transformed_names_', [])
-        self.show_progressbar = state.get('show_progressbar', False)
 
     def _get_col_subset(self, X, cols, input_df=False):
         """
@@ -215,9 +205,7 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
 
         """
         self._build()
-        pbar = tqdm(self.built_features, disable=not self.show_progressbar)
-        for columns, transformers, options in pbar:
-            pbar.set_description("[Fit] %s" % columns)
+        for columns, transformers, options in self.built_features:
             input_df = options.get('input_df', self.input_df)
 
             if transformers is not None:
@@ -306,9 +294,7 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
 
         extracted = []
         self.transformed_names_ = []
-        pbar = tqdm(self.built_features, disable=not self.show_progressbar)
-        for columns, transformers, options in pbar:
-            pbar.set_description("[Transform] %s" % columns)
+        for columns, transformers, options in self.built_features:
             input_df = options.get('input_df', self.input_df)
 
             # columns could be a string or list of
