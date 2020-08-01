@@ -47,7 +47,10 @@ def test_generate_features_with_default_parameters():
     feature_defs = gen_features(columns=columns, classes=[MockClass])
     assert len(feature_defs) == len(columns)
 
-    feature_dict = dict(feature_defs)
+    for feature in feature_defs:
+        assert feature[2] == {}
+
+    feature_dict = dict([_[0:2] for _ in feature_defs])
     assert columns == sorted(feature_dict.keys())
 
     # default init arguments for MockClass for clarification.
@@ -70,7 +73,7 @@ def test_generate_features_with_several_classes():
         ]
     )
 
-    for transformers in dict(feature_defs).values():
+    for col, transformers, params in feature_defs:
         assert_attributes(transformers[0], name='class', value=1)
         assert_attributes(transformers[1], name='mockA', value=1)
         assert_attributes(transformers[2], name='mockB', value=None)
@@ -84,9 +87,9 @@ def test_generate_features_with_none_only_transformers():
     feature_defs = gen_features(
         columns=['colA', 'colB', 'colC'], classes=[None])
 
-    expected = [('colA', None),
-                ('colB', None),
-                ('colC', None)]
+    expected = [('colA', None, {}),
+                ('colB', None, {}),
+                ('colC', None, {})]
 
     assert feature_defs == expected
 

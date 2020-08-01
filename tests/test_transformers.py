@@ -1,193 +1,47 @@
+import tempfile
 import pytest
-
 import numpy as np
-import pandas as pd
-from numpy.testing import assert_array_equal
+from pandas import DataFrame
+import joblib
 
-from sklearn_pandas import CategoricalImputer, FunctionTransformer
 from sklearn_pandas import DataFrameMapper
-
-# In sklearn18 NotFittedError was moved from utils.validation
-# to exceptions module.
-try:
-    from sklearn.exceptions import NotFittedError
-except ImportError:
-    from sklearn.utils.validation import NotFittedError
+from sklearn_pandas import NumericalTransformer
 
 
-@pytest.mark.parametrize('none_value', [None, np.nan])
-@pytest.mark.parametrize('input_type', ['np', 'pd'])
-def test_unit(input_type, none_value):
-
-    data = ['a', 'b', 'b', none_value]
-
-    if input_type == 'pd':
-        X = pd.Series(data)
-    else:
-        X = np.asarray(data, dtype=object)
-
-    Xc = X.copy()
-
-    Xt = CategoricalImputer().fit_transform(X)
-
-    assert pd.core.common.array_equivalent(np.asarray(X), np.asarray(Xc))
-    assert isinstance(Xt, np.ndarray)
-    assert (Xt == ['a', 'b', 'b', 'b']).all()
+@pytest.fixture
+def simple_dataset():
+    return DataFrame({
+        'feat1': [1, 2, 1, 3, 1],
+        'feat2': [1, 2, 2, 2, 3],
+        'feat3': [1, 2, 3, 4, 5],
+    })
 
 
-@pytest.mark.parametrize('input_type', ['np', 'pd'])
-def test_no_mode(input_type):
-
-    data = ['a', 'b', 'c', np.nan]
-
-    if input_type == 'pd':
-        X = pd.Series(data)
-    else:
-        X = np.asarray(data, dtype=object)
-
-    with pytest.raises(ValueError):
-        CategoricalImputer().fit_transform(X)
-
-
-@pytest.mark.parametrize('input_type', ['np', 'pd'])
-def test_missing_values_param(input_type):
-
-    data = ['x', 'y', 'a_missing', 'y']
-
-    if input_type == 'pd':
-        X = pd.Series(data)
-    else:
-        X = np.asarray(data, dtype=object)
-
-    imp = CategoricalImputer(missing_values='a_missing')
-    Xt = imp.fit_transform(X)
-
-    assert (Xt == np.array(['x', 'y', 'y', 'y'])).all()
-
-
-@pytest.mark.parametrize('input_type', ['np', 'pd'])
-def test_copy_param(input_type):
-
-    data = ['a', np.nan, 'b', 'a']
-
-    if input_type == 'pd':
-        X = pd.Series(data)
-    else:
-        X = np.asarray(data, dtype=object)
-
-    imp = CategoricalImputer(copy=False)
-    Xt = imp.fit_transform(X)
-
-    Xe = np.array(['a', 'a', 'b', 'a'])
-    assert (Xt == Xe).all()
-    assert (X == Xe).all()
-
-
-@pytest.mark.parametrize('input_type', ['np', 'pd'])
-def test_data_type(input_type):
-
-    data = ['a', np.nan, 'b', 3, 'a', 3, 'a', 4.5]
-
-    if input_type == 'pd':
-        X = pd.Series(data)
-    else:
-        X = np.asarray(data, dtype=object)
-
-    Xt = CategoricalImputer().fit_transform(X)
-
-    Xe = np.array(['a', 'a', 'b', 3, 'a', 3, 'a', 4.5], dtype=object)
-    assert (Xt == Xe).all()
-
-
-@pytest.mark.parametrize('none_value', [None, np.nan])
-def test_integration(none_value):
-
-    df = pd.DataFrame({'cat': ['a', 'a', 'a', none_value, 'b'],
-                       'num': [1, 2, 3, 4, 5]})
-
-    mapper = DataFrameMapper([
-        ('cat', CategoricalImputer()),
-        ('num', None)
-    ], df_out=True).fit(df)
-
-    df_t = mapper.transform(df)
-
-    assert pd.notnull(df_t).all().all()
-
-    val_idx = pd.notnull(df['cat'])
-    nan_idx = ~val_idx
-
-    assert (df['num'] == df_t['num']).all()
-
-    assert (df['cat'][val_idx] == df_t['cat'][val_idx]).all()
-    assert (df_t['cat'][nan_idx] == df['cat'].mode().values[0]).all()
-
-
-def test_not_fitted():
+def test_common_numerical_transformer(simple_dataset):
     """
-    If imputer is not fitted, NotFittedError is raised.
+    Test log transformation
     """
-    imp = CategoricalImputer()
-    with pytest.raises(NotFittedError):
-        imp.transform(np.array(['a', 'b', 'b', None]))
+    transfomer = DataFrameMapper([
+        ('feat1', NumericalTransformer('log'))
+    ], df_out=True)
+    df = simple_dataset
+    outDF = transfomer.fit_transform(df)
+    assert list(outDF.columns) == ['feat1']
+    assert np.array_equal(df['feat1'].apply(np.log).values, outDF.feat1.values)
 
 
-@pytest.mark.parametrize('input_type', ['np', 'pd'])
-@pytest.mark.parametrize('replacement_value', ['a', 'c'])
-def test_custom_replacement(replacement_value, input_type):
+def test_numerical_transformer_serialization(simple_dataset):
     """
-    If replacement != 'mode', impute with that value instead of mode
+    Test if you can serialize transformer
     """
-    data = ['a', np.nan, 'b', 'b']
+    transfomer = DataFrameMapper([
+        ('feat1', NumericalTransformer('log'))
+    ])
 
-    if input_type == 'pd':
-        X = pd.Series(data)
-    else:
-        X = np.asarray(data, dtype=object)
-
-    Xc = X.copy()
-
-    Xt = CategoricalImputer(
-        strategy='constant',
-        fill_value=replacement_value
-    ).fit_transform(X)
-
-    assert pd.core.common.array_equivalent(np.asarray(X), np.asarray(Xc))
-    assert isinstance(Xt, np.ndarray)
-    assert (Xt == ['a', replacement_value, 'b', 'b']).all()
-
-
-def test_invalid_strategy():
-    """
-    Raise an error if an invalid strategy is entered
-    """
-    with pytest.raises(ValueError):
-        CategoricalImputer(strategy="not_a_supported_strategy")
-
-
-@pytest.mark.parametrize('input_type', ['np', 'pd'])
-def test_default_fill_value_for_constant_strategy(input_type):
-    data = ['a', np.nan, 'b', 'b']
-
-    if input_type == 'pd':
-        X = pd.Series(data)
-    else:
-        X = np.asarray(data, dtype=object)
-
-    imputer = CategoricalImputer(strategy='constant')
-    Xt = imputer.fit_transform(X)
-
-    assert imputer.fill_ == '?'
-    assert (Xt == ['a', imputer.fill_, 'b', 'b']).all()
-
-
-def test_function_transformer():
-    """
-    Test whether random transformations using FunctionTransformer work.
-    """
-    array = np.array([10, 100])
-    transformer = FunctionTransformer(np.log10)
-
-    transformed = transformer.fit_transform(array)
-
-    assert_array_equal(np.array([1., 2.]), transformed)
+    df = simple_dataset
+    transfomer.fit(df)
+    f = tempfile.NamedTemporaryFile(delete=True)
+    joblib.dump(transfomer, f.name)
+    transfomer2 = joblib.load(f.name)
+    np.array_equal(transfomer.transform(df), transfomer2.transform(df))
+    f.close()

@@ -6,12 +6,7 @@ Sklearn-pandas
     :target: https://circleci.com/gh/scikit-learn-contrib/sklearn-pandas
 
 This module provides a bridge between `Scikit-Learn <http://scikit-learn.org/stable>`__'s machine learning methods and `pandas <https://pandas.pydata.org>`__-style Data Frames.
-
-In particular, it provides:
-
-1. A way to map ``DataFrame`` columns to transformations, which are later recombined into features.
-2. A compatibility shim for old ``scikit-learn`` versions to cross-validate a pipeline that takes a pandas ``DataFrame`` as input. This is only needed for ``scikit-learn<0.16.0`` (see `#11 <https://github.com/paulgb/sklearn-pandas/issues/11>`__ for details). It is deprecated and will likely be dropped in ``skearn-pandas==2.0``.
-3. A couple of special transformers that work well with pandas inputs: ``CategoricalImputer`` and ``FunctionTransformer``.
+In particular, it provides a way to map ``DataFrame`` columns to transformations, which are later recombined into features.
 
 Installation
 ------------
@@ -19,6 +14,7 @@ Installation
 You can install ``sklearn-pandas`` with ``pip``::
 
     # pip install sklearn-pandas
+
 
 Tests
 -----
@@ -36,11 +32,11 @@ Import
 Import what you need from the ``sklearn_pandas`` package. The choices are:
 
 * ``DataFrameMapper``, a class for mapping pandas data frame columns to different sklearn transformations
-* ``cross_val_score``, similar to ``sklearn.cross_validation.cross_val_score`` but working on pandas DataFrames
+
 
 For this demonstration, we will import both::
 
-    >>> from sklearn_pandas import DataFrameMapper, cross_val_score
+    >>> from sklearn_pandas import DataFrameMapper
 
 For these examples, we'll also use pandas, numpy, and sklearn::
 
@@ -136,8 +132,18 @@ of the feature definition::
   >>> mapper_alias.transformed_names_
   ['children_scaled']
 
+Alternatively, you can also specify prefix and/or suffix to add to the column name. For example::
 
-Passing Series/DataFrames to the transformers
+
+  >>> mapper_alias = DataFrameMapper([
+  ...     (['children'], sklearn.preprocessing.StandardScaler(), {'prefix': 'standard_scaled_'}),
+  ...     (['children'], sklearn.preprocessing.StandardScaler(), {'suffix': '_raw'})
+  ... ])
+  >>> _ = mapper_alias.fit_transform(data.copy())
+  >>> mapper_alias.transformed_names_
+  ['standard_scaled_children', 'children_raw']
+
+Passing Series/DataFrames to the transformerså
 *********************************************
 
 By default the transformers are passed a numpy array of the selected columns
@@ -231,8 +237,9 @@ Multiple transformers for the same column
 Multiple transformers can be applied to the same column specifying them
 in a list::
 
+    >>> from sklearn.impute import SimpleImputer
     >>> mapper3 = DataFrameMapper([
-    ...     (['age'], [sklearn.preprocessing.Imputer(),
+    ...     (['age'], [SimpleImputer(),
     ...                sklearn.preprocessing.StandardScaler()])])
     >>> data_3 = pd.DataFrame({'age': [1, np.nan, 3]})
     >>> mapper3.fit_transform(data_3)
@@ -302,7 +309,7 @@ into generator, and then use returned definition as ``features`` argument for ``
     ...     classes=[sklearn.preprocessing.LabelEncoder]
     ... )
     >>> feature_def
-    [('col1', [LabelEncoder()]), ('col2', [LabelEncoder()]), ('col3', [LabelEncoder()])]
+    [('col1', [LabelEncoder()], {}), ('col2', [LabelEncoder()], {}), ('col3', [LabelEncoder()], {})]
     >>> mapper5 = DataFrameMapper(feature_def)
     >>> data5 = pd.DataFrame({
     ...     'col1': ['yes', 'no', 'yes'],
@@ -318,23 +325,42 @@ If it is required to override some of transformer parameters, then a dict with '
 transformer parameters should be provided. For example, consider a dataset with missing values.
 Then the following code could be used to override default imputing strategy:
 
+    >>> from sklearn.impute import SimpleImputer
+    >>> import numpy as np
     >>> feature_def = gen_features(
     ...     columns=[['col1'], ['col2'], ['col3']],
-    ...     classes=[{'class': sklearn.preprocessing.Imputer, 'strategy': 'most_frequent'}]
+    ...     classes=[{'class': SimpleImputer, 'strategy':'most_frequent'}]
     ... )
     >>> mapper6 = DataFrameMapper(feature_def)
     >>> data6 = pd.DataFrame({
-    ...     'col1': [None, 1, 1, 2, 3],
-    ...     'col2': [True, False, None, None, True],
-    ...     'col3': [0, 0, 0, None, None]
+    ...     'col1': [np.nan, 1, 1, 2, 3],
+    ...     'col2': [True, False, np.nan, np.nan, True],
+    ...     'col3': [0, 0, 0, np.nan, np.nan]
     ... })
     >>> mapper6.fit_transform(data6)
-    array([[1., 1., 0.],
-           [1., 0., 0.],
-           [1., 1., 0.],
-           [2., 1., 0.],
-           [3., 1., 0.]])
+    array([[1.0, True, 0.0],
+           [1.0, False, 0.0],
+           [1.0, True, 0.0],
+           [2.0, True, 0.0],
+           [3.0, True, 0.0]], dtype=object)
 
+You can also specify global prefix or suffix for the generated transformed column names using the prefix and suffix
+parameters::
+
+    >>> feature_def = gen_features(
+    ...     columns=['col1', 'col2', 'col3'],
+    ...     classes=[sklearn.preprocessing.LabelEncoder],
+    ...     prefix="lblencoder_"
+    ... )
+    >>> mapper5 = DataFrameMapper(feature_def)
+    >>> data5 = pd.DataFrame({
+    ...     'col1': ['yes', 'no', 'yes'],
+    ...     'col2': [True, False, False],
+    ...     'col3': ['one', 'two', 'three']
+    ... })
+    >>> _ = mapper5.fit_transform(data5)
+    >>> mapper5.transformed_names_
+    ['lblencoder_col1', 'lblencoder_col2', 'lblencoder_col3']
 
 Feature selection and other supervised transformations
 ******************************************************
@@ -356,7 +382,8 @@ Feature selection and other supervised transformations
 Working with sparse features
 ****************************
 
-A ``DataFrameMapper`` will return a dense feature array by default. Setting ``sparse=True`` in the mapper will return a sparse array whenever any of the extracted features is sparse. Example:
+A ``DataFrameMapper`` will return a dense feature array by default. Setting ``sparse=True`` in the mapper will return
+a sparse array whenever any of the extracted features is sparse. Example:
 
     >>> mapper5 = DataFrameMapper([
     ...     ('pet', CountVectorizer()),
@@ -366,62 +393,44 @@ A ``DataFrameMapper`` will return a dense feature array by default. Setting ``sp
 
 The stacking of the sparse features is done without ever densifying them.
 
-Cross-Validation
-****************
 
-Now that we can combine features from pandas DataFrames, we may want to use cross-validation to see whether our model works. ``scikit-learn<0.16.0`` provided features for cross-validation, but they expect numpy data structures and won't work with ``DataFrameMapper``.
+Using ``NumericalTransformer``
+****************************
 
-To get around this, sklearn-pandas provides a wrapper on sklearn's ``cross_val_score`` function which passes a pandas DataFrame to the estimator rather than a numpy array::
+While you can use ``FunctionTransformation`` to generate arbitrary transformers, it can present serialization issues
+when pickling. Use ``NumericalTransformer`` instead, which takes the function name as a string parameter and hence
+can be easily serialized.
 
-    >>> pipe = sklearn.pipeline.Pipeline([
-    ...     ('featurize', mapper),
-    ...     ('lm', sklearn.linear_model.LinearRegression())])
-    >>> np.round(cross_val_score(pipe, X=data.copy(), y=data.salary, scoring='r2'), 2)
-    array([ -1.09,  -5.3 , -15.38])
-
-Sklearn-pandas' ``cross_val_score`` function provides exactly the same interface as sklearn's function of the same name.
-
-``CategoricalImputer``
-**********************
-
-Since the ``scikit-learn``  ``Imputer`` transformer currently only works with
-numbers, ``sklearn-pandas`` provides an equivalent helper transformer that
-works with strings, substituting null values with the most frequent value in
-that column. Alternatively, you can specify a fixed value to use.
-
-Example: imputing with the mode:
-
-    >>> from sklearn_pandas import CategoricalImputer
-    >>> data = np.array(['a', 'b', 'b', np.nan], dtype=object)
-    >>> imputer = CategoricalImputer()
-    >>> imputer.fit_transform(data)
-    array(['a', 'b', 'b', 'b'], dtype=object)
-
-Example: imputing with a fixed value:
-
-    >>> from sklearn_pandas import CategoricalImputer
-    >>> data = np.array(['a', 'b', 'b', np.nan], dtype=object)
-    >>> imputer = CategoricalImputer(strategy='constant', fill_value='a')
-    >>> imputer.fit_transform(data)
-    array(['a', 'b', 'b', 'a'], dtype=object)
+    >>> from sklearn_pandas import NumericalTransformer
+    >>> mapper5 = DataFrameMapper([
+    ...     ('children', NumericalTransformer('log')),
+    ... ])
+    >>> mapper5.fit_transform(data)
+    array([[1.38629436],
+           [1.79175947],
+           [1.09861229],
+           [1.09861229],
+           [0.69314718],
+           [1.09861229],
+           [1.60943791],
+           [1.38629436]])
 
 
-``FunctionTransformer``
-***********************
-
-Often one wants to apply simple transformations to data such as ``np.log``. ``FunctionTransformer`` is a simple wrapper that takes any function and applies vectorization so that it can be used as a transformer.
-
-Example:
-
-    >>> from sklearn_pandas import FunctionTransformer
-    >>> array = np.array([10, 100])
-    >>> transformer = FunctionTransformer(np.log10)
-
-    >>> transformer.fit_transform(array)
-    array([1., 2.])
 
 Changelog
 ---------
+2.0.0 (2020-08-01)
+******************
+* Deprecated support for Python < 3.6.
+* Deprecated support for old versions of scikit-learn, pandas and numpy. Please check setup.py for minimum requirement.
+* Removed CategoricalImputer, cross_val_score and GridSearchCV. All these functionality now exists as part of
+  scikit-learn. Please use SimpleImputer instead of CategoricalImputer. Also
+  Cross validation from sklearn now supports dataframe so we don't need to use cross validation wrapper provided over
+  here.
+* Added ``NumericalTransformer`` for common numerical transformations. Currently it implements log and log1p
+  transformation.
+* Added prefix and suffix options. See examples above. These are usually helpful when using gen_features.
+
 
 1.8.0 (2018-12-01)
 ******************

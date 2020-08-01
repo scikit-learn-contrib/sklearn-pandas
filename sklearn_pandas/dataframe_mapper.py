@@ -1,4 +1,3 @@
-import sys
 import contextlib
 
 import pandas as pd
@@ -9,12 +8,7 @@ from sklearn.base import BaseEstimator, TransformerMixin
 from .cross_validation import DataWrapper
 from .pipeline import make_transformer_pipeline, _call_fit, TransformerPipeline
 
-PY3 = sys.version_info[0] == 3
-if PY3:
-    string_types = text_type = str
-else:
-    string_types = basestring  # noqa
-    text_type = unicode  # noqa
+string_types = text_type = str
 
 
 def _handle_feature(fea):
@@ -101,6 +95,7 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         input_df    If ``True`` pass the selected columns to the transformers
                     as a pandas DataFrame or Series. Otherwise pass them as a
                     numpy array. Defaults to ``False``.
+
         """
         self.features = features
         self.built_features = None
@@ -209,7 +204,6 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
 
         """
         self._build()
-
         for columns, transformers, options in self.built_features:
             input_df = options.get('input_df', self.input_df)
 
@@ -226,7 +220,8 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
                 _call_fit(self.built_default.fit, Xt, y)
         return self
 
-    def get_names(self, columns, transformer, x, alias=None):
+    def get_names(self, columns, transformer, x, alias=None, prefix='',
+                  suffix=''):
         """
         Return verbose names for the transformed columns.
 
@@ -242,6 +237,9 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         else:
             name = columns
         num_cols = x.shape[1] if len(x.shape) > 1 else 1
+
+        output = []
+
         if num_cols > 1:
             # If there are as many columns as classes in the transformer,
             # infer column names from classes names.
@@ -257,13 +255,19 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
             # Otherwise use the only estimator present
             else:
                 names = _get_feature_names(transformer)
+
             if names is not None and len(names) == num_cols:
-                return ['%s_%s' % (name, o) for o in names]
-            # otherwise, return name concatenated with '_1', '_2', etc.
+                output = [f"{name}_{o}" for o in names]
+                # otherwise, return name concatenated with '_1', '_2', etc.
             else:
-                return [name + '_' + str(o) for o in range(num_cols)]
+                output = [name + '_' + str(o) for o in range(num_cols)]
         else:
-            return [name]
+            output = [name]
+
+        if prefix == suffix == "":
+            return output
+
+        return ['{}{}{}'.format(prefix, x, suffix) for x in output]
 
     def get_dtypes(self, extracted):
         dtypes_features = [self.get_dtype(ex) for ex in extracted]
@@ -307,8 +311,11 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
             extracted.append(_handle_feature(Xt))
 
             alias = options.get('alias')
+            prefix = options.get('prefix', '')
+            suffix = options.get('suffix', '')
+
             self.transformed_names_ += self.get_names(
-                columns, transformers, Xt, alias)
+                columns, transformers, Xt, alias, prefix, suffix)
 
         # handle features not explicitly selected
         if self.built_default is not False:
