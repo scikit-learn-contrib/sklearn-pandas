@@ -29,7 +29,7 @@ class PyTest(TestCommand):
         raise SystemExit(errno)
 
 
-setup(name='sklearn-pandas2',
+setup(name='sklearn-pandas',
       version=__version__,
       description='Pandas integration with sklearn',
       maintainer='Ritesh Agrawal',
