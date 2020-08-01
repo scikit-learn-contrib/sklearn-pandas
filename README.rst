@@ -382,7 +382,8 @@ Feature selection and other supervised transformations
 Working with sparse features
 ****************************
 
-A ``DataFrameMapper`` will return a dense feature array by default. Setting ``sparse=True`` in the mapper will return a sparse array whenever any of the extracted features is sparse. Example:
+A ``DataFrameMapper`` will return a dense feature array by default. Setting ``sparse=True`` in the mapper will return
+a sparse array whenever any of the extracted features is sparse. Example:
 
     >>> mapper5 = DataFrameMapper([
     ...     ('pet', CountVectorizer()),
@@ -393,11 +394,12 @@ A ``DataFrameMapper`` will return a dense feature array by default. Setting ``sp
 The stacking of the sparse features is done without ever densifying them.
 
 
-Using Numerical Transformer
+Using ``NumericalTransformer``
 ****************************
 
-While you can use FunctionTransformation to generate artibtrary transformer but they cannot not serialized (pickled).
-NumericalTransformer takes function name as a string parameter and hence can be easily serialized.
+While you can use ``FunctionTransformation`` to generate arbitrary transformers, it can present serialization issues
+when pickling. Use ``NumericalTransformer`` instead, which takes the function name as a string parameter and hence
+can be easily serialized.
 
     >>> from sklearn_pandas import NumericalTransformer
     >>> mapper5 = DataFrameMapper([
@@ -415,9 +417,20 @@ NumericalTransformer takes function name as a string parameter and hence can be 
 
 
 
-
 Changelog
 ---------
+2.0.0 (2020-08-01)
+******************
+* Deprecated support for Python < 3.6.
+* Deprecated support for old versions of scikit-learn, pandas and numpy. Please check setup.py for minimum requirement.
+* Removed CategoricalImputer, cross_val_score and GridSearchCV. All these functionality now exists as part of
+  scikit-learn. Please use SimpleImputer instead of CategoricalImputer. Also
+  Cross validation from sklearn now supports dataframe so we don't need to use cross validation wrapper provided over
+  here.
+* Added ``NumericalTransformer`` for common numerical transformations. Currently it implements log and log1p
+  transformation.
+* Added prefix and suffix options. See examples above. These are usually helpful when using gen_features.
+
 
 1.8.0 (2018-12-01)
 ******************
