@@ -143,7 +143,7 @@ Alternatively, you can also specify prefix and/or suffix to add to the column na
   >>> mapper_alias.transformed_names_
   ['standard_scaled_children', 'children_raw']
 
-Passing Series/DataFrames to the transformerså
+Passing Series/DataFrames to the transformers
 *********************************************
 
 By default the transformers are passed a numpy array of the selected columns
