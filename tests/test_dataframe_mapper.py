@@ -663,11 +663,12 @@ def test_unselected_columns():
 def test_drop_columns():
     """
     drop_columns returns a list of the columns not appearing in the
-    features of the mapper but present in the given dataframe, having keyword 'drop'
+    features of the mapper but present in the given dataframe,
+    having keyword 'drop'
     """
     mapper = DataFrameMapper([
         ('a', None),
-        ('b','drop'),
+        ('b', 'drop'),
         ('c', None)
     ])
     assert mapper._drop_columns == {'b'}
@@ -681,7 +682,7 @@ def test_selected_columns_with_drop_and_default_none():
     df = pd.DataFrame({'a': [1], 'b': [2], 'c': [3]})
     mapper = DataFrameMapper([
         ('a', None),
-        ('c','drop')
+        ('c', 'drop')
     ], default=None)
     transformed = mapper.fit_transform(df)
     assert transformed.shape == (1, 2)
@@ -699,7 +700,6 @@ def test_default_false():
 
     transformed = mapper.fit_transform(df)
     assert transformed.shape == (3, 1)
-
 
 
 def test_default_none():

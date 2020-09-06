@@ -71,7 +71,8 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
                     The first element is the pandas column selector. This can
                     be a string (for one column) or a list of strings.
                     The second element is an object that supports
-                    sklearn's transform interface, or a list of such objects or a keyword 'drop'
+                    sklearn's transform interface, or a list of such objects
+                    or a keyword 'drop'
                     The third element is optional and, if present, must be
                     a dictionary with the options to apply to the
                     transformation. Example: {'alias': 'day_of_week'}
@@ -134,7 +135,7 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
                     else:
                         drop_columns.add(col)
             return drop_columns
-        except:
+        except TypeError:
             return None
 
     @staticmethod
@@ -148,7 +149,7 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
                 if feature[1] != 'drop':
                     f.append(feature)
             return f
-        except:
+        except TypeError:
             return None
 
     @property
@@ -176,7 +177,8 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         """
         X_columns = list(X.columns)
         return [column for column in X_columns if
-                column not in self._selected_columns and column not in self._drop_columns]
+                column not in self._selected_columns
+                and column not in self._drop_columns]
 
     def __setstate__(self, state):
         # compatibility for older versions of sklearn-pandas
