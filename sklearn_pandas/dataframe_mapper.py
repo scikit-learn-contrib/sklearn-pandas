@@ -71,7 +71,7 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
                     The first element is the pandas column selector. This can
                     be a string (for one column) or a list of strings.
                     The second element is an object that supports
-                    sklearn's transform interface, or a list of such objects.
+                    sklearn's transform interface, or a list of such objects or a keyword 'drop'
                     The third element is optional and, if present, must be
                     a dictionary with the options to apply to the
                     transformation. Example: {'alias': 'day_of_week'}
@@ -97,8 +97,8 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
                     numpy array. Defaults to ``False``.
 
         """
-        self.features = features
-        self.built_features = None
+        self._drop_columns = self._drop_columns(features)
+        self.features = self._get_features(features)
         self.default = default
         self.built_default = None
         self.sparse = sparse
@@ -118,6 +118,38 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         else:
             self.built_features = self.features
         self.built_default = _build_transformer(self.default)
+
+    @staticmethod
+    def _drop_columns(features):
+        """
+        Return a set of columns to be dropped from dataframe
+        """
+        drop_columns = set()
+        try:
+            for feature in features:
+                if feature[1] == 'drop':
+                    col = feature[0]
+                    if isinstance(col, list):
+                        drop_columns = drop_columns.union(set(col))
+                    else:
+                        drop_columns.add(col)
+            return drop_columns
+        except:
+            return None
+
+    @staticmethod
+    def _get_features(features):
+        """
+        Remove those columns which are to be dropped from dataframe.
+        """
+        f = []
+        try:
+            for feature in features:
+                if feature[1] != 'drop':
+                    f.append(feature)
+            return f
+        except:
+            return None
 
     @property
     def _selected_columns(self):
@@ -144,7 +176,7 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         """
         X_columns = list(X.columns)
         return [column for column in X_columns if
-                column not in self._selected_columns]
+                column not in self._selected_columns and column not in self._drop_columns]
 
     def __setstate__(self, state):
         # compatibility for older versions of sklearn-pandas
