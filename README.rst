@@ -210,6 +210,32 @@ attribute.
 
 Note this does not work together with the ``default=True`` or ``sparse=True`` arguments to the mapper.
 
+Dropping columns explictly
+*******************************
+
+Sometimes it is required to drop a specific column/ list of columns.
+For this purpose, ``drop_cols``  argument for ``DataFrameMapper`` can be used.
+Default value is ``None``
+
+    >>> mapper_df = DataFrameMapper([
+    ...     ('pet', sklearn.preprocessing.LabelBinarizer()),
+    ...     (['children'], sklearn.preprocessing.StandardScaler())
+    ... ], drop_cols=['salary'])
+
+Now running ``fit_transform`` will run transformations on 'pet' and 'children' and drop 'salary' column:
+
+   >>> np.round(mapper_df.fit_transform(data.copy()), 1)
+   array([[ 1. ,  0. ,  0. ,  0.2],
+          [ 0. ,  1. ,  0. ,  1.9],
+          [ 0. ,  1. ,  0. , -0.6],
+          [ 0. ,  0. ,  1. , -0.6],
+          [ 1. ,  0. ,  0. , -1.5],
+          [ 0. ,  1. ,  0. , -0.6],
+          [ 1. ,  0. ,  0. ,  1. ],
+          [ 0. ,  0. ,  1. ,  0.2]])
+
+Transformations may require multiple input columns. In these
+
 Transform Multiple Columns
 **************************
 
@@ -395,7 +421,7 @@ The stacking of the sparse features is done without ever densifying them.
 
 
 Using ``NumericalTransformer``
-****************************
+***********************************
 
 While you can use ``FunctionTransformation`` to generate arbitrary transformers, it can present serialization issues
 when pickling. Use ``NumericalTransformer`` instead, which takes the function name as a string parameter and hence
@@ -430,6 +456,8 @@ Changelog
 * Added ``NumericalTransformer`` for common numerical transformations. Currently it implements log and log1p
   transformation.
 * Added prefix and suffix options. See examples above. These are usually helpful when using gen_features.
+* Added ``drop_cols`` argument to DataframeMapper. This can be used to explicitly drop columns
+
 
 
 1.8.0 (2018-12-01)
@@ -543,3 +571,4 @@ Other contributors:
 * Timothy Sweetser (@hacktuarial)
 * Vitaley Zaretskey (@vzaretsk)
 * Zac Stewart (@zacstewart)
+* Parul Singh (@paro1234)

@@ -649,7 +649,7 @@ def test_selected_columns():
 
 def test_unselected_columns():
     """
-    selected_columns returns a list of the columns not appearing in the
+    unselected_columns returns a list of the columns not appearing in the
     features of the mapper but present in the given dataframe.
     """
     df = pd.DataFrame({'a': [1], 'b': [2], 'c': [3]})
@@ -660,32 +660,32 @@ def test_unselected_columns():
     assert 'c' in mapper._unselected_columns(df)
 
 
-def test_drop_columns():
+def test_drop_and_default_false():
     """
-    drop_columns returns a list of the columns not appearing in the
-    features of the mapper but present in the given dataframe,
-    having keyword 'drop'
-    """
-    mapper = DataFrameMapper([
-        ('a', None),
-        ('b', 'drop'),
-        ('c', None)
-    ])
-    assert mapper._drop_columns == {'b'}
-
-
-def test_selected_columns_with_drop_and_default_none():
-    """
-    selected_columns returns a set of the columns appearing in the features
-    of the mapper.
+    If default=False, non explicitly selected columns and drop columns
+    are discarded.
     """
     df = pd.DataFrame({'a': [1], 'b': [2], 'c': [3]})
     mapper = DataFrameMapper([
-        ('a', None),
-        ('c', 'drop')
-    ], default=None)
+            ('a', None)
+        ], drop_cols=['c'])
     transformed = mapper.fit_transform(df)
-    assert transformed.shape == (1, 2)
+    assert transformed.shape == (1, 1)
+    assert mapper.transformed_names_ == ['a']
+
+
+def test_drop_and_default_none():
+    """
+    If default=None, drop columns are discarded and
+    remaining non explicitly selected columns are passed through untransformed
+    """
+    df = pd.DataFrame({'a': [1, 2, 3], 'b': [3, 5, 7]})
+    mapper = DataFrameMapper([
+        ('a', None)
+    ], drop_cols=['c'], default=None)
+
+    transformed = mapper.fit_transform(df)
+    assert transformed.shape == (3, 2)
     assert mapper.transformed_names_ == ['a', 'b']
 
 
