@@ -668,7 +668,7 @@ def test_drop_and_default_false():
     df = pd.DataFrame({'a': [1], 'b': [2], 'c': [3]})
     mapper = DataFrameMapper([
             ('a', None)
-        ], drop_cols=['c'])
+        ], drop_cols=['c'], default=False)
     transformed = mapper.fit_transform(df)
     assert transformed.shape == (1, 1)
     assert mapper.transformed_names_ == ['a']
@@ -687,6 +687,20 @@ def test_drop_and_default_none():
     transformed = mapper.fit_transform(df)
     assert transformed.shape == (3, 2)
     assert mapper.transformed_names_ == ['a', 'b']
+
+
+def test_conflicting_drop():
+    """
+    Drop column name shouldn't get confused with transformed columns.
+    """
+    df = pd.DataFrame({'a': [1, 2, 3], 'b': [3, 5, 7]})
+    mapper = DataFrameMapper([
+        ('a', None)
+    ], drop_cols=['a'], default=False)
+
+    transformed = mapper.fit_transform(df)
+    assert transformed.shape == (3, 1)
+    assert mapper.transformed_names_ == ['a']
 
 
 def test_default_false():

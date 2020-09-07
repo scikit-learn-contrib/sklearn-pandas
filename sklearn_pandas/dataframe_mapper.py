@@ -96,7 +96,7 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
                     as a pandas DataFrame or Series. Otherwise pass them as a
                     numpy array. Defaults to ``False``.
 
-        drop_cols   List of columns to be dropped. Defaults to None
+        drop_cols   List of columns to be dropped. Defaults to None.
 
         """
         self.features = features
@@ -105,7 +105,7 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         self.sparse = sparse
         self.df_out = df_out
         self.input_df = input_df
-        self.drop_columns = drop_cols
+        self.drop_columns = drop_cols or []
         self.transformed_names_ = []
 
         if (df_out and (sparse or default)):
@@ -145,14 +145,9 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         and transform steps.
         """
         X_columns = list(X.columns)
-        if self.drop_columns:
-
-            return [column for column in X_columns if
-                    column not in self._selected_columns
-                    and column not in self.drop_columns]
-        else:
-            return [column for column in X_columns if
-                    column not in self._selected_columns]
+        return [column for column in X_columns if
+                column not in self._selected_columns
+                and column not in self.drop_columns]
 
     def __setstate__(self, state):
         # compatibility for older versions of sklearn-pandas

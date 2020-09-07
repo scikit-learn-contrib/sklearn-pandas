@@ -445,8 +445,15 @@ can be easily serialized.
 
 Changelog
 ---------
+2.0.1 (2020-09-07)
+******************
+
+* Added an option to explicitly drop columns.
+
+
 2.0.0 (2020-08-01)
 ******************
+
 * Deprecated support for Python < 3.6.
 * Deprecated support for old versions of scikit-learn, pandas and numpy. Please check setup.py for minimum requirement.
 * Removed CategoricalImputer, cross_val_score and GridSearchCV. All these functionality now exists as part of
@@ -459,31 +466,36 @@ Changelog
 * Added ``drop_cols`` argument to DataframeMapper. This can be used to explicitly drop columns
 
 
-
 1.8.0 (2018-12-01)
 ******************
+
 * Add ``FunctionTransformer`` class (#117).
 * Fix column names derivation for dataframes with multi-index or non-string
   columns (#166).
 * Change behaviour of DataFrameMapper's fit_transform method to invoke each underlying transformers'
   native fit_transform if implemented. (#150)
 
+
 1.7.0 (2018-08-15)
 ******************
+
 * Fix issues with unicode names in ``get_names`` (#160).
 * Update to build using ``numpy==1.14`` and ``python==3.6`` (#154).
 * Add ``strategy`` and ``fill_value`` parameters to ``CategoricalImputer`` to allow imputing
   with values other than the mode (#144), (#161).
 * Preserve input data types when no transform is supplied (#138).
 
+
 1.6.0 (2017-10-28)
 ******************
+
 * Add column name to exception during fit/transform (#110).
 * Add ``gen_feature`` helper function to help generating the same transformation for multiple columns (#126).
 
 
 1.5.0 (2017-06-24)
 ******************
+
 * Allow inputting a dataframe/series per group of columns.
 * Get feature names also from ``estimator.get_feature_names()`` if present.
 * Attempt to derive feature names from individual transformers when applying a
@@ -494,6 +506,7 @@ Changelog
 
 1.4.0 (2017-05-13)
 ******************
+
 * Allow specifying a custom name (alias) for transformed columns (#83).
 * Capture output columns generated names in ``transformed_names_`` attribute (#78).
 * Add ``CategoricalImputer`` that replaces null-like values with the mode
