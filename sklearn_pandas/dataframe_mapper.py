@@ -105,7 +105,7 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         self.sparse = sparse
         self.df_out = df_out
         self.input_df = input_df
-        self.drop_cols = drop_cols or []
+        self.drop_cols = [] if drop_cols is None else drop_cols
         self.transformed_names_ = []
 
         if (df_out and (sparse or default)):
