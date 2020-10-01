@@ -448,7 +448,7 @@ Changelog
 2.0.2 (2020-10-01)
 ******************
 
-* Fix DataframeMappers drop_cols naming consistency with scikit-learn and initialization.
+* Fix `DataFrameMapper` drop_cols attribute naming consistency with scikit-learn and initialization.
 
 
 2.0.1 (2020-09-07)
