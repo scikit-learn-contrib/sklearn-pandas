@@ -156,7 +156,7 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         self.default = state.get('default', False)
         self.df_out = state.get('df_out', False)
         self.input_df = state.get('input_df', False)
-        self.drop_cols = state.get('drop_cols', None)
+        self.drop_cols = state.get('drop_cols', [])
         self.built_features = state.get('built_features', self.features)
         self.built_default = state.get('built_default', self.default)
         self.transformed_names_ = state.get('transformed_names_', [])
