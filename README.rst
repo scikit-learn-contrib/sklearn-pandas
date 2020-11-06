@@ -441,10 +441,26 @@ can be easily serialized.
            [1.60943791],
            [1.38629436]])
 
+Changing Logging level
+***********************************
+
+You can change log level to info to print time take to fit/transform features. Setting it to higher level will stop printing elapsed time.
+Below example shows how to change logging level.
+
+
+    >>> import logging
+    >>> logging.getLogger('sklearn_pandas').setLevel(logging.INFO)
 
 
 Changelog
 ---------
+
+2.0.3 (2020-11-06)
+******************
+
+* Added elapsed time information for each feature
+
+
 2.0.2 (2020-10-01)
 ******************
 
