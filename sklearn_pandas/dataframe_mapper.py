@@ -33,6 +33,10 @@ def _build_feature(columns, transformers, options={}):
     return (columns, _build_transformer(transformers), options)
 
 
+def _elapsed_secs(t1):
+    return (datetime.now()-t1).total_seconds()
+
+
 def _get_feature_names(estimator):
     """
     Attempt to extract feature names based on a given estimator
@@ -218,9 +222,7 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
                 with add_column_names_to_exception(columns):
                     Xt = self._get_col_subset(X, columns, input_df)
                     _call_fit(transformers.fit, Xt, y)
-            t2 = datetime.now()
-            logger.info(f"[FIT] {columns}: {(t2-t1).total_seconds()} seconds")
-
+            logger.info(f"[FIT] {columns}: {_elapsed_secs(t1)} secs")
 
         # handle features not explicitly selected
         if self.built_default:  # not False and not None
@@ -316,16 +318,17 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
                     if do_fit and hasattr(transformers, 'fit_transform'):
                         t1 = datetime.now()
                         Xt = _call_fit(transformers.fit_transform, Xt, y)
-                        logger.info(f"[FIT_TRANSFORM] {columns}: {(datetime.now()-t1).total_seconds()} seconds")
+                        logger.info(f"[FIT_TRANSFORM] {columns}: {_elapsed_secs(t1)} secs")  # NOQA
                     else:
                         if do_fit:
                             t1 = datetime.now()
                             _call_fit(transformers.fit, Xt, y)
-                            logger.info(f"[FIT] {columns}: {(datetime.now()-t1).total_seconds()} seconds")
+                            logger.info(
+                                f"[FIT] {columns}: {_elapsed_secs(t1)} secs")
 
                         t1 = datetime.now()
                         Xt = transformers.transform(Xt)
-                        logger.info(f"[TRANSFORM] {columns}: {(datetime.now()-t1).total_seconds()} seconds")
+                        logger.info(f"[TRANSFORM] {columns}: {_elapsed_secs(t1)} secs")  # NOQA
 
             extracted.append(_handle_feature(Xt))
 
@@ -356,7 +359,6 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
                 self.transformed_names_ += unsel_cols
 
             extracted.append(_handle_feature(Xt))
-
 
         # combine the feature outputs into one array.
         # at this point we lose track of which features
