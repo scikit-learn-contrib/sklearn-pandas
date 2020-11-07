@@ -23,7 +23,7 @@ jobs:
     - name: Build and publish
       env:
         TWINE_USERNAME: __token__
-        TWINE_PASSWORD: ${{ secrets.TEST_PYPI_SKLEARN_PANDAS }}
+        TWINE_PASSWORD: ${{ secrets.TEST_PYPI_PASSWORD }}
       run: |
         python setup.py sdist bdist_wheel
         twine upload --repository testpypi dist/*
