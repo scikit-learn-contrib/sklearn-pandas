@@ -6,7 +6,7 @@ name: Upload Python Package
 on: [workflow_dispatch]
 
 jobs:
-  test_deploy:
+  deploy:
 
     runs-on: ubuntu-latest
 
@@ -23,7 +23,7 @@ jobs:
     - name: Build and publish
       env:
         TWINE_USERNAME: __token__
-        TWINE_PASSWORD: ${{ secrets.TEST_PYPI_PASSWORD }}
+        TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
       run: |
         python setup.py sdist bdist_wheel
-        twine upload --repository testpypi dist/*
+        twine upload --repository pypi dist/*
