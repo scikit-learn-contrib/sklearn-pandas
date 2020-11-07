@@ -1,5 +1,6 @@
 import contextlib
 
+from datetime import datetime
 import pandas as pd
 import numpy as np
 from scipy import sparse
@@ -7,6 +8,7 @@ from sklearn.base import BaseEstimator, TransformerMixin
 
 from .cross_validation import DataWrapper
 from .pipeline import make_transformer_pipeline, _call_fit, TransformerPipeline
+from . import logger
 
 string_types = text_type = str
 
@@ -29,6 +31,10 @@ def _build_transformer(transformers):
 
 def _build_feature(columns, transformers, options={}):
     return (columns, _build_transformer(transformers), options)
+
+
+def _elapsed_secs(t1):
+    return (datetime.now()-t1).total_seconds()
 
 
 def _get_feature_names(estimator):
@@ -107,7 +113,6 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         self.input_df = input_df
         self.drop_cols = [] if drop_cols is None else drop_cols
         self.transformed_names_ = []
-
         if (df_out and (sparse or default)):
             raise ValueError("Can not use df_out with sparse or default")
 
@@ -208,13 +213,16 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
 
         """
         self._build()
+
         for columns, transformers, options in self.built_features:
+            t1 = datetime.now()
             input_df = options.get('input_df', self.input_df)
 
             if transformers is not None:
                 with add_column_names_to_exception(columns):
                     Xt = self._get_col_subset(X, columns, input_df)
                     _call_fit(transformers.fit, Xt, y)
+            logger.info(f"[FIT] {columns}: {_elapsed_secs(t1)} secs")
 
         # handle features not explicitly selected
         if self.built_default:  # not False and not None
@@ -304,14 +312,24 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
             # strings; we don't care because pandas
             # will handle either.
             Xt = self._get_col_subset(X, columns, input_df)
+
             if transformers is not None:
                 with add_column_names_to_exception(columns):
                     if do_fit and hasattr(transformers, 'fit_transform'):
+                        t1 = datetime.now()
                         Xt = _call_fit(transformers.fit_transform, Xt, y)
+                        logger.info(f"[FIT_TRANSFORM] {columns}: {_elapsed_secs(t1)} secs")  # NOQA
                     else:
                         if do_fit:
+                            t1 = datetime.now()
                             _call_fit(transformers.fit, Xt, y)
+                            logger.info(
+                                f"[FIT] {columns}: {_elapsed_secs(t1)} secs")
+
+                        t1 = datetime.now()
                         Xt = transformers.transform(Xt)
+                        logger.info(f"[TRANSFORM] {columns}: {_elapsed_secs(t1)} secs")  # NOQA
+
             extracted.append(_handle_feature(Xt))
 
             alias = options.get('alias')
@@ -339,6 +357,7 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
                 # if not applying a default transformer,
                 # keep column names unmodified
                 self.transformed_names_ += unsel_cols
+
             extracted.append(_handle_feature(Xt))
 
         # combine the feature outputs into one array.

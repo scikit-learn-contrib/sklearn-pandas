@@ -152,6 +152,20 @@ def test_transformed_names_binarizer(complex_dataframe):
     assert mapper.transformed_names_ == ['target_a', 'target_b', 'target_c']
 
 
+def test_logging(caplog, complex_dataframe):
+    """
+    Get transformed names of features in `transformed_names` attribute
+    for a transformation that multiplies the number of columns
+    """
+    import logging
+    logger = logging.getLogger('sklearn_pandas')
+    logger.setLevel(logging.INFO)
+    df = complex_dataframe
+    mapper = DataFrameMapper([('target', LabelBinarizer())])
+    mapper.fit_transform(df)
+    assert '[FIT_TRANSFORM] target:' in caplog.text
+
+
 def test_transformed_names_binarizer_unicode():
     df = pd.DataFrame({'target': [u'ñ', u'á', u'é']})
     mapper = DataFrameMapper([('target', LabelBinarizer())])
