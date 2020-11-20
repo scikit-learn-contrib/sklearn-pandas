@@ -451,6 +451,10 @@ Below example shows how to change logging level.
     >>> import logging
     >>> logging.getLogger('sklearn_pandas').setLevel(logging.INFO)
 
+Changes Not Yet Published
+---------
+
+* Using nox for testing
 
 Changelog
 ---------
