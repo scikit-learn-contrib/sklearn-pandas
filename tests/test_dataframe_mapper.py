@@ -1,14 +1,7 @@
 # -*- coding: utf8 -*-
 
 import pytest
-
-# In py3, mock is included with the unittest standard library
-# In py2, it's a separate package
-try:
-    from unittest.mock import Mock
-except ImportError:
-    from mock import Mock
-
+from unittest.mock import Mock
 from pandas import DataFrame
 import pandas as pd
 from scipy import sparse
