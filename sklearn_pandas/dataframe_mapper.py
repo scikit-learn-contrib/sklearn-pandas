@@ -166,6 +166,23 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         self.built_default = state.get('built_default', self.default)
         self.transformed_names_ = state.get('transformed_names_', [])
 
+    def __getstate__(self):
+        state = super().__getstate__()
+        state['features'] = self.features
+        state['sparse'] = self.sparse
+        state['default'] = self.default
+        state['df_out'] = self.df_out
+        state['input_df'] = self.input_df
+        state['drop_cols'] = self.drop_cols
+        try:             
+            state['built_features'] = self.built_features
+        except AttributeError as ex:
+            state['built_features'] = None
+        
+        state['built_default'] = self.built_default
+        state['transformed_names_'] = self.transformed_names_ 
+        return state
+
     def _get_col_subset(self, X, cols, input_df=False):
         """
         Get a subset of columns from the given table X.
