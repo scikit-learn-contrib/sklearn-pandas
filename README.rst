@@ -454,7 +454,7 @@ Below example shows how to change logging level.
 Changes Not Yet Published
 ---------
 
-* Using nox for testing
+* Using nox for testing.
 
 Changelog
 ---------
@@ -462,7 +462,7 @@ Changelog
 2.0.3 (2020-11-06)
 ******************
 
-* Added elapsed time information for each feature
+* Added elapsed time information for each feature.
 
 
 2.0.2 (2020-10-01)
@@ -499,7 +499,7 @@ Changelog
 * Fix column names derivation for dataframes with multi-index or non-string
   columns (#166).
 * Change behaviour of DataFrameMapper's fit_transform method to invoke each underlying transformers'
-  native fit_transform if implemented. (#150)
+  native fit_transform if implemented (#150).
 
 
 1.7.0 (2018-08-15)
@@ -508,7 +508,7 @@ Changelog
 * Fix issues with unicode names in ``get_names`` (#160).
 * Update to build using ``numpy==1.14`` and ``python==3.6`` (#154).
 * Add ``strategy`` and ``fill_value`` parameters to ``CategoricalImputer`` to allow imputing
-  with values other than the mode (#144), (#161).
+  with values other than the mode (#144),(#161).
 * Preserve input data types when no transform is supplied (#138).
 
 
