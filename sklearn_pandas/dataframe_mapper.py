@@ -174,11 +174,7 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         state['df_out'] = self.df_out
         state['input_df'] = self.input_df
         state['drop_cols'] = self.drop_cols
-        try:
-            state['built_features'] = self.built_features
-        except AttributeError:
-            state['built_features'] = None
-        
+        state['build_features'] = getattr(self, 'built_features', None)
         state['built_default'] = self.built_default
         state['transformed_names_'] = self.transformed_names_
         return state
