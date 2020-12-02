@@ -19,7 +19,7 @@ class NumericalTransformer(TransformerMixin):
     """
     Provides commonly used numerical transformers.
     """
-    SUPPORTED_FUNCTIONS = ['log', 'log1p']
+    SUPPORTED_FUNCTIONS = ['log', 'log1p', 'sin', 'cos']
 
     def __init__(self, func):
         """
@@ -43,5 +43,9 @@ class NumericalTransformer(TransformerMixin):
             return np.vectorize(np.log1p)(X)
         elif self.__func == 'log':
             return np.vectorize(np.log)(X)
+        elif self.__func == 'sin':
+            return np.vectorize(np.sin)(X)
+        elif self.__func == 'cos':
+            return np.vectorize(np.cos)(X)
 
         raise ValueError(f"Invalid function name: {self.__func}")
