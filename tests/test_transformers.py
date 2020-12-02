@@ -22,12 +22,16 @@ def test_common_numerical_transformer(simple_dataset):
     Test log transformation
     """
     transfomer = DataFrameMapper([
-        ('feat1', NumericalTransformer('log'))
+        ('feat1', NumericalTransformer('log')),
+        ('feat2', NumericalTransformer('sin')),
+        ('feat3', NumericalTransformer('cos'))
     ], df_out=True)
     df = simple_dataset
     outDF = transfomer.fit_transform(df)
-    assert list(outDF.columns) == ['feat1']
+    assert list(outDF.columns) == ['feat1', 'feat2', 'feat3']
     assert np.array_equal(df['feat1'].apply(np.log).values, outDF.feat1.values)
+    assert np.array_equal(df['feat2'].apply(np.sin).values, outDF.feat2.values)
+    assert np.array_equal(df['feat3'].apply(np.cos).values, outDF.feat3.values)
 
 
 def test_numerical_transformer_serialization(simple_dataset):
@@ -35,7 +39,9 @@ def test_numerical_transformer_serialization(simple_dataset):
     Test if you can serialize transformer
     """
     transfomer = DataFrameMapper([
-        ('feat1', NumericalTransformer('log'))
+        ('feat1', NumericalTransformer('log')),
+        ('feat2', NumericalTransformer('sin')),
+        ('feat3', NumericalTransformer('cos')),
     ])
 
     df = simple_dataset
