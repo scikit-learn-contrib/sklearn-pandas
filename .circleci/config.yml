@@ -5,8 +5,8 @@ jobs:
       - image: circleci/python:3.6
     steps:
       - checkout
-      - run: pip install --user tox
-      - run: ~/.local/bin/tox
+      - run: pip install --user nox
+      - run: ~/.local/bin/nox
 
 workflows:
   version: 2

@@ -2,12 +2,11 @@
 
 ## Development environment and steps
 
-1. Install `tox` either globally or in a virtualenv: `pip install tox`.
-2. Click on the "Fork" button at the top-right of the GitHub page.
-3. Clone your fork. Example: `git clone git@github.com:dukebody/sklearn-pandas.git`.
-4. Create a new branch to work on the issue/feature you want.
-5. Hack out your code. To run the tests and `flake8`, just run `tox`. Tests live in the `tests` subfolder.
-6. Submit a new PR with your code, indicating in the PR which issue/feature it relates to.
+1. Click on the "Fork" button at the top-right of the GitHub page.
+2. Clone your fork. Example: `git clone git@github.com:dukebody/sklearn-pandas.git`.
+3. Create a new branch to work on the issue/feature you want.
+4. Hack out your code. To run the tests and `flake8`, just run `nox`. Tests live in the `tests` subfolder.
+5. Submit a new PR with your code, indicating in the PR which issue/feature it relates to.
 
 Note: You don't need to install `sklearn-pandas` in your virtualenv to run the tests. `tox` will automatically create multiple virtual environments to run them with multiple package versions.
 

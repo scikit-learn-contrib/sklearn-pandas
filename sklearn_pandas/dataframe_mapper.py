@@ -1,6 +1,6 @@
-import sys
 import contextlib
 
+from datetime import datetime
 import pandas as pd
 import numpy as np
 from scipy import sparse
@@ -8,13 +8,9 @@ from sklearn.base import BaseEstimator, TransformerMixin
 
 from .cross_validation import DataWrapper
 from .pipeline import make_transformer_pipeline, _call_fit, TransformerPipeline
+from . import logger
 
-PY3 = sys.version_info[0] == 3
-if PY3:
-    string_types = text_type = str
-else:
-    string_types = basestring  # noqa
-    text_type = unicode  # noqa
+string_types = text_type = str
 
 
 def _handle_feature(fea):
@@ -35,6 +31,10 @@ def _build_transformer(transformers):
 
 def _build_feature(columns, transformers, options={}):
     return (columns, _build_transformer(transformers), options)
+
+
+def _elapsed_secs(t1):
+    return (datetime.now()-t1).total_seconds()
 
 
 def _get_feature_names(estimator):
@@ -69,7 +69,7 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
     """
 
     def __init__(self, features, default=False, sparse=False, df_out=False,
-                 input_df=False):
+                 input_df=False, drop_cols=None):
         """
         Params:
 
@@ -77,7 +77,7 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
                     The first element is the pandas column selector. This can
                     be a string (for one column) or a list of strings.
                     The second element is an object that supports
-                    sklearn's transform interface, or a list of such objects.
+                    sklearn's transform interface, or a list of such objects
                     The third element is optional and, if present, must be
                     a dictionary with the options to apply to the
                     transformation. Example: {'alias': 'day_of_week'}
@@ -101,16 +101,18 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         input_df    If ``True`` pass the selected columns to the transformers
                     as a pandas DataFrame or Series. Otherwise pass them as a
                     numpy array. Defaults to ``False``.
+
+        drop_cols   List of columns to be dropped. Defaults to None.
+
         """
         self.features = features
-        self.built_features = None
         self.default = default
         self.built_default = None
         self.sparse = sparse
         self.df_out = df_out
         self.input_df = input_df
+        self.drop_cols = [] if drop_cols is None else drop_cols
         self.transformed_names_ = []
-
         if (df_out and (sparse or default)):
             raise ValueError("Can not use df_out with sparse or default")
 
@@ -149,7 +151,8 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         """
         X_columns = list(X.columns)
         return [column for column in X_columns if
-                column not in self._selected_columns]
+                column not in self._selected_columns
+                and column not in self.drop_cols]
 
     def __setstate__(self, state):
         # compatibility for older versions of sklearn-pandas
@@ -158,6 +161,7 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         self.default = state.get('default', False)
         self.df_out = state.get('df_out', False)
         self.input_df = state.get('input_df', False)
+        self.drop_cols = state.get('drop_cols', [])
         self.built_features = state.get('built_features', self.features)
         self.built_default = state.get('built_default', self.default)
         self.transformed_names_ = state.get('transformed_names_', [])
@@ -211,12 +215,14 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         self._build()
 
         for columns, transformers, options in self.built_features:
+            t1 = datetime.now()
             input_df = options.get('input_df', self.input_df)
 
             if transformers is not None:
                 with add_column_names_to_exception(columns):
                     Xt = self._get_col_subset(X, columns, input_df)
                     _call_fit(transformers.fit, Xt, y)
+            logger.info(f"[FIT] {columns}: {_elapsed_secs(t1)} secs")
 
         # handle features not explicitly selected
         if self.built_default:  # not False and not None
@@ -226,7 +232,8 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
                 _call_fit(self.built_default.fit, Xt, y)
         return self
 
-    def get_names(self, columns, transformer, x, alias=None):
+    def get_names(self, columns, transformer, x, alias=None, prefix='',
+                  suffix=''):
         """
         Return verbose names for the transformed columns.
 
@@ -242,6 +249,9 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         else:
             name = columns
         num_cols = x.shape[1] if len(x.shape) > 1 else 1
+
+        output = []
+
         if num_cols > 1:
             # If there are as many columns as classes in the transformer,
             # infer column names from classes names.
@@ -257,13 +267,19 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
             # Otherwise use the only estimator present
             else:
                 names = _get_feature_names(transformer)
+
             if names is not None and len(names) == num_cols:
-                return ['%s_%s' % (name, o) for o in names]
-            # otherwise, return name concatenated with '_1', '_2', etc.
+                output = [f"{name}_{o}" for o in names]
+                # otherwise, return name concatenated with '_1', '_2', etc.
             else:
-                return [name + '_' + str(o) for o in range(num_cols)]
+                output = [name + '_' + str(o) for o in range(num_cols)]
         else:
-            return [name]
+            output = [name]
+
+        if prefix == suffix == "":
+            return output
+
+        return ['{}{}{}'.format(prefix, x, suffix) for x in output]
 
     def get_dtypes(self, extracted):
         dtypes_features = [self.get_dtype(ex) for ex in extracted]
@@ -296,19 +312,33 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
             # strings; we don't care because pandas
             # will handle either.
             Xt = self._get_col_subset(X, columns, input_df)
+
             if transformers is not None:
                 with add_column_names_to_exception(columns):
                     if do_fit and hasattr(transformers, 'fit_transform'):
+                        t1 = datetime.now()
                         Xt = _call_fit(transformers.fit_transform, Xt, y)
+                        logger.info(f"[FIT_TRANSFORM] {columns}: {_elapsed_secs(t1)} secs")  # NOQA
                     else:
                         if do_fit:
+                            t1 = datetime.now()
                             _call_fit(transformers.fit, Xt, y)
+                            logger.info(
+                                f"[FIT] {columns}: {_elapsed_secs(t1)} secs")
+
+                        t1 = datetime.now()
                         Xt = transformers.transform(Xt)
+                        logger.info(f"[TRANSFORM] {columns}: {_elapsed_secs(t1)} secs")  # NOQA
+
             extracted.append(_handle_feature(Xt))
 
             alias = options.get('alias')
+
+            prefix = options.get('prefix', '')
+            suffix = options.get('suffix', '')
+
             transformed_names_ += self.get_names(
-                columns, transformers, Xt, alias)
+                columns, transformers, Xt, alias, prefix, suffix)
 
         # handle features not explicitly selected
         if self.built_default is not False:
@@ -328,6 +358,7 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
                 # if not applying a default transformer,
                 # keep column names unmodified
                 transformed_names_ += unsel_cols
+
             extracted.append(_handle_feature(Xt))
 
         self.transformed_names_ = transformed_names_

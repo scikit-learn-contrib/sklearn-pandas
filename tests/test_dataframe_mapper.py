@@ -1,27 +1,19 @@
 # -*- coding: utf8 -*-
 
 import pytest
-from pkg_resources import parse_version
-
-# In py3, mock is included with the unittest standard library
-# In py2, it's a separate package
-try:
-    from unittest.mock import Mock
-except ImportError:
-    from mock import Mock
-
+from unittest.mock import Mock
 from pandas import DataFrame
 import pandas as pd
 from scipy import sparse
-from sklearn import __version__ as sklearn_version
-from sklearn.cross_validation import cross_val_score as sklearn_cv_score
 from sklearn.datasets import load_iris
 from sklearn.pipeline import Pipeline
+from sklearn.model_selection import cross_val_score
 from sklearn.svm import SVC
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.preprocessing import (
-    Imputer, StandardScaler, OneHotEncoder, LabelBinarizer)
+    StandardScaler, OneHotEncoder, LabelBinarizer)
+from sklearn.impute import SimpleImputer as Imputer
 from sklearn.feature_selection import SelectKBest, chi2
 from sklearn.base import BaseEstimator, TransformerMixin
 import sklearn.decomposition
@@ -29,7 +21,7 @@ import numpy as np
 from numpy.testing import assert_array_equal
 import pickle
 
-from sklearn_pandas import DataFrameMapper, cross_val_score
+from sklearn_pandas import DataFrameMapper
 from sklearn_pandas.dataframe_mapper import _handle_feature, _build_transformer
 from sklearn_pandas.pipeline import TransformerPipeline
 
@@ -151,6 +143,20 @@ def test_transformed_names_binarizer(complex_dataframe):
     mapper = DataFrameMapper([('target', LabelBinarizer())])
     mapper.fit_transform(df)
     assert mapper.transformed_names_ == ['target_a', 'target_b', 'target_c']
+
+
+def test_logging(caplog, complex_dataframe):
+    """
+    Get transformed names of features in `transformed_names` attribute
+    for a transformation that multiplies the number of columns
+    """
+    import logging
+    logger = logging.getLogger('sklearn_pandas')
+    logger.setLevel(logging.INFO)
+    df = complex_dataframe
+    mapper = DataFrameMapper([('target', LabelBinarizer())])
+    mapper.fit_transform(df)
+    assert '[FIT_TRANSFORM] target:' in caplog.text
 
 
 def test_transformed_names_binarizer_unicode():
@@ -333,8 +339,8 @@ def test_onehot_df():
     transformed = mapper.fit_transform(df)
     cols = transformed.columns
     assert len(cols) == 4
-    assert cols[0] == 'target_0'
-    assert cols[3] == 'target_3'
+    assert cols[0] == 'target_x0_0'
+    assert cols[3] == 'target_x0_3'
 
 
 def test_customtransform_df():
@@ -650,7 +656,7 @@ def test_selected_columns():
 
 def test_unselected_columns():
     """
-    selected_columns returns a list of the columns not appearing in the
+    unselected_columns returns a list of the columns not appearing in the
     features of the mapper but present in the given dataframe.
     """
     df = pd.DataFrame({'a': [1], 'b': [2], 'c': [3]})
@@ -659,6 +665,49 @@ def test_unselected_columns():
         (['a', 'b'], None)
     ])
     assert 'c' in mapper._unselected_columns(df)
+
+
+def test_drop_and_default_false():
+    """
+    If default=False, non explicitly selected columns and drop columns
+    are discarded.
+    """
+    df = pd.DataFrame({'a': [1], 'b': [2], 'c': [3]})
+    mapper = DataFrameMapper([
+            ('a', None)
+        ], drop_cols=['c'], default=False)
+    transformed = mapper.fit_transform(df)
+    assert transformed.shape == (1, 1)
+    assert mapper.transformed_names_ == ['a']
+
+
+def test_drop_and_default_none():
+    """
+    If default=None, drop columns are discarded and
+    remaining non explicitly selected columns are passed through untransformed
+    """
+    df = pd.DataFrame({'a': [1, 2, 3], 'b': [3, 5, 7]})
+    mapper = DataFrameMapper([
+        ('a', None)
+    ], drop_cols=['c'], default=None)
+
+    transformed = mapper.fit_transform(df)
+    assert transformed.shape == (3, 2)
+    assert mapper.transformed_names_ == ['a', 'b']
+
+
+def test_conflicting_drop():
+    """
+    Drop column name shouldn't get confused with transformed columns.
+    """
+    df = pd.DataFrame({'a': [1, 2, 3], 'b': [3, 5, 7]})
+    mapper = DataFrameMapper([
+        ('a', None)
+    ], drop_cols=['a'], default=False)
+
+    transformed = mapper.fit_transform(df)
+    assert transformed.shape == (3, 1)
+    assert mapper.transformed_names_ == ['a']
 
 
 def test_default_false():
@@ -754,35 +803,6 @@ def test_list_transformers_old_unpickle(simple_dataframe):
     transformer = loaded_mapper.features[0][1]
     assert isinstance(transformer, TransformerPipeline)
     assert isinstance(transformer.steps[0][1], MockXTransformer)
-
-
-def test_default_old_unpickle(simple_dataframe):
-    mapper = DataFrameMapper([('a', None)])
-    # simulate the mapper was pickled before the ``default`` init argument
-    # existed
-    del mapper.default
-    mapper_pickled = pickle.dumps(mapper)
-
-    loaded_mapper = pickle.loads(mapper_pickled)
-    loaded_mapper.fit_transform(simple_dataframe)  # doesn't fail
-
-
-def test_build_features_old_unpickle(simple_dataframe):
-    """
-    Fitted mappers pickled before the built_features and built_default
-    attributes can correctly transform
-    """
-    df = simple_dataframe
-    mapper = DataFrameMapper([('a', None)])
-    mapper.fit(df)
-
-    # simulate the mapper was pickled before the attributes existed
-    del mapper.built_features
-    del mapper.built_default
-
-    mapper_pickled = pickle.dumps(mapper)
-    loaded_mapper = pickle.loads(mapper_pickled)
-    loaded_mapper.transform(simple_dataframe)  # doesn't fail
 
 
 def test_sparse_features(simple_dataframe):
@@ -913,7 +933,6 @@ def test_with_car_dataframe(cars_dataframe):
     assert scores.mean() > 0.30
 
 
-@pytest.mark.skipIf(parse_version(sklearn_version) < parse_version('0.16'))
 def test_direct_cross_validation(iris_dataframe):
     """
     Starting with sklearn>=0.16.0 we no longer need CV wrappers for dataframes.
@@ -930,7 +949,7 @@ def test_direct_cross_validation(iris_dataframe):
     ])
     data = iris_dataframe.drop("species", axis=1)
     labels = iris_dataframe["species"]
-    scores = sklearn_cv_score(pipeline, data, labels)
+    scores = cross_val_score(pipeline, data, labels)
     assert scores.mean() > 0.96
     assert (scores.std() * 2) < 0.04
 
