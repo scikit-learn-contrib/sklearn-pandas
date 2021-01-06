@@ -166,6 +166,19 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         self.built_default = state.get('built_default', self.default)
         self.transformed_names_ = state.get('transformed_names_', [])
 
+    def __getstate__(self):
+        state = super().__getstate__()
+        state['features'] = self.features
+        state['sparse'] = self.sparse
+        state['default'] = self.default
+        state['df_out'] = self.df_out
+        state['input_df'] = self.input_df
+        state['drop_cols'] = self.drop_cols
+        state['build_features'] = getattr(self, 'built_features', None)
+        state['built_default'] = self.built_default
+        state['transformed_names_'] = self.transformed_names_
+        return state
+
     def _get_col_subset(self, X, cols, input_df=False):
         """
         Get a subset of columns from the given table X.
@@ -304,7 +317,7 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
             self._build()
 
         extracted = []
-        self.transformed_names_ = []
+        transformed_names_ = []
         for columns, transformers, options in self.built_features:
             input_df = options.get('input_df', self.input_df)
 
@@ -333,10 +346,11 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
             extracted.append(_handle_feature(Xt))
 
             alias = options.get('alias')
+
             prefix = options.get('prefix', '')
             suffix = options.get('suffix', '')
 
-            self.transformed_names_ += self.get_names(
+            transformed_names_ += self.get_names(
                 columns, transformers, Xt, alias, prefix, suffix)
 
         # handle features not explicitly selected
@@ -351,14 +365,16 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
                         if do_fit:
                             _call_fit(self.built_default.fit, Xt, y)
                         Xt = self.built_default.transform(Xt)
-                self.transformed_names_ += self.get_names(
+                transformed_names_ += self.get_names(
                     unsel_cols, self.built_default, Xt)
             else:
                 # if not applying a default transformer,
                 # keep column names unmodified
-                self.transformed_names_ += unsel_cols
+                transformed_names_ += unsel_cols
 
             extracted.append(_handle_feature(Xt))
+
+        self.transformed_names_ = transformed_names_
 
         # combine the feature outputs into one array.
         # at this point we lose track of which features
