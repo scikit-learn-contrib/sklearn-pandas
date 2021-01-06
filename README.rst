@@ -450,14 +450,19 @@ Below example shows how to change logging level.
 
     >>> import logging
     >>> logging.getLogger('sklearn_pandas').setLevel(logging.INFO)
-
-Changes Not Yet Published
----------
-
-* Using nox for testing.
+    
 
 Changelog
 ---------
+
+2.0.4 (2020-11-06)
+******************
+
+* Explicitly handling serialization (#224)
+* document fixes
+* Making transform function thread safe (#194)
+* Switched to nox for unit testing (#226)
+
 
 2.0.3 (2020-11-06)
 ******************
@@ -597,6 +602,7 @@ Other contributors:
 * Brendan Herger (@bjherger)
 * Cal Paterson (@calpaterson)
 * @defvorfu
+* Floris Hoogenboom (@FlorisHoogenboom)
 * Gustavo Sena Mafra (@gsmafra)
 * Israel Saeta Pérez (@dukebody)
 * Jeremy Howard (@jph00)
