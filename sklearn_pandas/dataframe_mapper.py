@@ -156,6 +156,7 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
 
     def __setstate__(self, state):
         # compatibility for older versions of sklearn-pandas
+        super().__setstate__(state)
         self.features = [_build_feature(*feat) for feat in state['features']]
         self.sparse = state.get('sparse', False)
         self.default = state.get('default', False)
