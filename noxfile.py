@@ -4,7 +4,7 @@ import nox
 def lint(session):
     session.install('pytest>=5.3.5', 'setuptools>=45.2',
                     'wheel>=0.34.2', 'flake8>=3.7.9',
-                    'numpy==1.18.1', 'pandas==1.0.5')
+                    'numpy==1.18.1', 'pandas==1.1.4')
     session.install('.')
     session.run('flake8', 'sklearn_pandas/', 'tests')
 
