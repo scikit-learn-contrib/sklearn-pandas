@@ -3,6 +3,7 @@ import pandas as pd
 from sklearn.base import TransformerMixin
 import warnings
 
+
 def _get_mask(X, value):
     """
     Compute the boolean mask X == missing_values.
@@ -30,8 +31,9 @@ class NumericalTransformer(TransformerMixin):
                 in SUPPORTED_FUNCTIONS variable. Throws assertion error if the
                 not supported.
         """
+
         warnings.warn("""
-            NumericalTransformer is deprecated. Please write your own 
+            NumericalTransformer is deprecated. Please write your own
             transformer using Sklearn.base.TransformerMixin class
             """, DeprecationWarning)
         assert func in self.SUPPORTED_FUNCTIONS, \
