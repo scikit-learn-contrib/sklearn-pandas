@@ -455,6 +455,9 @@ Below example shows how to change logging level.
 Changelog
 ---------
 
+* Fix bug with `__setstate__` method. Calling super so that mixin such as baikal can work properly 
+* adding test for Python 3.9
+
 2.0.4 (2020-11-06)
 ******************
 
