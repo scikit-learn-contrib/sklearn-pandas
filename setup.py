@@ -39,8 +39,8 @@ setup(name='sklearn-pandas',
       keywords=['scikit', 'sklearn', 'pandas'],
       install_requires=[
           'scikit-learn>=0.23.0',
-          'scipy>=1.4.1',
-          'pandas>=1.0.5',
+          'scipy>=1.5.1',
+          'pandas>=1.1.4',
           'numpy>=1.18.1'
       ],
       tests_require=['pytest', 'mock'],

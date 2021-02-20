@@ -16,7 +16,7 @@ jobs:
       - run: ~/.local/bin/nox  
   test39:
     docker:
-      - image: circleci/python:3.9.1
+      - image: cimg/python:3.9.1
     steps:
       - checkout
       - run: pip install --user nox
@@ -26,4 +26,6 @@ workflows:
   version: 2
   build_and_test:
     jobs:
+      - test37
+      - test38
       - test39
