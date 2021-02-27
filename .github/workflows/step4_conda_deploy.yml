@@ -1,4 +1,4 @@
-name: Conda Deploy
+name: 4 Conda Deploy
 
 on: 
   workflow_dispatch:
