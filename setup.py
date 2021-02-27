@@ -45,4 +45,5 @@ setup(name='sklearn-pandas',
       ],
       tests_require=['pytest', 'mock'],
       cmdclass={'test': PyTest},
-      )
+      license='MIT License'
+)
