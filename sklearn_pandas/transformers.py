@@ -33,11 +33,11 @@ class NumericalTransformer(TransformerMixin):
         """
 
         warnings.warn("""
-            NumericalTransformer will be deprecated in the next version. 
+            NumericalTransformer will be deprecated in the next version.
             Please Sklearn.base.TransformerMixin to write
             customer transformers
             """, DeprecationWarning)
-        
+
         assert func in self.SUPPORTED_FUNCTIONS, \
             f"Only following func are supported: {self.SUPPORTED_FUNCTIONS}"
         super(NumericalTransformer, self).__init__()
