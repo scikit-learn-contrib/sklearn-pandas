@@ -1,4 +1,4 @@
-name: Upload Python Package
+name: Conda Deploy
 
 on: 
   workflow_dispatch:

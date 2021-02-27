@@ -455,8 +455,14 @@ Below example shows how to change logging level.
 Changelog
 ---------
 
-* Fix bug with `__setstate__` method. Calling super so that mixin such as baikal can work properly 
-* adding test for Python 3.9
+
+2.1.0 (2021-02-26)
+******************
+* Removed test for Python 3.6 and added Python 3.9
+* Added deprecation warning for NumericalTransformer
+* Fixed pickling issue causing integration issues with Baikal.  
+* Started publishing package to conda repo
+
 
 2.0.4 (2020-11-06)
 ******************
