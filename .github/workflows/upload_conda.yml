@@ -1,0 +1,21 @@
+name: Upload Python Package
+
+on: 
+  workflow_dispatch:
+    branches:
+      - main 
+
+jobs:
+
+  conda_deploy:
+    runs-on: ubuntu-latest
+    # needs: test
+  
+    steps:
+      - uses: actions/checkout@v2              
+      - name: publish-to-conda
+        uses: fcakyon/conda-publish-action@v1.3
+        with:
+          subdir: 'conda'
+          anacondatoken: ${{ secrets.ANACONDA_TOKEN }}
+          platforms: 'win osx linux'          

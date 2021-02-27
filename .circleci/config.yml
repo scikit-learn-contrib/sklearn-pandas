@@ -27,5 +27,4 @@ workflows:
   build_and_test:
     jobs:
       - test37
-      - test38
       - test39
