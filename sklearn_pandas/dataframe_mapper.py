@@ -186,8 +186,8 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
 
         X       a Pandas dataframe; the table to select columns from
         cols    a string or list of strings representing the columns to select.
-                It can also be a callable that returns True or False, i.e. compatible
-                with the built-in filter function.
+                It can also be a callable that returns True or False, i.e.
+                compatible with the built-in filter function.
 
         Returns a numpy array with the data from the selected columns
         """
