@@ -30,8 +30,10 @@ The examples in this file double as basic sanity tests. To run them, use ``docte
 
     # python -m doctest README.rst
 
+
 Usage
 -----
+
 
 Import
 ******
@@ -50,11 +52,14 @@ For these examples, we'll also use pandas, numpy, and sklearn::
     >>> import pandas as pd
     >>> import numpy as np
     >>> import sklearn.preprocessing, sklearn.decomposition, \
-    ...     sklearn.linear_model, sklearn.pipeline, sklearn.metrics
+    ...     sklearn.linear_model, sklearn.pipeline, sklearn.metrics, \
+    ...     sklearn.compose
     >>> from sklearn.feature_extraction.text import CountVectorizer
+
 
 Load some Data
 **************
+
 
 Normally you'll read the data from a file, but for demonstration purposes we'll create a data frame from a Python dict::
 
@@ -62,13 +67,18 @@ Normally you'll read the data from a file, but for demonstration purposes we'll 
     ...                      'children': [4., 6, 3, 3, 2, 3, 5, 4],
     ...                      'salary':   [90., 24, 44, 27, 32, 59, 36, 27]})
 
+
 Transformation Mapping
 ----------------------
+
 
 Map the Columns to Transformations
 **********************************
 
-The mapper takes a list of tuples. The first element of each tuple is a column name from the pandas DataFrame, or a list containing one or multiple columns (we will see an example with multiple columns later). The second element is an object which will perform the transformation which will be applied to that column. The third one is optional and is a dictionary containing the transformation options, if applicable (see "custom column names for transformed features" below).
+The mapper takes a list of tuples. Each tuple has three elements:
+  1. column name(s): The first element is a column name from the pandas DataFrame, or a list containing one or multiple columns (we will see an example with multiple columns later) or an instance of a callable function such as `make_column_selector <https://scikit-learn.org/stable/modules/generated/sklearn.compose.make_column_selector.html>` 
+  2. transformer(s): The second element is an object which will perform the transformation which will be applied to that column. 
+  3. attributes: The third one is optional and is a dictionary containing the transformation options, if applicable (see "custom column names for transformed features" below).
 
 Let's see an example::
 
@@ -77,7 +87,7 @@ Let's see an example::
     ...     (['children'], sklearn.preprocessing.StandardScaler())
     ... ])
 
-The difference between specifying the column selector as ``'column'`` (as a simple string) and ``['column']`` (as a list with one element) is the shape of the array that is passed to the transformer. In the first case, a one dimensional array will be passed, while in the second case it will be a 2-dimensional array with one column, i.e. a column vector.
+The difference between specifying the column selector as ``'column'`` (as a simple string) and ``['column']`` (as a list with one element) is the shape of the array that is passed to the transformer. In the first case, a one dimensional array will be passed, while in the second case it will be a 2-dimensional array with one column, i.e. a column vector. 
 
 This behaviour mimics the same pattern as pandas' dataframes ``__getitem__``  indexing:
 
@@ -87,6 +97,7 @@ This behaviour mimics the same pattern as pandas' dataframes ``__getitem__``  in
     (8, 1)
 
 Be aware that some transformers expect a 1-dimensional input (the label-oriented ones) while some others, like ``OneHotEncoder`` or ``Imputer``, expect 2-dimensional input, with the shape ``[n_samples, n_features]``.
+
 
 Test the Transformation
 ***********************
@@ -149,6 +160,46 @@ Alternatively, you can also specify prefix and/or suffix to add to the column na
   >>> _ = mapper_alias.fit_transform(data.copy())
   >>> mapper_alias.transformed_names_
   ['standard_scaled_children', 'children_raw']
+
+
+Dynamic Columns
+***********************
+In some situations the columns are not known before hand and we would like to dynamically select them during the fit operation. As shown below, in such situations you can provide either a custom callable or use `make_column_selector <https://scikit-learn.org/stable/modules/generated/sklearn.compose.make_column_selector.html>`. 
+
+
+    >>> class GetColumnsStartingWith:
+    ...   def __init__(self, start_str):
+    ...     self.pattern = start_str
+    ...
+    ...   def __call__(self, X:pd.DataFrame=None):
+    ...     return [c for c in X.columns if c.startswith(self.pattern)]
+    ...
+    >>> df = pd.DataFrame({
+    ...    'sepal length (cm)': [1.0, 2.0, 3.0],
+    ...    'sepal width (cm)': [1.0, 2.0, 3.0],
+    ...    'petal length (cm)': [1.0, 2.0, 3.0],
+    ...    'petal width (cm)': [1.0, 2.0, 3.0]
+    ... })
+    >>> t = DataFrameMapper([
+    ...     (
+    ...       sklearn.compose.make_column_selector(dtype_include=float),
+    ...       sklearn.preprocessing.StandardScaler(),
+    ...       {'alias': 'x'}
+    ...     ),
+    ...     (
+    ...       GetColumnsStartingWith('petal'),
+    ...       None,
+    ...       {'alias': 'petal'}
+    ...     )], df_out=True, default=False)
+    >>> t.fit(df).transform(df).shape
+    (3, 6)
+    >>> t.transformed_names_
+    ['x_0', 'x_1', 'x_2', 'x_3', 'petal_0', 'petal_1']
+
+
+
+Above we use `make_column_selector` to select all columns that are of type float and also use a custom callable function to select columns that start with the word 'petal'.
+
 
 Passing Series/DataFrames to the transformers
 *********************************************
@@ -461,6 +512,11 @@ Below example shows how to change logging level.
 
 Changelog
 ---------
+
+
+2.2.0 (2021-05-07)
+******************
+* Added an ability to provide callable functions instead of static column list.
 
 
 2.1.0 (2021-02-26)
