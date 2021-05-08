@@ -20,6 +20,7 @@ import sklearn.decomposition
 import numpy as np
 from numpy.testing import assert_array_equal
 import pickle
+from sklearn.compose import make_column_selector
 
 from sklearn_pandas import DataFrameMapper
 from sklearn_pandas.dataframe_mapper import _handle_feature, _build_transformer
@@ -969,3 +970,18 @@ def test_heterogeneous_output_types_input_df():
     dft = M.fit_transform(df)
     assert dft['feat1'].dtype == np.dtype('int64')
     assert dft['feat2'].dtype == np.dtype('float64')
+
+
+def test_make_column_selector(iris_dataframe):
+    t = DataFrameMapper([
+        (make_column_selector(dtype_include=float), None, {'alias': 'x'}),
+        ('sepal length (cm)', None),
+    ], df_out=True, default=False)
+
+    xt = t.fit(iris_dataframe).transform(iris_dataframe)
+    assert list(xt.columns) == ['x_0', 'x_1', 'x_2', 'x_3', 'sepal length (cm)']
+
+    pickled = pickle.dumps(t)
+    t2 = pickle.loads(pickled)
+    xt2 = t2.transform(iris_dataframe)
+    assert np.array_equal(xt.values, xt2.values)

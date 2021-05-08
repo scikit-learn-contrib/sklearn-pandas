@@ -1,6 +1,7 @@
 import contextlib
 
 from datetime import datetime
+from unittest.mock import call
 import pandas as pd
 import numpy as np
 from scipy import sparse
@@ -29,8 +30,14 @@ def _build_transformer(transformers):
     return transformers
 
 
-def _build_feature(columns, transformers, options={}):
-    return (columns, _build_transformer(transformers), options)
+def _build_feature(columns, transformers, options={}, X=None):
+    if X is None:
+        return (columns, _build_transformer(transformers), options)        
+    return (
+        columns(X) if callable(columns) else columns,
+        _build_transformer(transformers),
+        options
+    )
 
 
 def _elapsed_secs(t1):
@@ -116,14 +123,16 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         if (df_out and (sparse or default)):
             raise ValueError("Can not use df_out with sparse or default")
 
-    def _build(self):
+    def _build(self, X=None):
         """
         Build attributes built_features and built_default.
         """
         if isinstance(self.features, list):
-            self.built_features = [_build_feature(*f) for f in self.features]
+            self.built_features = [
+                _build_feature(*f, X=X) for f in self.features
+            ]
         else:
-            self.built_features = self.features
+            self.built_features = _build_feature(*self.features, X=X)
         self.built_default = _build_transformer(self.default)
 
     @property
@@ -191,8 +200,6 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
 
         Returns a numpy array with the data from the selected columns
         """
-        if callable(cols):
-            cols = filter(cols, X.columns)
 
         if isinstance(cols, string_types):
             return_vector = True
@@ -230,7 +237,7 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         y       the target vector relative to X, optional
 
         """
-        self._build()
+        self._build(X=X)
 
         for columns, transformers, options in self.built_features:
             t1 = datetime.now()
@@ -319,7 +326,7 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         fit_transform.
         """
         if do_fit:
-            self._build()
+            self._build(X=X)
 
         extracted = []
         transformed_names_ = []

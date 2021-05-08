@@ -33,7 +33,7 @@ class NumericalTransformer(TransformerMixin):
         """
 
         warnings.warn("""
-            NumericalTransformer will be deprecated in 2.2 version.
+            NumericalTransformer will be deprecated in 3.0 version.
             Please use Sklearn.base.TransformerMixin to write
             customer transformers
             """, DeprecationWarning)
