@@ -979,7 +979,8 @@ def test_make_column_selector(iris_dataframe):
     ], df_out=True, default=False)
 
     xt = t.fit(iris_dataframe).transform(iris_dataframe)
-    assert list(xt.columns) == ['x_0', 'x_1', 'x_2', 'x_3', 'sepal length (cm)']
+    expected = ['x_0', 'x_1', 'x_2', 'x_3', 'sepal length (cm)']
+    assert list(xt.columns) == expected
 
     pickled = pickle.dumps(t)
     t2 = pickle.loads(pickled)

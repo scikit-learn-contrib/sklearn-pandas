@@ -1,12 +1,9 @@
 import contextlib
-
 from datetime import datetime
-from unittest.mock import call
 import pandas as pd
 import numpy as np
 from scipy import sparse
 from sklearn.base import BaseEstimator, TransformerMixin
-
 from .cross_validation import DataWrapper
 from .pipeline import make_transformer_pipeline, _call_fit, TransformerPipeline
 from . import logger
@@ -32,7 +29,7 @@ def _build_transformer(transformers):
 
 def _build_feature(columns, transformers, options={}, X=None):
     if X is None:
-        return (columns, _build_transformer(transformers), options)        
+        return (columns, _build_transformer(transformers), options)
     return (
         columns(X) if callable(columns) else columns,
         _build_transformer(transformers),
