@@ -76,7 +76,7 @@ Map the Columns to Transformations
 **********************************
 
 The mapper takes a list of tuples. Each tuple has three elements:
-  1. column name(s): The first element is a column name from the pandas DataFrame, or a list containing one or multiple columns (we will see an example with multiple columns later) or an instance of a callable function such as `make_column_selector <https://scikit-learn.org/stable/modules/generated/sklearn.compose.make_column_selector.html>`_. 
+  1. column name(s): The first element is a column name from the pandas DataFrame, or a list containing one or multiple columns (we will see an example with multiple columns later) or an instance of a callable function such as `make_column_selector <https://scikit-learn.org/stable/modules/generated/sklearn.compose.make_column_selector.html>`__. 
   2. transformer(s): The second element is an object which will perform the transformation which will be applied to that column. 
   3. attributes: The third one is optional and is a dictionary containing the transformation options, if applicable (see "custom column names for transformed features" below).
 
@@ -164,7 +164,7 @@ Alternatively, you can also specify prefix and/or suffix to add to the column na
 
 Dynamic Columns
 ***********************
-In some situations the columns are not known before hand and we would like to dynamically select them during the fit operation. As shown below, in such situations you can provide either a custom callable or use `make_column_selector <https://scikit-learn.org/stable/modules/generated/sklearn.compose.make_column_selector.html>`_. 
+In some situations the columns are not known before hand and we would like to dynamically select them during the fit operation. As shown below, in such situations you can provide either a custom callable or use `make_column_selector <https://scikit-learn.org/stable/modules/generated/sklearn.compose.make_column_selector.html>`__. 
 
 
     >>> class GetColumnsStartingWith:
