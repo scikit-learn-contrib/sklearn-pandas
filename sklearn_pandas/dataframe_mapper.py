@@ -47,6 +47,8 @@ def _get_feature_names(estimator):
     """
     if hasattr(estimator, 'classes_'):
         return estimator.classes_
+    elif hasattr(estimator, 'get_feature_names_out'):
+        return estimator.get_feature_names_out()
     elif hasattr(estimator, 'get_feature_names'):
         return estimator.get_feature_names()
     return None
@@ -290,11 +292,11 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
             else:
                 names = _get_feature_names(transformer)
 
-            if names is not None and len(names) == num_cols:
-                output = [f"{name}_{o}" for o in names]
-                # otherwise, return name concatenated with '_1', '_2', etc.
-            else:
-                output = [name + '_' + str(o) for o in range(num_cols)]
+            if names is None or len(names) != num_cols:
+                # return name concatenated with '_0', '_1', etc.
+                names = range(num_cols)
+
+            output = [f"{name}_{o}" for o in names]
         else:
             output = [name]
 

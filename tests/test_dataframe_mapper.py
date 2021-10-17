@@ -344,6 +344,24 @@ def test_onehot_df():
     assert cols[3] == 'target_x0_3'
 
 
+def test_onehot_2cols_df():
+    """
+    Check level ids from one-hot when mapping 2 columns
+    """
+    df = pd.DataFrame({
+        'col': [0, 0, 1, 1, 2, 3, 0],
+        'target': [0, 0, 1, 1, 2, 3, 0]
+    })
+    mapper = DataFrameMapper([
+        (['col', 'target'], OneHotEncoder())
+    ], df_out=True)
+    transformed = mapper.fit_transform(df)
+    cols = transformed.columns
+    assert len(cols) == 8
+    assert cols[0] == 'col_target_x0_0'
+    assert cols[4] == 'col_target_x1_0'
+
+
 def test_customtransform_df():
     """
     Check level ids from a transformer in which

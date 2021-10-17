@@ -10,13 +10,15 @@ def lint(session):
 
 @nox.session
 @nox.parametrize('numpy', ['1.18.1', '1.19.4', '1.20.1'])
+@nox.parametrize('sklearn', ['0.23.0', '0.24.2', '1.0'])
 @nox.parametrize('scipy', ['1.5.4', '1.6.0'])
 @nox.parametrize('pandas', ['1.1.4', '1.2.2'])
-def tests(session, numpy, scipy, pandas):
+def tests(session, numpy, sklearn, scipy, pandas):
     session.install('pytest>=5.3.5', 
                     'setuptools>=45.2',
                     'wheel>=0.34.2',
                     f'numpy=={numpy}',
+                    f'scikit-learn=={sklearn}',
                     f'scipy=={scipy}',
                     f'pandas=={pandas}'
                     )
