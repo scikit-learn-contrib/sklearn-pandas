@@ -89,9 +89,10 @@ class CustomTransformer(BaseEstimator, TransformerMixin):
         return X - self.min
 
 
-class ImageTransformer(BaseEstimator, TransformerMixin):
+class MockImageTransformer(BaseEstimator, TransformerMixin):
     """
-    Example transformer that scales a 2d vector
+    Example transformer that takes the max of a 2d vector
+    then scales the result.
     """
     def __init__(self, multiplier=10.0):
         self.multiplier = multiplier
@@ -100,12 +101,9 @@ class ImageTransformer(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X):
-        if isinstance(X, pd.DataFrame):
-            for idx, row in X.iterrows():
-                pass
-        else:
-            for element_2d in X:
-                assert len(element_2d.shape) == 2
+        assert isinstance(X, pd.DataFrame)
+        for col in X.columns:
+            X[col] = X[col].map(lambda img: np.max(img))
         return X * self.multiplier
 
 
@@ -299,15 +297,16 @@ def test_complex_object_df(complex_object_dataframe):
     """
     df = complex_object_dataframe
     img_scale = 10
-    mapper = DataFrameMapper([('target', None), ('feat1', None),
-            (make_column_selector('feat2'), StandardScaler()),
-            (make_column_selector('img2d'), ImageTransformer(img_scale))],
-            df_out=True, input_df=True)
+    mapper = DataFrameMapper(
+        [('target', None), ('feat1', None),
+         (make_column_selector('feat2'), StandardScaler()),
+         (make_column_selector('img2d'), MockImageTransformer(img_scale))],
+        df_out=True, input_df=True)
     transformed = mapper.fit_transform(df)
     assert len(transformed) == len(complex_object_dataframe)
-    assert np.all(np.isclose(
+    assert np.isclose(
         np.sum(transformed['img2d']),
-        np.sum(df['img2d'] * img_scale), atol=1e-12))
+        np.max(np.sum(df['img2d'])) * img_scale, atol=1e-12)
 
 
 def test_numeric_column_names(complex_dataframe):
