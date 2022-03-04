@@ -120,13 +120,15 @@ def complex_dataframe():
                          'feat1': [1, 2, 3, 4, 5, 6],
                          'feat2': [1, 2, 3, 2, 3, 4]})
 
+
 @pytest.fixture
 def complex_object_dataframe():
     return pd.DataFrame({'target': ['a', 'a', 'b', 'b', 'c', 'c'],
                          'feat1': [1, 2, 3, 4, 5, 6],
                          'feat2': [1, 2, 3, 2, 3, 4],
-                         'img2d': [1*np.eye(2), 2*np.eye(2), 3*np.eye(2), \
-                                 4*np.eye(2), 5*np.eye(2), 6*np.eye(2)]})
+                         'img2d': [1*np.eye(2), 2*np.eye(2), 3*np.eye(2),
+                                   4*np.eye(2), 5*np.eye(2), 6*np.eye(2)]})
+
 
 @pytest.fixture
 def multiindex_dataframe():
@@ -297,12 +299,10 @@ def test_complex_object_df(complex_object_dataframe):
     """
     df = complex_object_dataframe
     img_scale = 10
-    mapper = DataFrameMapper(
-        [('target', None), ('feat1', None),
-         (make_column_selector('feat2'), StandardScaler()),
-         (make_column_selector('img2d'), ImageTransformer(img_scale))],
-         # ('img2d', ImageTransformer(img_scale))],
-        df_out=True, input_df=True)
+    mapper = DataFrameMapper([('target', None), ('feat1', None),
+            (make_column_selector('feat2'), StandardScaler()),
+            (make_column_selector('img2d'), ImageTransformer(img_scale))],
+            df_out=True, input_df=True)
     transformed = mapper.fit_transform(df)
     assert len(transformed) == len(complex_object_dataframe)
     assert np.all(np.isclose(
