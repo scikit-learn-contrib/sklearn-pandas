@@ -304,7 +304,6 @@ def test_complex_object_df(complex_object_dataframe):
          # ('img2d', ImageTransformer(img_scale))],
         df_out=True, input_df=True)
     transformed = mapper.fit_transform(df)
-    import pdb; pdb.set_trace()
     assert len(transformed) == len(complex_object_dataframe)
     assert np.all(np.isclose(
         np.sum(transformed['img2d']),
