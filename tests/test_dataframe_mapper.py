@@ -89,6 +89,24 @@ class CustomTransformer(BaseEstimator, TransformerMixin):
         return X - self.min
 
 
+class MockImageTransformer(BaseEstimator, TransformerMixin):
+    """
+    Example transformer that takes the max of a 2d vector
+    then scales the result.
+    """
+    def __init__(self, multiplier=10.0):
+        self.multiplier = multiplier
+
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X):
+        assert isinstance(X, pd.DataFrame)
+        for col in X.columns:
+            X[col] = X[col].map(lambda img: np.max(img))
+        return X * self.multiplier
+
+
 @pytest.fixture
 def simple_dataframe():
     return pd.DataFrame({'a': [1, 2, 3]})
@@ -99,6 +117,15 @@ def complex_dataframe():
     return pd.DataFrame({'target': ['a', 'a', 'b', 'b', 'c', 'c'],
                          'feat1': [1, 2, 3, 4, 5, 6],
                          'feat2': [1, 2, 3, 2, 3, 4]})
+
+
+@pytest.fixture
+def complex_object_dataframe():
+    return pd.DataFrame({'target': ['a', 'a', 'b', 'b', 'c', 'c'],
+                         'feat1': [1, 2, 3, 4, 5, 6],
+                         'feat2': [1, 2, 3, 2, 3, 4],
+                         'img2d': [1*np.eye(2), 2*np.eye(2), 3*np.eye(2),
+                                   4*np.eye(2), 5*np.eye(2), 6*np.eye(2)]})
 
 
 @pytest.fixture
@@ -262,6 +289,24 @@ def test_complex_df(complex_dataframe):
     assert len(transformed) == len(complex_dataframe)
     for c in df.columns:
         assert len(transformed[c]) == len(df[c])
+
+
+def test_complex_object_df(complex_object_dataframe):
+    """
+    Get a dataframe from a complex dataframe with 2d features
+    """
+    df = complex_object_dataframe
+    img_scale = 10
+    mapper = DataFrameMapper(
+        [('target', None), ('feat1', None),
+         (make_column_selector('feat2'), StandardScaler()),
+         (make_column_selector('img2d'), MockImageTransformer(img_scale))],
+        df_out=True, input_df=True)
+    transformed = mapper.fit_transform(df)
+    assert len(transformed) == len(complex_object_dataframe)
+    assert np.isclose(
+        np.sum(transformed['img2d']),
+        np.max(np.sum(df['img2d'])) * img_scale, atol=1e-12)
 
 
 def test_numeric_column_names(complex_dataframe):
