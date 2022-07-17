@@ -9,6 +9,8 @@ Sklearn-pandas
 .. image:: https://anaconda.org/conda-forge/sklearn-pandas/badges/version.svg
    :target: https://anaconda.org/conda-forge/sklearn-pandas/
 
+.. highlight:: python
+
 This module provides a bridge between `Scikit-Learn <http://scikit-learn.org/stable>`__'s machine learning methods and `pandas <https://pandas.pydata.org>`__-style Data Frames.
 In particular, it provides a way to map ``DataFrame`` columns to transformations, which are later recombined into features.
 
@@ -89,7 +91,7 @@ Let's see an example::
 
 The difference between specifying the column selector as ``'column'`` (as a simple string) and ``['column']`` (as a list with one element) is the shape of the array that is passed to the transformer. In the first case, a one dimensional array will be passed, while in the second case it will be a 2-dimensional array with one column, i.e. a column vector. 
 
-This behaviour mimics the same pattern as pandas' dataframes ``__getitem__``  indexing:
+This behaviour mimics the same pattern as pandas' dataframes ``__getitem__``  indexing::
 
     >>> data['children'].shape
     (8,)
@@ -164,8 +166,9 @@ Alternatively, you can also specify prefix and/or suffix to add to the column na
 
 Dynamic Columns
 ***********************
-In some situations the columns are not known before hand and we would like to dynamically select them during the fit operation. As shown below, in such situations you can provide either a custom callable or use `make_column_selector <https://scikit-learn.org/stable/modules/generated/sklearn.compose.make_column_selector.html>`__. 
+In some situations the columns are not known before hand and we would like to dynamically select them during the fit operation. As shown below, in such situations you can provide either a custom callable or use `make_column_selector <https://scikit-learn.org/stable/modules/generated/sklearn.compose.make_column_selector.html>`__.
 
+::
 
     >>> class GetColumnsStartingWith:
     ...   def __init__(self, start_str):
@@ -273,14 +276,14 @@ Dropping columns explictly
 
 Sometimes it is required to drop a specific column/ list of columns.
 For this purpose, ``drop_cols``  argument for ``DataFrameMapper`` can be used.
-Default value is ``None``
+Default value is ``None``::
 
     >>> mapper_df = DataFrameMapper([
     ...     ('pet', sklearn.preprocessing.LabelBinarizer()),
     ...     (['children'], sklearn.preprocessing.StandardScaler())
     ... ], drop_cols=['salary'])
 
-Now running ``fit_transform`` will run transformations on 'pet' and 'children' and drop 'salary' column:
+Now running ``fit_transform`` will run transformations on 'pet' and 'children' and drop 'salary' column::
 
    >>> np.round(mapper_df.fit_transform(data.copy()), 1)
    array([[ 1. ,  0. ,  0. ,  0.2],
@@ -355,7 +358,7 @@ Applying a default transformer
 ******************************
 
 A default transformer can be applied to columns not explicitly selected
-passing it as the ``default`` argument to the mapper:
+passing it as the ``default`` argument to the mapper::
 
     >>> mapper4 = DataFrameMapper([
     ...     ('pet', sklearn.preprocessing.LabelBinarizer()),
@@ -385,7 +388,7 @@ acceptable by ``DataFrameMapper``.
 
 For example, consider a dataset with three categorical columns, 'col1', 'col2', and 'col3',
 To binarize each of them, one could pass column names and ``LabelBinarizer`` transformer class
-into generator, and then use returned definition as ``features`` argument for ``DataFrameMapper``:
+into generator, and then use returned definition as ``features`` argument for ``DataFrameMapper``::
 
     >>> from sklearn_pandas import gen_features
     >>> feature_def = gen_features(
@@ -407,7 +410,7 @@ into generator, and then use returned definition as ``features`` argument for ``
 
 If it is required to override some of transformer parameters, then a dict with 'class' key and
 transformer parameters should be provided. For example, consider a dataset with missing values.
-Then the following code could be used to override default imputing strategy:
+Then the following code could be used to override default imputing strategy::
 
     >>> from sklearn.impute import SimpleImputer
     >>> import numpy as np
@@ -451,6 +454,8 @@ Feature selection and other supervised transformations
 
 ``DataFrameMapper`` supports transformers that require both X and y arguments. An example of this is feature selection. Treating the 'pet' column as the target, we will select the column that best predicts it.
 
+::
+
     >>> from sklearn.feature_selection import SelectKBest, chi2
     >>> mapper_fs = DataFrameMapper([(['children','salary'], SelectKBest(chi2, k=1))])
     >>> mapper_fs.fit_transform(data[['children','salary']], data['pet'])
@@ -467,7 +472,7 @@ Working with sparse features
 ****************************
 
 A ``DataFrameMapper`` will return a dense feature array by default. Setting ``sparse=True`` in the mapper will return
-a sparse array whenever any of the extracted features is sparse. Example:
+a sparse array whenever any of the extracted features is sparse. Example::
 
     >>> mapper5 = DataFrameMapper([
     ...     ('pet', CountVectorizer()),
@@ -484,6 +489,8 @@ Using ``NumericalTransformer``
 While you can use ``FunctionTransformation`` to generate arbitrary transformers, it can present serialization issues
 when pickling. Use ``NumericalTransformer`` instead, which takes the function name as a string parameter and hence
 can be easily serialized.
+
+::
 
     >>> from sklearn_pandas import NumericalTransformer
     >>> mapper5 = DataFrameMapper([
@@ -505,6 +512,7 @@ Changing Logging level
 You can change log level to info to print time take to fit/transform features. Setting it to higher level will stop printing elapsed time.
 Below example shows how to change logging level.
 
+::
 
     >>> import logging
     >>> logging.getLogger('sklearn_pandas').setLevel(logging.INFO)
