@@ -10,7 +10,7 @@ def lint(session):
 
 @nox.session
 @nox.parametrize('numpy', ['1.18.1', '1.20.1'])
-@nox.parametrize('sklearn', ['1.0', '1.1.2'])
+@nox.parametrize('sklearn', ['1.1.0', '1.1.2'])
 @nox.parametrize('scipy', ['1.6.0'])
 @nox.parametrize('pandas', ['1.2.2'])
 def tests(session, numpy, sklearn, scipy, pandas):

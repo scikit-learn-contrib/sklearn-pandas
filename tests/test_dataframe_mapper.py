@@ -468,8 +468,8 @@ def test_pca(complex_dataframe):
     transformed = mapper.fit_transform(df)
     cols = transformed.columns
     assert len(cols) == 2
-    assert cols[0] == 'feat1_feat2_0'
-    assert cols[1] == 'feat1_feat2_1'
+    assert cols[0] == 'feat1_feat2_pca0'
+    assert cols[1] == 'feat1_feat2_pca1'
 
 
 def test_fit_transform(simple_dataframe):
