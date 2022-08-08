@@ -478,27 +478,6 @@ a sparse array whenever any of the extracted features is sparse. Example:
 The stacking of the sparse features is done without ever densifying them.
 
 
-Using ``NumericalTransformer``
-***********************************
-
-While you can use ``FunctionTransformation`` to generate arbitrary transformers, it can present serialization issues
-when pickling. Use ``NumericalTransformer`` instead, which takes the function name as a string parameter and hence
-can be easily serialized.
-
-    >>> from sklearn_pandas import NumericalTransformer
-    >>> mapper5 = DataFrameMapper([
-    ...     ('children', NumericalTransformer('log')),
-    ... ])
-    >>> mapper5.fit_transform(data)
-    array([[1.38629436],
-           [1.79175947],
-           [1.09861229],
-           [1.09861229],
-           [0.69314718],
-           [1.09861229],
-           [1.60943791],
-           [1.38629436]])
-
 Changing Logging level
 ***********************************
 

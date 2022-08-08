@@ -43,7 +43,7 @@ def _elapsed_secs(t1):
     return (datetime.now()-t1).total_seconds()
 
 
-def _get_feature_names(estimator, input_features=None):
+def _get_feature_names(estimator, input_features=None, alias=None):
     """
     Attempt to extract feature names based on a given estimator
     """
@@ -287,17 +287,17 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
             # last one
             if isinstance(transformer, TransformerPipeline):
                 inverse_steps = transformer.steps[::-1]
-                estimators = (estimator for name, estimator in inverse_steps)
+                estimators = (estimator for _, estimator in inverse_steps)
                 names_steps = (_get_feature_names(e, input_features = columns) for e in estimators)  # noqa
                 names = next((n for n in names_steps if n is not None), None)
             # Otherwise use the only estimator present
             else:
-                names = _get_feature_names(transformer, input_features=columns)
+                names = _get_feature_names(transformer, input_features=columns, alias = alias)
 
             if names is None or len(names) != num_cols:
                 # return name concatenated with '_0', '_1', etc.
                 names = range(num_cols)
-
+                
             output = [f"{name}_{o}" for o in names]
         else:
             output = [name]

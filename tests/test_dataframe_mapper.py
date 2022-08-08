@@ -340,8 +340,8 @@ def test_onehot_df():
     transformed = mapper.fit_transform(df)
     cols = transformed.columns
     assert len(cols) == 4
-    assert cols[0] == 'target_x0_0'
-    assert cols[3] == 'target_x0_3'
+    assert cols[0] == 'target_target_0'
+    assert cols[3] == 'target_target_3'
 
 
 def test_onehot_2cols_df():
