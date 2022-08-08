@@ -358,8 +358,8 @@ def test_onehot_2cols_df():
     transformed = mapper.fit_transform(df)
     cols = transformed.columns
     assert len(cols) == 8
-    assert cols[0] == 'col_target_x0_0'
-    assert cols[4] == 'col_target_x1_0'
+    assert cols[0] == 'col_target_col_0'
+    assert cols[4] == 'col_target_target_0'
 
 
 def test_customtransform_df():
