@@ -385,8 +385,26 @@ def test_onehot_df():
     transformed = mapper.fit_transform(df)
     cols = transformed.columns
     assert len(cols) == 4
-    assert cols[0] == 'target_x0_0'
-    assert cols[3] == 'target_x0_3'
+    assert cols[0] == 'target_target_0'
+    assert cols[3] == 'target_target_3'
+
+
+def test_onehot_2cols_df():
+    """
+    Check level ids from one-hot when mapping 2 columns
+    """
+    df = pd.DataFrame({
+        'col': [0, 0, 1, 1, 2, 3, 0],
+        'target': [0, 0, 1, 1, 2, 3, 0]
+    })
+    mapper = DataFrameMapper([
+        (['col', 'target'], OneHotEncoder())
+    ], df_out=True)
+    transformed = mapper.fit_transform(df)
+    cols = transformed.columns
+    assert len(cols) == 8
+    assert cols[0] == 'col_target_col_0'
+    assert cols[4] == 'col_target_target_0'
 
 
 def test_customtransform_df():
@@ -450,8 +468,8 @@ def test_pca(complex_dataframe):
     transformed = mapper.fit_transform(df)
     cols = transformed.columns
     assert len(cols) == 2
-    assert cols[0] == 'feat1_feat2_0'
-    assert cols[1] == 'feat1_feat2_1'
+    assert cols[0] == 'feat1_feat2_pca0'
+    assert cols[1] == 'feat1_feat2_pca1'
 
 
 def test_fit_transform(simple_dataframe):

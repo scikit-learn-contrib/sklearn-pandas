@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import re
+
 from setuptools import setup
 from setuptools.command.test import test as TestCommand
-import re
 
 for line in open('sklearn_pandas/__init__.py'):
     match = re.match("__version__ *= *'(.*)'", line)
@@ -38,10 +39,10 @@ setup(name='sklearn-pandas',
       packages=['sklearn_pandas'],
       keywords=['scikit', 'sklearn', 'pandas'],
       install_requires=[
-          'scikit-learn>=0.23.0',
+          'scikit-learn>=1.1.0',
           'scipy>=1.5.1',
           'pandas>=1.1.4',
-          'numpy>=1.18.1'
+          'numpy>=1.19.4'
       ],
       tests_require=['pytest', 'mock'],
       cmdclass={'test': PyTest},
