@@ -675,6 +675,7 @@ The code for ``DataFrameMapper`` is based on code originally written by `Ben Ham
 Other contributors:
 
 * Ariel Rossanigo (@arielrossanigo)
+* Antonio Carlos Falcão Petri (@falcaopetri)
 * Arnau Gil Amat (@arnau126)
 * Assaf Ben-David (@AssafBenDavid)
 * Brendan Herger (@bjherger)
