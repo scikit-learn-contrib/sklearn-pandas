@@ -194,7 +194,7 @@ In some situations the columns are not known before hand and we would like to dy
     >>> t.fit(df).transform(df).shape
     (3, 6)
     >>> t.transformed_names_
-    ['x_0', 'x_1', 'x_2', 'x_3', 'petal_0', 'petal_1']
+    ['x_sepal length (cm)', 'x_sepal width (cm)', 'x_petal length (cm)', 'x_petal width (cm)', 'petal_0', 'petal_1']
 
 
 

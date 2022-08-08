@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "sklearn-pandas"
+version = "2.2.0"
+description = "Coordinates transformation between pandas and sklearn"
+authors = ["Your Name <you@example.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+scikit-learn = "^1.0.0"
+scipy = "^1.5.1"
+pandas  = "^1.1.4"
+numpy = "^1.18.1"
+
+[tool.poetry.dev-dependencies]
+pytest = "^7.1.2"
+nox = "^2022.1.7"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

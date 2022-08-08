@@ -1,12 +1,14 @@
 import contextlib
 from datetime import datetime
-import pandas as pd
+
 import numpy as np
+import pandas as pd
 from scipy import sparse
 from sklearn.base import BaseEstimator, TransformerMixin
-from .cross_validation import DataWrapper
-from .pipeline import make_transformer_pipeline, _call_fit, TransformerPipeline
+
 from . import logger
+from .cross_validation import DataWrapper
+from .pipeline import TransformerPipeline, _call_fit, make_transformer_pipeline
 
 string_types = text_type = str
 
@@ -41,16 +43,16 @@ def _elapsed_secs(t1):
     return (datetime.now()-t1).total_seconds()
 
 
-def _get_feature_names(estimator):
+def _get_feature_names(estimator, input_features=None):
     """
     Attempt to extract feature names based on a given estimator
     """
-    if hasattr(estimator, 'classes_'):
-        return estimator.classes_
-    elif hasattr(estimator, 'get_feature_names_out'):
-        return estimator.get_feature_names_out()
+    if hasattr(estimator, 'get_feature_names_out'):
+        return estimator.get_feature_names_out(input_features=input_features)
     elif hasattr(estimator, 'get_feature_names'):
         return estimator.get_feature_names()
+    elif hasattr(estimator, 'classes_'):
+        return estimator.classes_
     return None
 
 
@@ -286,11 +288,11 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
             if isinstance(transformer, TransformerPipeline):
                 inverse_steps = transformer.steps[::-1]
                 estimators = (estimator for name, estimator in inverse_steps)
-                names_steps = (_get_feature_names(e) for e in estimators)
+                names_steps = (_get_feature_names(e, input_features = columns) for e in estimators)  # noqa
                 names = next((n for n in names_steps if n is not None), None)
             # Otherwise use the only estimator present
             else:
-                names = _get_feature_names(transformer)
+                names = _get_feature_names(transformer, input_features=columns)
 
             if names is None or len(names) != num_cols:
                 # return name concatenated with '_0', '_1', etc.
