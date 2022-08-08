@@ -292,12 +292,12 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
                 names = next((n for n in names_steps if n is not None), None)
             # Otherwise use the only estimator present
             else:
-                names = _get_feature_names(transformer, input_features=columns, alias = alias)
+                names = _get_feature_names(transformer, input_features=columns)
 
             if names is None or len(names) != num_cols:
                 # return name concatenated with '_0', '_1', etc.
                 names = range(num_cols)
-                
+
             output = [f"{name}_{o}" for o in names]
         else:
             output = [name]
