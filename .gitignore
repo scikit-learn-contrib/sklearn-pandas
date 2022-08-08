@@ -6,3 +6,4 @@ dist/
 .cache/
 .idea/
 .pytest_cache/
+.DS_Store
