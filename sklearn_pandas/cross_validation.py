@@ -7,4 +7,4 @@ class DataWrapper(object):
         return len(self.df)
 
     def __getitem__(self, key):
-        return self.df.iloc[key]
+        return self.df.loc[key]
