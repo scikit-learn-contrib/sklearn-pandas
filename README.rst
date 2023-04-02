@@ -519,8 +519,7 @@ Below example shows how to change logging level.
 
 License
 -------
-For more details on the license of this repository see [License](https://github.com/scikit-learn-contrib/sklearn-pandas/blob/master/LICENSE).
-
+For more details on the license of this repository see `License <https://github.com/scikit-learn-contrib/sklearn-pandas/blob/master/LICENSE>`__.
 
 Changelog
 ---------
