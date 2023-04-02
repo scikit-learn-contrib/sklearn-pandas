@@ -516,7 +516,10 @@ Below example shows how to change logging level.
 
     >>> import logging
     >>> logging.getLogger('sklearn_pandas').setLevel(logging.INFO)
-    
+
+License
+-------
+For more details on the license of this repository see `License <https://github.com/scikit-learn-contrib/sklearn-pandas/blob/master/LICENSE>`__.
 
 Changelog
 ---------
@@ -667,6 +670,7 @@ Changelog
 ********************
 
 * Allow specifying a list of transformers to use sequentially on the same column.
+
 
 
 Credits
