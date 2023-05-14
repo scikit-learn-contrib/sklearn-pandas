@@ -124,10 +124,22 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         """
         Build attributes built_features and built_default.
         """
+
         if isinstance(self.features, list):
-            self.built_features = [
-                _build_feature(*f, X=X) for f in self.features
-            ]
+ 
+            filtered_list = []
+            for obj in self.features:
+                if isinstance(obj[0], list):
+                    new_cols = [col for col in obj[0] if col not in self.drop_cols]
+                   
+                    new_tuple = tuple([new_cols] + list(obj[1:]))
+                    filtered_list.append(new_tuple)
+                else:
+                    if obj[0] not in self.drop_cols:
+                        filtered_list.append(obj)
+            self.features = filtered_list
+
+            self.built_features = [_build_feature(*f, X=X) for f in self.features]
         else:
             self.built_features = _build_feature(*self.features, X=X)
         self.built_default = _build_transformer(self.default)
@@ -322,6 +334,7 @@ class DataFrameMapper(BaseEstimator, TransformerMixin):
         Avoids code duplication for implementation of transform and
         fit_transform.
         """
+
         if do_fit:
             self._build(X=X)
 
