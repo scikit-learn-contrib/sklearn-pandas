@@ -698,3 +698,8 @@ Other contributors:
 * Zac Stewart (@zacstewart)
 * Parul Singh (@paro1234)
 * Vincent Heusinkveld (@VHeusinkveld)
+
+License
+-------
+
+This project is licensed [License](https://github.com/scikit-learn-contrib/sklearn-pandas/blob/master/LICENSE)
